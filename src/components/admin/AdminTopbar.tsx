@@ -1,11 +1,22 @@
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
-import { faSearch, faBell, faUserCircle, faSignOutAlt } from '@fortawesome/free-solid-svg-icons';
+import { faSearch, faBell, faUserCircle, faBars } from '@fortawesome/free-solid-svg-icons';
 
-export default function AdminTopbar() {
+interface AdminTopbarProps {
+  onMenuClick: () => void;
+}
+
+export default function AdminTopbar({ onMenuClick }: AdminTopbarProps) {
   return (
-    <header className="h-20 bg-white border-b border-gray-100 flex items-center justify-between px-10 fixed top-0 right-0 left-64 z-40 shadow-sm backdrop-blur-md bg-white/80">
-      <div className="flex-grow max-w-xl">
-        <div className="relative group">
+    <header className="h-20 bg-white border-b border-gray-100 flex items-center justify-between px-4 md:px-10 fixed top-0 right-0 left-0 lg:left-64 z-40 shadow-sm backdrop-blur-md bg-white/80">
+      <div className="flex items-center flex-grow max-w-xl">
+        <button 
+          onClick={onMenuClick}
+          className="lg:hidden w-10 h-10 flex items-center justify-center text-gray-400 hover:text-brand-orange mr-4"
+        >
+          <FontAwesomeIcon icon={faBars} className="text-xl" />
+        </button>
+        
+        <div className="relative group flex-grow hidden sm:block">
           <div className="absolute inset-y-0 left-0 pl-5 flex items-center pointer-events-none text-gray-400 group-focus-within:text-brand-orange transition-colors">
             <FontAwesomeIcon icon={faSearch} />
           </div>
@@ -17,18 +28,18 @@ export default function AdminTopbar() {
         </div>
       </div>
 
-      <div className="flex items-center space-x-6">
+      <div className="flex items-center space-x-3 md:space-x-6">
         <button className="relative p-3 rounded-xl bg-gray-50 text-gray-400 hover:text-brand-orange hover:bg-brand-orange/10 transition-all group">
           <FontAwesomeIcon icon={faBell} className="w-5 h-5 group-hover:scale-110 transition-transform" />
           <span className="absolute top-2.5 right-2.5 w-2.5 h-2.5 bg-rose-500 border-2 border-white rounded-full" />
         </button>
 
-        <div className="flex items-center space-x-4 pl-6 border-l border-gray-100">
-          <div className="text-right hidden md:block">
-            <div className="text-sm font-black text-brand-dark uppercase tracking-widest">Admin User</div>
-            <div className="text-[10px] font-black text-emerald-500 uppercase tracking-[0.2em]">Super Admin</div>
+        <div className="flex items-center space-x-2 md:space-x-4 pl-3 md:pl-6 border-l border-gray-100">
+          <div className="text-right hidden sm:block">
+            <div className="text-xs md:text-sm font-black text-brand-dark uppercase tracking-widest">Admin User</div>
+            <div className="text-[9px] md:text-[10px] font-black text-emerald-500 uppercase tracking-[0.2em]">Super Admin</div>
           </div>
-          <div className="w-12 h-12 bg-brand-light rounded-2xl flex items-center justify-center text-brand-orange text-xl shadow-inner border border-brand-orange/10">
+          <div className="w-10 h-10 md:w-12 md:h-12 bg-brand-light rounded-2xl flex items-center justify-center text-brand-orange text-lg md:text-xl shadow-inner border border-brand-orange/10">
             <FontAwesomeIcon icon={faUserCircle} />
           </div>
         </div>
