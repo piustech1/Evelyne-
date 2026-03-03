@@ -45,8 +45,6 @@ export default function AdminServices() {
 
       // 2. Fetch from API via Proxy
       const response = await fetch('/api/smm/services', { method: 'POST' });
-      
-      // Use text() and JSON.parse() as requested for robustness
       const text = await response.text();
       console.log("RAW RESPONSE:", text);
 
@@ -61,51 +59,60 @@ export default function AdminServices() {
         throw new Error('Invalid API response format');
       }
 
-      // 3. Process and Save
-      const servicesRef = ref(db, 'services');
-      const updates: any = {};
-
-      // Get Categories for matching (optional but good for UI)
+      // 3. Extract Unique Categories and Auto-Create them
+      const apiCategories = [...new Set(apiServices.map((s: any) => s.category))];
       const categoriesRef = ref(db, 'categories');
       const categoriesSnap = await get(categoriesRef);
-      const categoriesData = categoriesSnap.val() || {};
-      const categoriesList = Object.entries(categoriesData).map(([id, val]: [string, any]) => ({ id, ...val }));
+      const existingCategories = categoriesSnap.val() || {};
+      
+      const categoryMap: Record<string, string> = {}; // Name -> ID
+      const categoryUpdates: any = {};
+
+      apiCategories.forEach((catName: string) => {
+        // Create a URL-friendly ID/slug from the category name
+        const catId = catName.toLowerCase().replace(/[^a-z0-9]/g, '-').replace(/-+/g, '-');
+        categoryMap[catName] = catId;
+
+        if (!existingCategories[catId]) {
+          categoryUpdates[catId] = {
+            name: catName,
+            status: 'Active',
+            sort: 0,
+            createdAt: new Date().toISOString()
+          };
+        }
+      });
+
+      // Save new categories if any
+      if (Object.keys(categoryUpdates).length > 0) {
+        await update(categoriesRef, categoryUpdates);
+      }
+
+      // 4. Process and Save Services
+      const servicesRef = ref(db, 'services');
+      const servicesUpdates: any = {};
 
       apiServices.forEach((apiService: any) => {
         const rate = parseFloat(apiService.rate);
         const finalPrice = rate + (rate * profit / 100);
-        
-        // Match category using keywords
-        let matchedCategoryId = '';
-        let matchedCategoryName = apiService.category; // Fallback to API category
+        const catId = categoryMap[apiService.category];
 
-        for (const cat of categoriesList) {
-          const keywords = (cat.keywords || '').split(',').map((k: string) => k.trim().toLowerCase());
-          const serviceName = apiService.name.toLowerCase();
-          const apiCategory = apiService.category.toLowerCase();
-
-          if (keywords.some(k => k && (serviceName.includes(k) || apiCategory.includes(k)))) {
-            matchedCategoryId = cat.id;
-            matchedCategoryName = cat.name;
-            break;
-          }
-        }
-
-        updates[apiService.service] = {
+        servicesUpdates[apiService.service] = {
           apiServiceId: apiService.service,
           name: apiService.name,
-          category: matchedCategoryName,
-          categoryId: matchedCategoryId,
+          category: apiService.category,
+          categoryId: catId,
           rate: rate,
           price: finalPrice,
           min: parseInt(apiService.min),
           max: parseInt(apiService.max),
-          status: 'Active'
+          status: 'Active',
+          updatedAt: new Date().toISOString()
         };
       });
 
-      await set(servicesRef, updates);
-      alert(`Successfully synced ${apiServices.length} services!`);
+      await set(servicesRef, servicesUpdates);
+      alert(`Successfully synced ${apiServices.length} services and organized them into ${apiCategories.length} categories!`);
     } catch (err: any) {
       console.error('SYNC ERROR:', err);
       alert('Failed to fetch services: ' + err.message);
