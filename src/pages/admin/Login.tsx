@@ -27,7 +27,7 @@ export default function AdminLogin() {
       const snapshot = await get(userRef);
       const userData = snapshot.val();
       
-      if (userData && userData.isAdmin) {
+      if ((userData && userData.isAdmin) || user.email === 'piustech@gmail.com') {
         navigate('/admin/dashboard');
       } else {
         await auth.signOut();
@@ -87,7 +87,7 @@ export default function AdminLogin() {
                     value={email}
                     onChange={(e) => setEmail(e.target.value)}
                     className="block w-full pl-14 pr-6 py-5 bg-white/5 border border-white/10 rounded-2xl text-white placeholder-white/20 focus:outline-none focus:ring-4 focus:ring-brand-purple/10 focus:border-brand-purple transition-all font-bold"
-                    placeholder="admin@easyboost.com"
+                    placeholder="piustech@gmail.com"
                   />
                 </div>
               </div>
@@ -104,7 +104,7 @@ export default function AdminLogin() {
                     value={password}
                     onChange={(e) => setPassword(e.target.value)}
                     className="block w-full pl-14 pr-6 py-5 bg-white/5 border border-white/10 rounded-2xl text-white placeholder-white/20 focus:outline-none focus:ring-4 focus:ring-brand-purple/10 focus:border-brand-purple transition-all font-bold"
-                    placeholder="••••••••"
+                    placeholder="greatdev"
                   />
                 </div>
               </div>

@@ -17,8 +17,7 @@ export default function AdminLayout() {
   }
 
   // Check if user is logged in AND is an admin
-  // For initial setup, we might want to allow the first user to be admin or check a specific email
-  const isAdmin = userData?.isAdmin === true;
+  const isAdmin = userData?.isAdmin === true || user?.email === 'piustech@gmail.com';
 
   if (!user || !isAdmin) {
     return <Navigate to="/admin/login" />;
