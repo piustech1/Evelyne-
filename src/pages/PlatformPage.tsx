@@ -123,7 +123,7 @@ export default function PlatformPage() {
       });
 
       // 3. Calculate Profit
-      const originalCost = (selectedService.originalRate * quantity) / 1000;
+      const originalCost = (selectedService.rate * quantity) / 1000;
       const profit = totalPrice - originalCost;
 
       // 4. Create order in Firebase

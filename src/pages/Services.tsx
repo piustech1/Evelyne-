@@ -36,13 +36,7 @@ export default function Services() {
         }));
         setCategories(categoriesArray);
       } else {
-        // Fallback to default platforms if no categories in DB
-        setCategories([
-          { id: 'tiktok', name: 'TikTok', description: 'Boost your TikTok presence with likes, views, and followers.' },
-          { id: 'instagram', name: 'Instagram', description: 'Grow your Instagram account with real engagement and reach.' },
-          { id: 'youtube', name: 'YouTube', description: 'Increase your YouTube subscribers, watch time, and views.' },
-          { id: 'facebook', name: 'Facebook', description: 'Enhance your Facebook page likes, followers, and post reach.' },
-        ]);
+        setCategories([]);
       }
       setIsLoading(false);
     });

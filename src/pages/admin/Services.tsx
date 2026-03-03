@@ -43,31 +43,41 @@ export default function AdminServices() {
       const settings = settingsSnap.val() || { profitPercentage: 20 };
       const profit = settings.profitPercentage || 20;
 
-      // 2. Get Categories for matching
+      // 2. Fetch from API via Proxy
+      const response = await fetch('/api/smm/services', { method: 'POST' });
+      
+      // Use text() and JSON.parse() as requested for robustness
+      const text = await response.text();
+      console.log("RAW RESPONSE:", text);
+
+      if (!text.startsWith("[") && !text.startsWith("{")) {
+        throw new Error("Invalid API response");
+      }
+
+      const apiServices = JSON.parse(text);
+      console.log("SERVICES:", apiServices);
+
+      if (!Array.isArray(apiServices)) {
+        throw new Error('Invalid API response format');
+      }
+
+      // 3. Process and Save
+      const servicesRef = ref(db, 'services');
+      const updates: any = {};
+
+      // Get Categories for matching (optional but good for UI)
       const categoriesRef = ref(db, 'categories');
       const categoriesSnap = await get(categoriesRef);
       const categoriesData = categoriesSnap.val() || {};
       const categoriesList = Object.entries(categoriesData).map(([id, val]: [string, any]) => ({ id, ...val }));
 
-      // 3. Fetch from API
-      const response = await fetch('/api/smm/services', { method: 'POST' });
-      const apiServices = await response.json();
-
-      if (!Array.isArray(apiServices)) {
-        throw new Error('Invalid API response');
-      }
-
-      // 4. Process and Save
-      const servicesRef = ref(db, 'services');
-      const updates: any = {};
-
       apiServices.forEach((apiService: any) => {
         const rate = parseFloat(apiService.rate);
         const finalPrice = rate + (rate * profit / 100);
         
-        // Match category
+        // Match category using keywords
         let matchedCategoryId = '';
-        let matchedCategoryName = 'Uncategorized';
+        let matchedCategoryName = apiService.category; // Fallback to API category
 
         for (const cat of categoriesList) {
           const keywords = (cat.keywords || '').split(',').map((k: string) => k.trim().toLowerCase());
@@ -84,24 +94,21 @@ export default function AdminServices() {
         updates[apiService.service] = {
           apiServiceId: apiService.service,
           name: apiService.name,
-          originalCategory: apiService.category,
+          category: matchedCategoryName,
           categoryId: matchedCategoryId,
-          categoryName: matchedCategoryName,
-          originalRate: rate,
+          rate: rate,
           price: finalPrice,
           min: parseInt(apiService.min),
           max: parseInt(apiService.max),
-          type: apiService.type,
-          status: 'Active',
-          updatedAt: new Date().toISOString()
+          status: 'Active'
         };
       });
 
       await set(servicesRef, updates);
       alert(`Successfully synced ${apiServices.length} services!`);
     } catch (err: any) {
-      console.error('Sync Error:', err);
-      alert('Failed to sync services: ' + err.message);
+      console.error('SYNC ERROR:', err);
+      alert('Failed to fetch services: ' + err.message);
     } finally {
       setIsSyncing(false);
     }
@@ -163,7 +170,8 @@ export default function AdminServices() {
                 <th className="pb-6 px-4">API ID</th>
                 <th className="pb-6 px-4">Service Name</th>
                 <th className="pb-6 px-4 hidden sm:table-cell">Category</th>
-                <th className="pb-6 px-4">Price / 1k</th>
+                <th className="pb-6 px-4">Rate (API)</th>
+                <th className="pb-6 px-4">Final Price</th>
                 <th className="pb-6 px-4">Status</th>
               </tr>
             </thead>
@@ -178,7 +186,8 @@ export default function AdminServices() {
                 >
                   <td className="py-6 px-4 text-xs font-black text-white">#{service.apiServiceId}</td>
                   <td className="py-6 px-4 text-xs font-bold text-gray-400 truncate max-w-[300px]">{service.name}</td>
-                  <td className="py-6 px-4 text-xs font-bold text-gray-600 hidden sm:table-cell">{service.categoryName}</td>
+                  <td className="py-6 px-4 text-xs font-bold text-gray-600 hidden sm:table-cell">{service.category}</td>
+                  <td className="py-6 px-4 text-xs font-bold text-gray-500">UGX {service.rate?.toLocaleString()}</td>
                   <td className="py-6 px-4 text-xs font-black text-brand-purple">UGX {service.price?.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</td>
                   <td className="py-6 px-4">
                     <button 

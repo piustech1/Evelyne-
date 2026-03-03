@@ -25,14 +25,20 @@ async function startServer() {
       const response = await fetch(SMM_API_URL, {
         method: 'POST',
         headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
-        body: new URLSearchParams({
-          key: API_KEY,
-          action: 'services'
-        })
+        body: `key=${API_KEY}&action=services`
       });
 
-      const data = await response.json();
-      res.json(data);
+      const text = await response.text();
+      console.log("RAW RESPONSE:", text);
+
+      if (!text.startsWith("[") && !text.startsWith("{")) {
+        throw new Error("Invalid API response");
+      }
+
+      const services = JSON.parse(text);
+      console.log("SERVICES:", services);
+      
+      res.json(services);
     } catch (error: any) {
       console.error('SMM Services Error:', error);
       res.status(500).json({ error: error.message });
