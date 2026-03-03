@@ -1,3 +1,4 @@
+import { useState, useEffect } from 'react';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { 
   faSearch, 
@@ -8,96 +9,153 @@ import {
   faWallet, 
   faHistory, 
   faTrashAlt, 
-  faEye 
+  faEye,
+  faShieldAlt,
+  faUserSlash,
+  faUsers
 } from '@fortawesome/free-solid-svg-icons';
 import { motion } from 'motion/react';
-
-const users = [
-  { id: '#USR-1021', username: 'john_doe', email: 'john@example.com', balance: 'UGX 124,500', orders: '1,284', status: 'Active', date: '2026-01-15' },
-  { id: '#USR-1020', username: 'sarah_smith', email: 'sarah@example.com', balance: 'UGX 45,000', orders: '452', status: 'Active', date: '2026-01-20' },
-  { id: '#USR-1019', username: 'mike_ross', email: 'mike@example.com', balance: 'UGX 0', orders: '12', status: 'Banned', date: '2026-02-05' },
-  { id: '#USR-1018', username: 'jane_doe', email: 'jane@example.com', balance: 'UGX 2,400', orders: '84', status: 'Active', date: '2026-02-10' },
-  { id: '#USR-1017', username: 'alex_king', email: 'alex@example.com', balance: 'UGX 1.2M', orders: '8,421', status: 'Active', date: '2026-02-15' },
-];
+import { db } from '../../lib/firebase';
+import { ref, onValue, update, remove } from 'firebase/database';
 
 export default function AdminUsers() {
+  const [users, setUsers] = useState<any[]>([]);
+  const [searchTerm, setSearchTerm] = useState('');
+  const [isLoading, setIsLoading] = useState(true);
+
+  useEffect(() => {
+    const usersRef = ref(db, 'users');
+    onValue(usersRef, (snapshot) => {
+      const data = snapshot.val();
+      if (data) {
+        setUsers(Object.entries(data).map(([id, val]: [string, any]) => ({ id, ...val })));
+      } else {
+        setUsers([]);
+      }
+      setIsLoading(false);
+    });
+  }, []);
+
+  const toggleAdmin = async (userId: string, currentStatus: boolean) => {
+    try {
+      await update(ref(db, `users/${userId}`), { isAdmin: !currentStatus });
+    } catch (err) {
+      console.error('Failed to toggle admin status', err);
+    }
+  };
+
+  const toggleBan = async (userId: string, currentStatus: string) => {
+    const newStatus = currentStatus === 'Banned' ? 'Active' : 'Banned';
+    try {
+      await update(ref(db, `users/${userId}`), { status: newStatus });
+    } catch (err) {
+      console.error('Failed to toggle ban status', err);
+    }
+  };
+
+  const filteredUsers = users.filter(u => 
+    u.name?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+    u.email?.toLowerCase().includes(searchTerm.toLowerCase())
+  );
+
   return (
-    <div className="space-y-6 md:space-y-10">
-      <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
+    <div className="space-y-12">
+      <div className="flex flex-col md:flex-row md:items-center justify-between gap-6">
         <div>
-          <h1 className="text-3xl md:text-4xl font-display font-black text-brand-dark tracking-tighter mb-1 md:mb-2">Users</h1>
-          <p className="text-gray-400 font-bold text-xs md:text-sm uppercase tracking-widest">Manage your customer base</p>
+          <h1 className="text-4xl md:text-5xl font-display font-black text-white tracking-tighter mb-2">Users</h1>
+          <p className="text-gray-500 font-black text-[10px] uppercase tracking-[0.2em]">Manage your customer base</p>
         </div>
-        <button className="w-full md:w-auto px-6 md:px-8 py-3 md:py-4 gradient-brand text-white font-black uppercase tracking-widest text-[10px] md:text-xs rounded-2xl shadow-xl shadow-brand-orange/20 hover:scale-105 transition-all active:scale-95 flex items-center justify-center space-x-3">
-          <FontAwesomeIcon icon={faUserPlus} />
-          <span>Add New User</span>
-        </button>
       </div>
 
-      <div className="bg-white p-6 md:p-10 rounded-[2rem] md:rounded-[3rem] shadow-sm border border-gray-100">
-        <div className="flex flex-col md:flex-row md:items-center justify-between mb-8 md:mb-10 gap-6">
+      <div className="bg-brand-card p-8 md:p-12 rounded-[3.5rem] shadow-2xl border border-white/5">
+        <div className="flex flex-col md:flex-row md:items-center justify-between mb-12 gap-8">
           <div className="flex items-center space-x-4 w-full md:max-w-xl">
             <div className="relative group flex-grow">
-              <div className="absolute inset-y-0 left-0 pl-5 flex items-center pointer-events-none text-gray-400 group-focus-within:text-brand-orange transition-colors">
+              <div className="absolute inset-y-0 left-0 pl-6 flex items-center pointer-events-none text-gray-600 group-focus-within:text-brand-purple transition-colors">
                 <FontAwesomeIcon icon={faSearch} />
               </div>
               <input
                 type="text"
                 placeholder="Search users..."
-                className="pl-12 pr-4 py-3.5 md:py-4 bg-gray-50 border border-gray-100 rounded-2xl focus:outline-none focus:ring-4 focus:ring-brand-orange/5 focus:border-brand-orange focus:bg-white transition-all w-full font-bold text-sm"
+                value={searchTerm}
+                onChange={(e) => setSearchTerm(e.target.value)}
+                className="pl-14 pr-6 py-4 bg-white/5 border border-white/10 rounded-2xl text-white placeholder-gray-700 focus:outline-none focus:ring-4 focus:ring-brand-purple/10 focus:border-brand-purple focus:bg-white/10 transition-all w-full font-bold text-sm"
               />
             </div>
           </div>
         </div>
 
-        <div className="overflow-x-auto -mx-6 md:mx-0">
-          <div className="inline-block min-w-full align-middle px-6 md:px-0">
-            <table className="min-w-full text-left border-collapse">
-              <thead>
-                <tr className="text-[9px] md:text-[10px] font-black text-gray-400 uppercase tracking-[0.2em] border-b border-gray-50">
-                  <th className="pb-4 md:pb-6 px-2 md:px-4">User ID</th>
-                  <th className="pb-4 md:pb-6 px-2 md:px-4">Username</th>
-                  <th className="pb-4 md:pb-6 px-2 md:px-4 hidden sm:table-cell">Email</th>
-                  <th className="pb-4 md:pb-6 px-2 md:px-4">Balance</th>
-                  <th className="pb-4 md:pb-6 px-2 md:px-4">Status</th>
-                  <th className="pb-4 md:pb-6 px-2 md:px-4 text-right">Actions</th>
-                </tr>
-              </thead>
-              <tbody className="divide-y divide-gray-50">
-                {users.map((user, idx) => (
-                  <motion.tr
-                    key={idx}
-                    initial={{ opacity: 0, x: -10 }}
-                    animate={{ opacity: 1, x: 0 }}
-                    transition={{ delay: idx * 0.05 }}
-                    className="group hover:bg-brand-light/30 transition-colors"
-                  >
-                    <td className="py-4 md:py-6 px-2 md:px-4 text-xs md:text-sm font-black text-brand-dark">{user.id}</td>
-                    <td className="py-4 md:py-6 px-2 md:px-4 text-xs md:text-sm font-bold text-gray-700">{user.username}</td>
-                    <td className="py-4 md:py-6 px-2 md:px-4 text-xs md:text-sm font-bold text-gray-400 hidden sm:table-cell">{user.email}</td>
-                    <td className="py-4 md:py-6 px-2 md:px-4 text-xs md:text-sm font-black text-emerald-500">{user.balance}</td>
-                    <td className="py-4 md:py-6 px-2 md:px-4">
-                      <span className={`inline-flex items-center px-3 md:px-4 py-1 md:py-1.5 rounded-full text-[8px] md:text-[9px] font-black uppercase tracking-widest ${
-                        user.status === 'Active' ? 'bg-emerald-100 text-emerald-600' : 'bg-rose-100 text-rose-600'
-                      }`}>
-                        {user.status}
-                      </span>
-                    </td>
-                    <td className="py-4 md:py-6 px-2 md:px-4 text-right">
-                      <div className="flex items-center justify-end space-x-1 md:space-x-2">
-                        <button className="w-8 h-8 md:w-9 md:h-9 rounded-xl bg-gray-50 text-gray-400 hover:text-brand-orange hover:bg-brand-orange/10 transition-all flex items-center justify-center">
-                          <FontAwesomeIcon icon={faEye} className="text-xs md:text-sm" />
-                        </button>
-                        <button className="w-8 h-8 md:w-9 md:h-9 rounded-xl bg-gray-50 text-gray-400 hover:text-rose-600 hover:bg-rose-50 transition-all flex items-center justify-center">
-                          <FontAwesomeIcon icon={faBan} className="text-xs md:text-sm" />
-                        </button>
-                      </div>
-                    </td>
-                  </motion.tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
+        <div className="overflow-x-auto">
+          <table className="w-full text-left border-collapse">
+            <thead>
+              <tr className="text-[10px] font-black text-gray-600 uppercase tracking-[0.2em] border-b border-white/5">
+                <th className="pb-6 px-4">User ID</th>
+                <th className="pb-6 px-4">Name</th>
+                <th className="pb-6 px-4 hidden sm:table-cell">Email</th>
+                <th className="pb-6 px-4">Balance</th>
+                <th className="pb-6 px-4">Status</th>
+                <th className="pb-6 px-4 text-right">Actions</th>
+              </tr>
+            </thead>
+            <tbody className="divide-y divide-white/5">
+              {filteredUsers.map((user, idx) => (
+                <motion.tr
+                  key={user.id}
+                  initial={{ opacity: 0, x: -10 }}
+                  animate={{ opacity: 1, x: 0 }}
+                  transition={{ delay: idx * 0.05 }}
+                  className="group hover:bg-white/5 transition-colors"
+                >
+                  <td className="py-6 px-4 text-xs font-black text-white group-hover:text-brand-purple transition-colors">#{user.id.slice(-6).toUpperCase()}</td>
+                  <td className="py-6 px-4 text-xs font-bold text-gray-400 flex items-center gap-2">
+                    {user.name}
+                    {user.isAdmin && (
+                      <span className="text-[8px] bg-brand-purple/20 text-brand-purple px-2 py-0.5 rounded-full font-black uppercase">Admin</span>
+                    )}
+                  </td>
+                  <td className="py-6 px-4 text-xs font-bold text-gray-600 hidden sm:table-cell">{user.email}</td>
+                  <td className="py-6 px-4 text-xs font-black text-emerald-500">UGX {user.balance?.toLocaleString() || 0}</td>
+                  <td className="py-6 px-4">
+                    <span className={`inline-flex items-center px-4 py-1.5 rounded-full text-[9px] font-black uppercase tracking-widest border ${
+                      user.status === 'Banned' ? 'bg-rose-500/10 text-rose-500 border-rose-500/20' : 'bg-emerald-500/10 text-emerald-500 border-emerald-500/20'
+                    }`}>
+                      {user.status || 'Active'}
+                    </span>
+                  </td>
+                  <td className="py-6 px-4 text-right">
+                    <div className="flex items-center justify-end space-x-2">
+                      <button 
+                        onClick={() => toggleAdmin(user.id, user.isAdmin)}
+                        className={`w-10 h-10 rounded-xl transition-all flex items-center justify-center border ${
+                          user.isAdmin ? 'bg-brand-purple text-white border-brand-purple' : 'bg-white/5 text-gray-500 border-white/5 hover:text-brand-purple hover:bg-brand-purple/10'
+                        }`}
+                        title={user.isAdmin ? 'Remove Admin' : 'Make Admin'}
+                      >
+                        <FontAwesomeIcon icon={faShieldAlt} className="text-xs" />
+                      </button>
+                      <button 
+                        onClick={() => toggleBan(user.id, user.status)}
+                        className={`w-10 h-10 rounded-xl transition-all flex items-center justify-center border ${
+                          user.status === 'Banned' ? 'bg-rose-500 text-white border-rose-500' : 'bg-white/5 text-gray-500 border-white/5 hover:text-rose-500 hover:bg-rose-500/10'
+                        }`}
+                        title={user.status === 'Banned' ? 'Unban User' : 'Ban User'}
+                      >
+                        <FontAwesomeIcon icon={faUserSlash} className="text-xs" />
+                      </button>
+                    </div>
+                  </td>
+                </motion.tr>
+              ))}
+            </tbody>
+          </table>
+          {filteredUsers.length === 0 && !isLoading && (
+            <div className="py-32 text-center space-y-4">
+              <div className="w-20 h-20 bg-white/5 rounded-full flex items-center justify-center text-gray-700 text-3xl mx-auto">
+                <FontAwesomeIcon icon={faUsers} />
+              </div>
+              <div className="text-gray-600 font-black uppercase tracking-widest text-xs">No users found</div>
+            </div>
+          )}
         </div>
       </div>
     </div>

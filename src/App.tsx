@@ -4,7 +4,7 @@
  */
 
 import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
-import { useState, useEffect } from 'react';
+import { useAuth } from './hooks/useAuth';
 import LandingPage from './pages/LandingPage';
 import Login from './pages/Login';
 import Signup from './pages/Signup';
@@ -33,13 +33,15 @@ import AdminAnnouncements from './pages/admin/Announcements';
 import AdminSettings from './pages/admin/Settings';
 
 export default function App() {
-  const [isLoggedIn, setIsLoggedIn] = useState(false);
+  const { user, loading } = useAuth();
 
-  // Mock login check
-  useEffect(() => {
-    const user = localStorage.getItem('user');
-    if (user) setIsLoggedIn(true);
-  }, []);
+  if (loading) {
+    return (
+      <div className="min-h-screen bg-brand-dark flex items-center justify-center">
+        <div className="w-12 h-12 border-4 border-brand-purple border-t-transparent rounded-full animate-spin" />
+      </div>
+    );
+  }
 
   return (
     <Router>
@@ -65,26 +67,26 @@ export default function App() {
         <Route
           path="*"
           element={
-            <div className="min-h-screen flex flex-col bg-brand-light">
-              <Navbar isLoggedIn={isLoggedIn} setIsLoggedIn={setIsLoggedIn} />
+            <div className="min-h-screen flex flex-col bg-brand-dark">
+              <Navbar isLoggedIn={!!user} />
               
               <main className="flex-grow">
                 <Routes>
                   <Route path="/" element={<LandingPage />} />
-                  <Route path="/login" element={<Login setIsLoggedIn={setIsLoggedIn} />} />
-                  <Route path="/signup" element={<Signup setIsLoggedIn={setIsLoggedIn} />} />
+                  <Route path="/login" element={!user ? <Login /> : <Navigate to="/dashboard" />} />
+                  <Route path="/signup" element={!user ? <Signup /> : <Navigate to="/dashboard" />} />
                   
                   {/* Protected Routes */}
-                  <Route path="/dashboard" element={isLoggedIn ? <Dashboard /> : <Navigate to="/login" />} />
-                  <Route path="/services" element={isLoggedIn ? <Services /> : <Navigate to="/login" />} />
-                  <Route path="/services/:platform" element={isLoggedIn ? <PlatformPage /> : <Navigate to="/login" />} />
-                  <Route path="/orders" element={isLoggedIn ? <Orders /> : <Navigate to="/login" />} />
-                  <Route path="/wallet" element={isLoggedIn ? <Wallet /> : <Navigate to="/login" />} />
-                  <Route path="/profile" element={isLoggedIn ? <Profile setIsLoggedIn={setIsLoggedIn} /> : <Navigate to="/login" />} />
+                  <Route path="/dashboard" element={user ? <Dashboard /> : <Navigate to="/login" />} />
+                  <Route path="/services" element={user ? <Services /> : <Navigate to="/login" />} />
+                  <Route path="/services/:platform" element={user ? <PlatformPage /> : <Navigate to="/login" />} />
+                  <Route path="/orders" element={user ? <Orders /> : <Navigate to="/login" />} />
+                  <Route path="/wallet" element={user ? <Wallet /> : <Navigate to="/login" />} />
+                  <Route path="/profile" element={user ? <Profile /> : <Navigate to="/login" />} />
                 </Routes>
               </main>
 
-              {isLoggedIn && <MobileNav />}
+              {user && <MobileNav />}
             </div>
           }
         />

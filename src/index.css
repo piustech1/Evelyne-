@@ -5,15 +5,17 @@
   --font-sans: "Inter", ui-sans-serif, system-ui, sans-serif;
   --font-display: "Outfit", ui-sans-serif, system-ui, sans-serif;
   
-  --color-brand-orange: #ff6b35;
-  --color-brand-coral: #f76c6c;
-  --color-brand-light: #f8f9fa;
-  --color-brand-dark: #212529;
+  --color-brand-blue: #4F46E5;
+  --color-brand-purple: #7C3AED;
+  --color-brand-dark: #0F172A;
+  --color-brand-card: #1E293B;
+  --color-brand-light: #F1F5F9;
+  --color-brand-accent: #818CF8;
 }
 
 @layer base {
   body {
-    @apply font-sans text-brand-dark bg-white;
+    @apply font-sans text-brand-light bg-brand-dark;
   }
   
   h1, h2, h3, h4, h5, h6 {
@@ -22,11 +24,32 @@
 }
 
 .gradient-brand {
-  background: linear-gradient(135deg, var(--color-brand-orange) 0%, var(--color-brand-coral) 100%);
+  background: linear-gradient(135deg, var(--color-brand-blue) 0%, var(--color-brand-purple) 100%);
 }
 
 .text-gradient {
-  background: linear-gradient(135deg, var(--color-brand-orange) 0%, var(--color-brand-coral) 100%);
+  background: linear-gradient(135deg, var(--color-brand-blue) 0%, var(--color-brand-purple) 100%);
   -webkit-background-clip: text;
   -webkit-text-fill-color: transparent;
+}
+
+.card-dark {
+  @apply bg-brand-card border border-white/5 rounded-3xl shadow-xl;
+}
+
+.custom-scrollbar::-webkit-scrollbar {
+  width: 4px;
+}
+
+.custom-scrollbar::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+.custom-scrollbar::-webkit-scrollbar-thumb {
+  background: rgba(255, 255, 255, 0.1);
+  border-radius: 10px;
+}
+
+.custom-scrollbar::-webkit-scrollbar-thumb:hover {
+  background: rgba(255, 255, 255, 0.2);
 }

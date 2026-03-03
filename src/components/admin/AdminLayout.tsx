@@ -1,22 +1,35 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { Outlet, Navigate } from 'react-router-dom';
 import AdminSidebar from './AdminSidebar';
 import AdminTopbar from './AdminTopbar';
+import { useAuth } from '../../hooks/useAuth';
 
 export default function AdminLayout() {
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
-  const isAdminLoggedIn = localStorage.getItem('adminUser');
+  const { user, userData, loading } = useAuth();
 
-  if (!isAdminLoggedIn) {
+  if (loading) {
+    return (
+      <div className="min-h-screen bg-brand-dark flex items-center justify-center">
+        <div className="text-white font-black uppercase tracking-widest animate-pulse">Verifying Admin Access...</div>
+      </div>
+    );
+  }
+
+  // Check if user is logged in AND is an admin
+  // For initial setup, we might want to allow the first user to be admin or check a specific email
+  const isAdmin = userData?.isAdmin === true;
+
+  if (!user || !isAdmin) {
     return <Navigate to="/admin/login" />;
   }
 
   return (
-    <div className="min-h-screen bg-brand-light flex relative overflow-x-hidden">
+    <div className="min-h-screen bg-brand-dark flex relative overflow-x-hidden">
       {/* Sidebar Overlay for Mobile */}
       {isSidebarOpen && (
         <div 
-          className="fixed inset-0 bg-black/50 z-[55] lg:hidden backdrop-blur-sm transition-opacity"
+          className="fixed inset-0 bg-black/60 z-[55] lg:hidden backdrop-blur-md transition-opacity"
           onClick={() => setIsSidebarOpen(false)}
         />
       )}

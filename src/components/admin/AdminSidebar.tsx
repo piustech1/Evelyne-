@@ -1,4 +1,4 @@
-import { Link, useLocation } from 'react-router-dom';
+import { Link, useLocation, useNavigate } from 'react-router-dom';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { 
   faThLarge, 
@@ -13,8 +13,11 @@ import {
   faBullhorn, 
   faCog, 
   faSignOutAlt,
-  faRocket
+  faRocket,
+  faXmark
 } from '@fortawesome/free-solid-svg-icons';
+import { auth } from '../../lib/firebase';
+import { signOut } from 'firebase/auth';
 
 const menuItems = [
   { name: 'Dashboard', icon: faThLarge, path: '/admin/dashboard' },
@@ -37,30 +40,36 @@ interface AdminSidebarProps {
 
 export default function AdminSidebar({ isOpen, setIsOpen }: AdminSidebarProps) {
   const location = useLocation();
+  const navigate = useNavigate();
 
-  const handleLogout = () => {
-    localStorage.removeItem('adminUser');
-    window.location.href = '/admin/login';
+  const handleLogout = async () => {
+    try {
+      await signOut(auth);
+      navigate('/admin/login');
+    } catch (err) {
+      console.error('Logout failed', err);
+    }
   };
 
   return (
-    <div className={`w-64 bg-brand-dark text-white h-screen fixed left-0 top-0 flex flex-col shadow-2xl z-[60] transition-transform duration-300 transform lg:translate-x-0 ${isOpen ? 'translate-x-0' : '-translate-x-full'}`}>
-      <div className="p-8 flex items-center justify-between">
-        <div className="flex items-center space-x-3">
-          <div className="w-10 h-10 gradient-brand rounded-xl flex items-center justify-center shadow-lg shadow-brand-orange/20">
-            <FontAwesomeIcon icon={faRocket} className="text-white text-lg" />
+    <div className={`w-64 bg-brand-dark text-white h-screen fixed left-0 top-0 flex flex-col shadow-[10px_0_30px_rgba(0,0,0,0.5)] z-[60] transition-transform duration-500 ease-in-out transform lg:translate-x-0 border-r border-white/5 ${isOpen ? 'translate-x-0' : '-translate-x-full'}`}>
+      <div className="p-10 flex items-center justify-between">
+        <div className="flex items-center space-x-4">
+          <div className="w-12 h-12 gradient-brand rounded-2xl flex items-center justify-center shadow-2xl shadow-brand-blue/30">
+            <FontAwesomeIcon icon={faRocket} className="text-white text-xl" />
           </div>
-          <span className="text-xl font-display font-black tracking-tighter">EasyAdmin</span>
+          <span className="text-2xl font-display font-black tracking-tighter">EasyAdmin</span>
         </div>
         <button 
-          className="lg:hidden text-white/40 hover:text-white"
+          className="lg:hidden w-10 h-10 rounded-xl bg-white/5 flex items-center justify-center text-white/40 hover:text-white transition-all"
           onClick={() => setIsOpen(false)}
         >
-          <FontAwesomeIcon icon={faSignOutAlt} className="rotate-180" />
+          <FontAwesomeIcon icon={faXmark} />
         </button>
       </div>
 
-      <nav className="flex-grow px-4 space-y-1 overflow-y-auto custom-scrollbar">
+      <nav className="flex-grow px-6 space-y-2 overflow-y-auto custom-scrollbar pb-10">
+        <div className="text-[10px] font-black text-gray-600 uppercase tracking-[0.2em] mb-4 ml-4">Main Menu</div>
         {menuItems.map((item) => {
           const isActive = location.pathname === item.path;
           return (
@@ -68,26 +77,29 @@ export default function AdminSidebar({ isOpen, setIsOpen }: AdminSidebarProps) {
               key={item.name}
               to={item.path}
               onClick={() => setIsOpen(false)}
-              className={`flex items-center space-x-3 px-4 py-3.5 rounded-2xl text-sm font-bold transition-all group ${
+              className={`flex items-center space-x-4 px-5 py-4 rounded-2xl text-xs font-black uppercase tracking-widest transition-all group relative overflow-hidden ${
                 isActive 
-                ? 'bg-brand-orange text-white shadow-lg shadow-brand-orange/20' 
-                : 'text-white/60 hover:bg-white/5 hover:text-white'
+                ? 'bg-brand-purple text-white shadow-2xl shadow-brand-purple/20' 
+                : 'text-gray-500 hover:bg-white/5 hover:text-white'
               }`}
             >
               <FontAwesomeIcon 
                 icon={item.icon} 
-                className={`w-5 h-5 transition-transform group-hover:scale-110 ${isActive ? 'text-white' : 'text-white/40 group-hover:text-white'}`} 
+                className={`w-5 h-5 transition-transform group-hover:scale-110 ${isActive ? 'text-white' : 'text-gray-600 group-hover:text-white'}`} 
               />
               <span>{item.name}</span>
+              {isActive && (
+                <div className="absolute right-0 top-0 bottom-0 w-1 bg-white" />
+              )}
             </Link>
           );
         })}
       </nav>
 
-      <div className="p-4 border-t border-white/5">
+      <div className="p-6 border-t border-white/5">
         <button 
           onClick={handleLogout}
-          className="w-full flex items-center space-x-3 px-4 py-3.5 rounded-2xl text-sm font-bold text-rose-400 hover:bg-rose-500/10 transition-all group"
+          className="w-full flex items-center space-x-4 px-5 py-5 rounded-2xl text-xs font-black uppercase tracking-widest text-rose-500 hover:bg-rose-500/10 transition-all group border border-rose-500/10"
         >
           <FontAwesomeIcon icon={faSignOutAlt} className="w-5 h-5 group-hover:-translate-x-1 transition-transform" />
           <span>Logout</span>

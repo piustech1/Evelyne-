@@ -37,9 +37,9 @@ const platforms = [
 
 export default function LandingPage() {
   return (
-    <div className="overflow-x-hidden bg-white">
+    <div className="overflow-x-hidden bg-brand-dark">
       {/* Hero Section */}
-      <section className="relative min-h-[85vh] flex items-center justify-center pt-20 pb-32 overflow-hidden">
+      <section className="relative min-h-screen flex items-center pt-20 pb-32 overflow-hidden">
         {/* Background Image with Overlay */}
         <div className="absolute inset-0 z-0">
           <img
@@ -48,66 +48,67 @@ export default function LandingPage() {
             className="w-full h-full object-cover"
             referrerPolicy="no-referrer"
           />
-          <div className="absolute inset-0 bg-gradient-to-b from-brand-dark/95 via-brand-dark/80 to-brand-dark/95" />
-          <div className="absolute inset-0 bg-gradient-to-tr from-brand-orange/20 to-transparent opacity-40" />
+          <div className="absolute inset-0 bg-gradient-to-r from-brand-dark via-brand-dark/90 to-transparent" />
+          <div className="absolute inset-0 bg-gradient-to-tr from-brand-blue/30 to-brand-purple/20 opacity-60" />
         </div>
 
-        <div className="relative z-10 max-w-6xl mx-auto px-6 text-center">
+        <div className="relative z-10 max-w-7xl mx-auto px-6 w-full">
           <motion.div
-            initial={{ opacity: 0, y: 30 }}
-            animate={{ opacity: 1, y: 0 }}
+            initial={{ opacity: 0, x: -30 }}
+            animate={{ opacity: 1, x: 0 }}
             transition={{ duration: 0.8 }}
-            className="space-y-8"
+            className="max-w-3xl space-y-8"
           >
-            <div className="inline-flex items-center space-x-2 px-4 py-2 bg-white/5 backdrop-blur-md border border-white/10 rounded-full text-brand-orange text-xs font-bold uppercase tracking-widest shadow-inner">
+            <div className="inline-flex items-center space-x-2 px-4 py-2 bg-white/5 backdrop-blur-md border border-white/10 rounded-full text-brand-accent text-xs font-bold uppercase tracking-widest shadow-inner">
               <FontAwesomeIcon icon={faBolt} className="animate-pulse" />
               <span>The #1 SMM Panel in Uganda</span>
             </div>
-            <h1 className="text-5xl md:text-8xl font-display font-bold text-white leading-[1.1] tracking-tight">
-              Grow Your <span className="text-brand-orange">Social</span> <br className="hidden md:block" /> Presence Fast
+            <h1 className="text-5xl md:text-8xl font-display font-black text-white leading-[1.1] tracking-tighter">
+              Grow Your <span className="text-gradient">Social</span> <br /> Presence Fast
             </h1>
-            <p className="text-lg md:text-2xl text-gray-300 max-w-2xl mx-auto font-medium leading-relaxed opacity-90">
-              Premium services for Instagram, TikTok, and YouTube. Get real engagement and dominate your niche today.
+            <p className="text-lg md:text-xl text-gray-400 max-w-xl font-medium leading-relaxed">
+              Premium services for Instagram, TikTok, and YouTube. Get real engagement and dominate your niche today with Uganda's most trusted panel.
             </p>
-            <div className="flex flex-col sm:flex-row items-center justify-center gap-4 pt-6">
+            <div className="flex flex-row items-center gap-3 pt-4">
               <Link
                 to="/signup"
-                className="w-full sm:w-auto px-10 py-5 gradient-brand text-white font-bold rounded-2xl shadow-2xl shadow-brand-orange/40 hover:scale-105 transition-transform text-lg"
+                className="flex-1 sm:flex-none px-6 sm:px-10 py-4 sm:py-5 gradient-brand text-white font-black rounded-2xl shadow-2xl shadow-brand-blue/40 hover:scale-105 transition-transform text-sm sm:text-lg uppercase tracking-widest text-center"
               >
-                Get Started Now
+                Get Started
               </Link>
-              <a
-                href="#services"
-                className="w-full sm:w-auto px-10 py-5 bg-white/10 backdrop-blur-md border border-white/20 text-white font-bold rounded-2xl hover:bg-white/20 transition-all text-lg"
+              <Link
+                to="/services"
+                className="flex-1 sm:flex-none px-6 sm:px-10 py-4 sm:py-5 bg-white/5 backdrop-blur-md border border-white/10 text-white font-black rounded-2xl hover:bg-white/10 transition-all text-sm sm:text-lg uppercase tracking-widest text-center"
               >
-                Explore Services
-              </a>
+                Services
+              </Link>
             </div>
           </motion.div>
         </div>
 
-        {/* Wave Divider */}
+        {/* Curved Separator */}
         <div className="absolute bottom-0 left-0 right-0 w-full overflow-hidden leading-[0] z-20">
-          <svg className="relative block w-full h-[60px] md:h-[120px]" viewBox="0 0 1200 120" preserveAspectRatio="none">
-            <path d="M321.39,56.44c58-10.79,114.16-30.13,172-41.86,82.39-16.72,168.19-17.73,250.45-.39C823.78,31,906.67,72,985.66,92.83c70.05,18.48,146.53,26.09,214.34,3V120H0V95.8C58.47,105.1,123.61,105.54,182.21,95.83,240.81,86.12,282.41,71.94,321.39,56.44Z" className="fill-white"></path>
+          <svg className="relative block w-full h-[60px] md:h-[100px]" viewBox="0 0 1200 120" preserveAspectRatio="none">
+            <path d="M0,0V46.29c47.79,22.2,103.59,32.17,158,28,70.36-5.37,136.33-33.31,206.8-37.5,73.84-4.36,147.54,16.88,218.2,35.26,69.27,18,138.3,24.88,209.4,13.08,36.15-6,69.85-17.84,104.45-29.34C989.49,25,1113-14.29,1200,52.47V0Z" className="fill-brand-dark opacity-50"></path>
+            <path d="M0,0V15.81C13,36.92,27.64,56.86,47.69,72.05,99.41,111.27,165,111,224.58,91.58c31.15-10.15,60.09-26.07,89.67-39.8,40.92-19,84.73-46,130.83-49.67,36.26-2.85,70.9,9.42,98.6,31.56,31.77,25.39,62.32,62,103.63,73,40.44,10.79,81.35-6.69,119.13-24.28s75.16-39,116.92-43.05c59.73-5.85,113.28,22.88,168.9,38.84,30.2,8.66,59,6.17,87.09-7.5,22.43-10.89,48-26.93,60.65-49.24V0Z" className="fill-brand-dark"></path>
           </svg>
         </div>
       </section>
 
       {/* Services Section */}
-      <section id="services" className="py-24 bg-white relative z-30">
+      <section id="services" className="py-24 relative z-30">
         <div className="max-w-7xl mx-auto px-6">
           <div className="text-center mb-16">
             <motion.div
               initial={{ opacity: 0, y: 20 }}
               whileInView={{ opacity: 1, y: 0 }}
               viewport={{ once: true }}
-              className="inline-block px-4 py-1 bg-brand-orange/10 text-brand-orange rounded-full text-xs font-bold uppercase tracking-widest mb-4"
+              className="inline-block px-4 py-1 bg-brand-blue/10 text-brand-accent rounded-full text-xs font-bold uppercase tracking-widest mb-4"
             >
               Our Platforms
             </motion.div>
-            <h2 className="text-4xl md:text-6xl font-bold text-brand-dark mb-6 tracking-tight">Supported Platforms</h2>
-            <p className="text-gray-500 max-w-2xl mx-auto text-lg leading-relaxed">
+            <h2 className="text-4xl md:text-6xl font-bold text-white mb-6 tracking-tighter">Supported Platforms</h2>
+            <p className="text-gray-400 max-w-2xl mx-auto text-lg leading-relaxed">
               We provide high-quality engagement for all major social media platforms with instant delivery and permanent results.
             </p>
           </div>
@@ -121,19 +122,19 @@ export default function LandingPage() {
                 viewport={{ once: true }}
                 transition={{ delay: idx * 0.1 }}
                 whileHover={{ y: -8 }}
-                className="bg-brand-light p-6 md:p-10 rounded-[2rem] md:rounded-[3rem] flex flex-col items-center text-center group hover:bg-white hover:shadow-2xl hover:shadow-brand-orange/10 transition-all border border-transparent hover:border-brand-orange/10 relative overflow-hidden"
+                className="bg-brand-card p-6 md:p-10 rounded-[2rem] flex flex-col items-center text-center group hover:bg-white/5 transition-all border border-white/5 hover:border-brand-purple/30 relative overflow-hidden"
               >
-                <div className={`w-14 h-14 md:w-20 md:h-20 ${platform.color} rounded-2xl md:rounded-[2rem] flex items-center justify-center mb-6 md:mb-8 text-white text-2xl md:text-3xl shadow-xl group-hover:scale-110 transition-transform duration-300`}>
+                <div className={`w-14 h-14 md:w-20 md:h-20 ${platform.color} rounded-2xl flex items-center justify-center mb-6 md:mb-8 text-white text-2xl md:text-3xl shadow-xl group-hover:scale-110 transition-transform duration-300`}>
                   <FontAwesomeIcon icon={platform.icon} />
                 </div>
-                <h3 className="text-lg md:text-2xl font-bold text-brand-dark mb-1 md:mb-2">{platform.name}</h3>
-                <div className="text-brand-orange font-bold text-xs md:text-base mb-3 md:mb-4">
+                <h3 className="text-lg md:text-2xl font-bold text-white mb-1 md:mb-2">{platform.name}</h3>
+                <div className="text-brand-accent font-bold text-xs md:text-base mb-3 md:mb-4">
                   Starting {platform.price}
                 </div>
-                <p className="text-gray-500 text-[10px] md:text-sm mb-6 md:mb-8 line-clamp-2 md:line-clamp-none">{platform.desc}</p>
+                <p className="text-gray-400 text-[10px] md:text-sm mb-6 md:mb-8 line-clamp-2 md:line-clamp-none">{platform.desc}</p>
                 <Link
                   to="/signup"
-                  className="w-full py-3 md:py-4 rounded-xl md:rounded-2xl bg-white text-brand-dark text-xs md:text-base font-bold border border-gray-100 group-hover:bg-brand-orange group-hover:text-white group-hover:border-brand-orange transition-all shadow-sm"
+                  className="w-full py-3 md:py-4 rounded-xl bg-white/5 text-white text-xs md:text-base font-bold border border-white/10 group-hover:gradient-brand group-hover:border-transparent transition-all shadow-sm"
                 >
                   Order Now
                 </Link>
@@ -145,26 +146,22 @@ export default function LandingPage() {
 
       {/* CTA Section */}
       <section className="py-24 relative overflow-hidden">
-        {/* Background Decoration */}
-        <div className="absolute top-0 left-0 w-full h-full bg-brand-light -z-10" />
-        <div className="absolute top-0 left-0 w-full h-px bg-gradient-to-r from-transparent via-gray-200 to-transparent" />
-
         <div className="max-w-7xl mx-auto px-6">
-          <div className="gradient-brand rounded-[3rem] md:rounded-[4rem] p-12 md:p-24 text-center text-white relative overflow-hidden shadow-2xl shadow-brand-orange/30">
+          <div className="gradient-brand rounded-[3rem] p-12 md:p-24 text-center text-white relative overflow-hidden shadow-2xl shadow-brand-blue/30">
             {/* Decorative circles */}
             <div className="absolute top-0 left-0 w-64 h-64 bg-white/10 rounded-full -translate-x-1/2 -translate-y-1/2 blur-3xl" />
             <div className="absolute bottom-0 right-0 w-96 h-96 bg-black/5 rounded-full translate-x-1/3 translate-y-1/3 blur-3xl" />
             
             <div className="relative z-10 space-y-8 md:space-y-10">
-              <h2 className="text-4xl md:text-7xl font-bold leading-tight tracking-tight">Ready to Boost <br className="hidden md:block" /> Your Growth?</h2>
+              <h2 className="text-4xl md:text-7xl font-bold leading-tight tracking-tighter">Ready to Boost <br /> Your Growth?</h2>
               <p className="text-white/80 text-lg md:text-xl max-w-xl mx-auto font-medium">
                 Join 50,000+ users who are already using EasyBoost to grow their social media presence and dominate their niche.
               </p>
               <Link
                 to="/signup"
-                className="inline-block px-12 py-5 md:px-16 md:py-6 bg-white text-brand-orange font-bold rounded-2xl md:rounded-full shadow-xl hover:scale-105 transition-transform text-xl md:text-2xl"
+                className="inline-block px-12 py-5 md:px-16 md:py-6 bg-white text-brand-blue font-black rounded-2xl shadow-xl hover:scale-105 transition-transform text-xl md:text-2xl uppercase tracking-widest"
               >
-                Start Boosting Today
+                Start Boosting
               </Link>
               <div className="flex flex-wrap items-center justify-center gap-6 md:gap-12 text-[10px] md:text-sm font-bold text-white/60 uppercase tracking-widest pt-4">
                 <div className="flex items-center space-x-2">
