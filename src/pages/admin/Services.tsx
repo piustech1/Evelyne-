@@ -34,93 +34,6 @@ export default function AdminServices() {
     });
   }, []);
 
-  const handleSyncServices = async () => {
-    setIsSyncing(true);
-    try {
-      // 1. Get Profit Percentage
-      const settingsRef = ref(db, 'settings');
-      const settingsSnap = await get(settingsRef);
-      const settings = settingsSnap.val() || { profitPercentage: 20 };
-      const profit = settings.profitPercentage || 20;
-
-      // 2. Fetch from API via Proxy
-      const response = await fetch('/api/smm/services', { method: 'POST' });
-      const text = await response.text();
-      console.log("RAW RESPONSE:", text);
-
-      if (!text.startsWith("[") && !text.startsWith("{")) {
-        throw new Error("Invalid API response");
-      }
-
-      const apiServices = JSON.parse(text);
-      console.log("SERVICES:", apiServices);
-
-      if (!Array.isArray(apiServices)) {
-        throw new Error('Invalid API response format');
-      }
-
-      // 3. Extract Unique Categories and Auto-Create them
-      const apiCategories = [...new Set(apiServices.map((s: any) => s.category))];
-      const categoriesRef = ref(db, 'categories');
-      const categoriesSnap = await get(categoriesRef);
-      const existingCategories = categoriesSnap.val() || {};
-      
-      const categoryMap: Record<string, string> = {}; // Name -> ID
-      const categoryUpdates: any = {};
-
-      apiCategories.forEach((catName: string) => {
-        // Create a URL-friendly ID/slug from the category name
-        const catId = catName.toLowerCase().replace(/[^a-z0-9]/g, '-').replace(/-+/g, '-');
-        categoryMap[catName] = catId;
-
-        if (!existingCategories[catId]) {
-          categoryUpdates[catId] = {
-            name: catName,
-            status: 'Active',
-            sort: 0,
-            createdAt: new Date().toISOString()
-          };
-        }
-      });
-
-      // Save new categories if any
-      if (Object.keys(categoryUpdates).length > 0) {
-        await update(categoriesRef, categoryUpdates);
-      }
-
-      // 4. Process and Save Services
-      const servicesRef = ref(db, 'services');
-      const servicesUpdates: any = {};
-
-      apiServices.forEach((apiService: any) => {
-        const rate = parseFloat(apiService.rate);
-        const finalPrice = rate + (rate * profit / 100);
-        const catId = categoryMap[apiService.category];
-
-        servicesUpdates[apiService.service] = {
-          apiServiceId: apiService.service,
-          name: apiService.name,
-          category: apiService.category,
-          categoryId: catId,
-          rate: rate,
-          price: finalPrice,
-          min: parseInt(apiService.min),
-          max: parseInt(apiService.max),
-          status: 'Active',
-          updatedAt: new Date().toISOString()
-        };
-      });
-
-      await set(servicesRef, servicesUpdates);
-      alert(`Successfully synced ${apiServices.length} services and organized them into ${apiCategories.length} categories!`);
-    } catch (err: any) {
-      console.error('SYNC ERROR:', err);
-      alert('Failed to fetch services: ' + err.message);
-    } finally {
-      setIsSyncing(false);
-    }
-  };
-
   const toggleStatus = async (service: any) => {
     const newStatus = service.status === 'Active' ? 'Disabled' : 'Active';
     try {
@@ -142,14 +55,6 @@ export default function AdminServices() {
           <h1 className="text-4xl md:text-5xl font-display font-black text-white tracking-tighter mb-2">Services</h1>
           <p className="text-gray-500 font-black text-[10px] uppercase tracking-[0.2em]">Manage your SMM services and pricing</p>
         </div>
-        <button 
-          onClick={handleSyncServices}
-          disabled={isSyncing}
-          className="px-8 py-4 gradient-brand text-white font-black uppercase tracking-widest text-[10px] rounded-2xl shadow-2xl shadow-brand-blue/20 hover:scale-105 transition-all active:scale-95 flex items-center justify-center space-x-3 disabled:opacity-50"
-        >
-          <FontAwesomeIcon icon={faCloudDownloadAlt} className={isSyncing ? 'animate-bounce' : ''} />
-          <span>{isSyncing ? 'Syncing...' : 'Sync Services from API'}</span>
-        </button>
       </div>
 
       <div className="bg-brand-card p-8 md:p-12 rounded-[3.5rem] shadow-2xl border border-white/5">

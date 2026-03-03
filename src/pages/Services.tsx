@@ -2,10 +2,10 @@ import { useState, useEffect } from 'react';
 import { motion } from 'motion/react';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { faTiktok, faInstagram, faYoutube, faFacebook } from '@fortawesome/free-brands-svg-icons';
-import { faRocket, faChevronRight, faShieldAlt, faBolt, faCheckCircle, faSearch, faList } from '@fortawesome/free-solid-svg-icons';
+import { faRocket, faChevronRight, faShieldAlt, faBolt, faCheckCircle, faSearch, faList, faExclamationTriangle } from '@fortawesome/free-solid-svg-icons';
 import { Link } from 'react-router-dom';
 import { db } from '../lib/firebase';
-import { ref, onValue } from 'firebase/database';
+import { ref, onValue, get, set, update } from 'firebase/database';
 
 const platformIcons: Record<string, any> = {
   tiktok: faTiktok,
@@ -26,37 +26,98 @@ export default function Services() {
   const [services, setServices] = useState<any[]>([]);
   const [searchTerm, setSearchTerm] = useState('');
   const [isLoading, setIsLoading] = useState(true);
+  const [error, setError] = useState('');
 
   useEffect(() => {
     const categoriesRef = ref(db, 'categories');
     const servicesRef = ref(db, 'services');
 
+    // 1. Listen for Categories
     onValue(categoriesRef, (snapshot) => {
       const data = snapshot.val();
       if (data) {
-        const categoriesArray = Object.entries(data).map(([id, value]: [string, any]) => ({
-          id,
-          ...value,
-        }));
-        setCategories(categoriesArray);
+        setCategories(Object.entries(data).map(([id, value]: [string, any]) => ({ id, ...value })));
       } else {
         setCategories([]);
       }
     });
 
+    // 2. Listen for Services
     onValue(servicesRef, (snapshot) => {
       const data = snapshot.val();
       if (data) {
-        const servicesArray = Object.entries(data).map(([id, value]: [string, any]) => ({
-          id,
-          ...value,
-        }));
-        setServices(servicesArray);
+        setServices(Object.entries(data).map(([id, value]: [string, any]) => ({ id, ...value })));
       } else {
         setServices([]);
       }
       setIsLoading(false);
     });
+
+    // 3. Auto-Fetch from API
+    const autoSync = async () => {
+      try {
+        // Get Settings
+        const settingsSnap = await get(ref(db, 'settings'));
+        const profit = settingsSnap.val()?.profitPercentage || 20;
+
+        // Get Categories for mapping
+        const catsSnap = await get(ref(db, 'categories'));
+        const catsData = catsSnap.val() || {};
+        const catsList = Object.entries(catsData).map(([id, val]: [string, any]) => ({ id, ...val }));
+
+        // Fetch from API
+        const response = await fetch('/api/smm/services', { method: 'POST' });
+        const text = await response.text();
+        
+        if (!text || (!text.startsWith("[") && !text.startsWith("{"))) {
+          throw new Error("Failed to load services");
+        }
+
+        const apiServices = JSON.parse(text);
+        if (!Array.isArray(apiServices)) throw new Error("Invalid format");
+
+        const servicesUpdates: any = {};
+        apiServices.forEach((s: any) => {
+          const rate = parseFloat(s.rate);
+          const finalPrice = rate + (rate * profit / 100);
+          
+          // Automatic Category Mapping
+          let matchedCatId = '';
+          let matchedCatName = 'Other';
+          
+          for (const cat of catsList) {
+            const keywords = (cat.keywords || '').split(',').map((k: string) => k.trim().toLowerCase());
+            const sName = s.name.toLowerCase();
+            const sCat = s.category.toLowerCase();
+            if (keywords.some(k => k && (sName.includes(k) || sCat.includes(k)))) {
+              matchedCatId = cat.id;
+              matchedCatName = cat.name;
+              break;
+            }
+          }
+
+          servicesUpdates[s.service] = {
+            apiServiceId: s.service,
+            name: s.name,
+            category: matchedCatName,
+            categoryId: matchedCatId,
+            rate: rate,
+            price: finalPrice,
+            min: parseInt(s.min),
+            max: parseInt(s.max),
+            status: 'Active',
+            updatedAt: new Date().toISOString()
+          };
+        });
+
+        await set(ref(db, 'services'), servicesUpdates);
+      } catch (err: any) {
+        console.error("Auto-sync failed:", err);
+        setError("Failed to fetch latest services. Try again later.");
+      }
+    };
+
+    autoSync();
   }, []);
 
   const filteredServices = services.filter(s => 
@@ -81,6 +142,12 @@ export default function Services() {
           <p className="text-white/70 max-w-md mx-auto font-medium text-sm md:text-base leading-relaxed">
             Explore our premium boosting services and start growing your social presence today.
           </p>
+          {error && (
+            <div className="mt-6 inline-flex items-center px-4 py-2 bg-rose-500/10 border border-rose-500/20 rounded-xl text-rose-500 text-xs font-bold">
+              <FontAwesomeIcon icon={faExclamationTriangle} className="mr-2" />
+              {error}
+            </div>
+          )}
         </motion.div>
       </div>
 
@@ -176,7 +243,7 @@ export default function Services() {
                             : 'bg-white/5 text-gray-600 cursor-not-allowed'
                           }`}
                         >
-                          Order
+                          Boost
                         </Link>
                       </td>
                     </motion.tr>
