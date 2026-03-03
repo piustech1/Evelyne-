@@ -17,7 +17,9 @@ import { ref, onValue, update } from 'firebase/database';
 const statusStyles: any = {
   'Completed': 'bg-emerald-500/10 text-emerald-500 border-emerald-500/20',
   'Processing': 'bg-brand-blue/10 text-brand-blue border-brand-blue/20',
+  'In progress': 'bg-brand-blue/10 text-brand-blue border-brand-blue/20',
   'Pending': 'bg-amber-500/10 text-amber-500 border-amber-500/20',
+  'Canceled': 'bg-rose-500/10 text-rose-500 border-rose-500/20',
   'Cancelled': 'bg-rose-500/10 text-rose-500 border-rose-500/20',
   'Partial': 'bg-brand-purple/10 text-brand-purple border-brand-purple/20',
 };
@@ -68,6 +70,35 @@ export default function AdminOrders() {
       await update(ref(db, `orders/${orderId}`), { status: newStatus });
     } catch (err) {
       console.error('Failed to update status', err);
+    }
+  };
+
+  const handleCheckStatus = async (order: any) => {
+    if (!order.apiOrderId) {
+      alert('This order was not placed via API.');
+      return;
+    }
+
+    try {
+      const response = await fetch('/api/smm/status', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ orderId: order.apiOrderId })
+      });
+      const data = await response.json();
+
+      if (data.status) {
+        await update(ref(db, `orders/${order.id}`), { 
+          status: data.status,
+          remains: data.remains,
+          start_count: data.start_count
+        });
+      } else if (data.error) {
+        alert('API Error: ' + data.error);
+      }
+    } catch (err: any) {
+      console.error('Status Check Error:', err);
+      alert('Failed to check status: ' + err.message);
     }
   };
 
@@ -159,6 +190,15 @@ export default function AdminOrders() {
                   </td>
                   <td className="py-6 px-4 text-right">
                     <div className="flex items-center justify-end space-x-2">
+                      {order.apiOrderId && (
+                        <button 
+                          onClick={() => handleCheckStatus(order)}
+                          className="w-10 h-10 rounded-xl bg-brand-purple/10 text-brand-purple hover:bg-brand-purple hover:text-white transition-all flex items-center justify-center border border-brand-purple/20"
+                          title="Check API Status"
+                        >
+                          <FontAwesomeIcon icon={faSyncAlt} className="text-xs" />
+                        </button>
+                      )}
                       <button 
                         onClick={() => handleUpdateStatus(order.id, 'Completed')}
                         className="w-10 h-10 rounded-xl bg-emerald-500/10 text-emerald-500 hover:bg-emerald-500 hover:text-white transition-all flex items-center justify-center border border-emerald-500/20"

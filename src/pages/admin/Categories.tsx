@@ -13,7 +13,8 @@ export default function AdminCategories() {
   const [formData, setFormData] = useState({
     name: '',
     status: 'Active',
-    sort: 0
+    sort: 0,
+    keywords: ''
   });
 
   useEffect(() => {
@@ -114,7 +115,7 @@ export default function AdminCategories() {
                       <button 
                         onClick={() => {
                           setEditingCategory(cat);
-                          setFormData({ name: cat.name, status: cat.status, sort: cat.sort });
+                          setFormData({ name: cat.name, status: cat.status, sort: cat.sort, keywords: cat.keywords || '' });
                           setIsModalOpen(true);
                         }}
                         className="w-10 h-10 rounded-xl bg-white/5 text-gray-500 hover:text-brand-blue hover:bg-brand-blue/10 transition-all flex items-center justify-center border border-white/5"
@@ -167,6 +168,18 @@ export default function AdminCategories() {
                   className="w-full p-5 bg-white/5 border border-white/10 rounded-2xl text-white focus:outline-none focus:ring-4 focus:ring-brand-purple/10 focus:border-brand-purple transition-all font-bold"
                   placeholder="e.g. Instagram"
                 />
+              </div>
+
+              <div className="space-y-3">
+                <label className="text-[10px] font-black text-gray-500 uppercase tracking-widest ml-1">Keywords (Comma separated)</label>
+                <input
+                  type="text"
+                  value={formData.keywords}
+                  onChange={(e) => setFormData({ ...formData, keywords: e.target.value })}
+                  className="w-full p-5 bg-white/5 border border-white/10 rounded-2xl text-white focus:outline-none focus:ring-4 focus:ring-brand-purple/10 focus:border-brand-purple transition-all font-bold"
+                  placeholder="e.g. Instagram, IG, Insta"
+                />
+                <p className="text-[9px] text-gray-600 font-black uppercase tracking-widest ml-1">Used to auto-match services from API</p>
               </div>
 
               <div className="grid grid-cols-2 gap-8">

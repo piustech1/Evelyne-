@@ -7,10 +7,14 @@ import { useAuth } from '../hooks/useAuth';
 import { db } from '../lib/firebase';
 import { ref, onValue, query, orderByChild, equalTo } from 'firebase/database';
 
-const statusStyles = {
+const statusStyles: Record<string, any> = {
   'Completed': { bg: 'bg-emerald-500/10', text: 'text-emerald-500', icon: faCheckCircle },
   'Processing': { bg: 'bg-brand-blue/10', text: 'text-brand-blue', icon: faSpinner },
+  'In progress': { bg: 'bg-brand-blue/10', text: 'text-brand-blue', icon: faSpinner },
   'Pending': { bg: 'bg-amber-500/10', text: 'text-amber-500', icon: faClock },
+  'Canceled': { bg: 'bg-rose-500/10', text: 'text-rose-500', icon: faTimesCircle },
+  'Cancelled': { bg: 'bg-rose-500/10', text: 'text-rose-500', icon: faTimesCircle },
+  'Partial': { bg: 'bg-brand-purple/10', text: 'text-brand-purple', icon: faSpinner },
   'Failed': { bg: 'bg-rose-500/10', text: 'text-rose-500', icon: faTimesCircle },
 };
 

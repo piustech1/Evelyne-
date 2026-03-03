@@ -89,7 +89,28 @@ export default function PlatformPage() {
     setOrderError('');
 
     try {
-      // Use transaction to safely deduct balance
+      // 1. Call SMM API Proxy
+      const apiResponse = await fetch('/api/smm/order', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          service: selectedService.apiServiceId,
+          link,
+          quantity
+        })
+      });
+
+      const apiData = await apiResponse.json();
+
+      if (apiData.error) {
+        throw new Error(apiData.error);
+      }
+
+      if (!apiData.order) {
+        throw new Error('Failed to place order with provider');
+      }
+
+      // 2. Use transaction to safely deduct balance
       const userRef = ref(db, `users/${user.uid}`);
       await runTransaction(userRef, (currentData) => {
         if (currentData) {
@@ -101,7 +122,11 @@ export default function PlatformPage() {
         return currentData;
       });
 
-      // Create order
+      // 3. Calculate Profit
+      const originalCost = (selectedService.originalRate * quantity) / 1000;
+      const profit = totalPrice - originalCost;
+
+      // 4. Create order in Firebase
       const ordersRef = ref(db, 'orders');
       const newOrderRef = push(ordersRef);
       await set(newOrderRef, {
@@ -109,11 +134,15 @@ export default function PlatformPage() {
         userName: userData.name,
         userEmail: user.email,
         serviceId: selectedService.id,
+        apiServiceId: selectedService.apiServiceId,
+        apiOrderId: apiData.order,
         service: selectedService.name,
         platform: category?.name || platform,
         link,
         quantity,
         price: totalPrice,
+        originalCost,
+        profit,
         status: 'Pending',
         createdAt: new Date().toISOString(),
       });

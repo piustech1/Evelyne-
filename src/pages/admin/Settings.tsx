@@ -16,6 +16,7 @@ export default function AdminSettings() {
     emailVerification: true,
     minDeposit: 5000,
     maxDeposit: 1000000,
+    profitPercentage: 20,
     apiEnabled: true
   });
   const [isSaving, setIsSaving] = useState(false);
@@ -168,6 +169,21 @@ export default function AdminSettings() {
                       onChange={(e) => handleChange('maxDeposit', Number(e.target.value))}
                       className="w-full p-5 bg-white/5 border border-white/10 rounded-2xl text-white focus:outline-none focus:ring-4 focus:ring-brand-purple/10 focus:border-brand-purple transition-all font-bold"
                     />
+                  </div>
+                  <div className="space-y-3">
+                    <label className="text-[10px] font-black text-gray-500 uppercase tracking-widest ml-1">Profit Percentage (%)</label>
+                    <div className="relative">
+                      <input
+                        type="number"
+                        value={settings.profitPercentage}
+                        onChange={(e) => handleChange('profitPercentage', Number(e.target.value))}
+                        className="w-full p-5 bg-white/5 border border-white/10 rounded-2xl text-white focus:outline-none focus:ring-4 focus:ring-brand-purple/10 focus:border-brand-purple transition-all font-bold"
+                      />
+                      <div className="absolute inset-y-0 right-0 pr-5 flex items-center pointer-events-none text-gray-500 font-black">
+                        %
+                      </div>
+                    </div>
+                    <p className="text-[9px] text-gray-600 font-black uppercase tracking-widest ml-1">Added to original service rate</p>
                   </div>
                 </div>
               </div>
