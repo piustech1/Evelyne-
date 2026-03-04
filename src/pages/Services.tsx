@@ -27,6 +27,7 @@ export default function Services() {
   const [searchTerm, setSearchTerm] = useState('');
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState('');
+  const [syncFailed, setSyncFailed] = useState(false);
 
   useEffect(() => {
     const categoriesRef = ref(db, 'categories');
@@ -84,8 +85,9 @@ export default function Services() {
 
         const servicesUpdates: any = {};
         apiServices.forEach((s: any) => {
-          const rate = parseFloat(s.rate);
-          const finalPrice = rate + (rate * profit / 100);
+          const usdRate = parseFloat(s.rate);
+          const ugxRate = usdRate * 3800;
+          const finalPrice = ugxRate + (ugxRate * profit / 100);
           
           // Automatic Category Mapping
           let matchedCatId = '';
@@ -109,8 +111,8 @@ export default function Services() {
             type: s.type,
             category: matchedCatName,
             categoryId: matchedCatId,
-            rate: rate,
-            price: finalPrice,
+            rate: usdRate,
+            price: Math.round(finalPrice),
             min: parseInt(s.min),
             max: parseInt(s.max),
             refill: s.refill,
@@ -121,9 +123,11 @@ export default function Services() {
         });
 
         await set(ref(db, 'services'), servicesUpdates);
+        setSyncFailed(false);
       } catch (err: any) {
         console.error("Auto-sync failed:", err);
-        setError(err.message || "Failed to fetch latest services. Try again later.");
+        setSyncFailed(true);
+        // Do not block the UI with an error, just log it.
       }
     };
 
@@ -134,6 +138,14 @@ export default function Services() {
     s.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
     s.category?.toLowerCase().includes(searchTerm.toLowerCase())
   );
+
+  // Group services by category
+  const groupedServices = filteredServices.reduce((acc: Record<string, any[]>, service) => {
+    const category = service.category || 'Other';
+    if (!acc[category]) acc[category] = [];
+    acc[category].push(service);
+    return acc;
+  }, {});
 
   return (
     <div className="min-h-screen bg-brand-dark pb-32">
@@ -200,8 +212,8 @@ export default function Services() {
         <div className="space-y-12">
           <div className="flex flex-col md:flex-row md:items-center justify-between gap-8">
             <div>
-              <h2 className="text-3xl md:text-4xl font-display font-black text-white tracking-tighter">Full Services List</h2>
-              <p className="text-gray-500 font-black text-[10px] uppercase tracking-[0.2em] mt-2">Browse all available services across all platforms</p>
+              <h2 className="text-3xl md:text-4xl font-display font-black text-white tracking-tighter">Services by Platform</h2>
+              <p className="text-gray-500 font-black text-[10px] uppercase tracking-[0.2em] mt-2">Grouped by social media platform</p>
             </div>
             <div className="relative group w-full md:max-w-md">
               <div className="absolute inset-y-0 left-0 pl-6 flex items-center pointer-events-none text-gray-600 group-focus-within:text-brand-purple transition-colors">
@@ -217,59 +229,73 @@ export default function Services() {
             </div>
           </div>
 
-          <div className="bg-brand-card rounded-[3.5rem] shadow-2xl border border-white/5 overflow-hidden">
-            <div className="overflow-x-auto">
-              <table className="w-full text-left border-collapse">
-                <thead>
-                  <tr className="bg-white/5 border-b border-white/5">
-                    <th className="px-10 py-8 text-[10px] font-black text-gray-500 uppercase tracking-widest">ID</th>
-                    <th className="px-10 py-8 text-[10px] font-black text-gray-500 uppercase tracking-widest">Service</th>
-                    <th className="px-10 py-8 text-[10px] font-black text-gray-500 uppercase tracking-widest">Category</th>
-                    <th className="px-10 py-8 text-[10px] font-black text-gray-500 uppercase tracking-widest">Price / 1k</th>
-                    <th className="px-10 py-8 text-[10px] font-black text-gray-500 uppercase tracking-widest">Min/Max</th>
-                    <th className="px-10 py-8 text-[10px] font-black text-gray-500 uppercase tracking-widest text-right">Action</th>
-                  </tr>
-                </thead>
-                <tbody className="divide-y divide-white/5">
-                  {filteredServices.map((service, idx) => (
-                    <motion.tr
-                      key={service.apiServiceId}
-                      initial={{ opacity: 0, x: -10 }}
-                      animate={{ opacity: 1, x: 0 }}
-                      transition={{ delay: idx * 0.01 }}
-                      className="hover:bg-white/5 transition-colors group"
-                    >
-                      <td className="px-10 py-8 text-xs font-black text-white group-hover:text-brand-purple transition-colors">#{service.apiServiceId}</td>
-                      <td className="px-10 py-8 text-xs font-bold text-gray-400">{service.name}</td>
-                      <td className="px-10 py-8 text-xs font-bold text-gray-600">{service.category}</td>
-                      <td className="px-10 py-8 text-xs font-black text-brand-purple">UGX {service.price?.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</td>
-                      <td className="px-10 py-8 text-[10px] font-black text-gray-500 uppercase tracking-widest">{service.min?.toLocaleString()} / {service.max?.toLocaleString()}</td>
-                      <td className="px-10 py-8 text-right">
-                        <Link
-                          to={service.categoryId ? `/services/${service.categoryId}` : '#'}
-                          className={`px-6 py-3 rounded-xl text-[9px] font-black uppercase tracking-widest transition-all ${
-                            service.categoryId 
-                            ? 'gradient-brand text-white shadow-lg shadow-brand-blue/20 hover:scale-105' 
-                            : 'bg-white/5 text-gray-600 cursor-not-allowed'
-                          }`}
+          {Object.entries(groupedServices).map(([categoryName, categoryServices]: [string, any[]]) => (
+            <div key={categoryName} className="space-y-6">
+              <div className="flex items-center space-x-4 px-4">
+                <div className="h-px flex-grow bg-white/5"></div>
+                <h3 className="text-xl font-display font-black text-white tracking-tighter whitespace-nowrap">
+                  {categoryName} Services
+                </h3>
+                <div className="h-px flex-grow bg-white/5"></div>
+              </div>
+
+              <div className="bg-brand-card rounded-[3.5rem] shadow-2xl border border-white/5 overflow-hidden">
+                <div className="overflow-x-auto">
+                  <table className="w-full text-left border-collapse">
+                    <thead>
+                      <tr className="bg-white/5 border-b border-white/5">
+                        <th className="px-10 py-8 text-[10px] font-black text-gray-500 uppercase tracking-widest">ID</th>
+                        <th className="px-10 py-8 text-[10px] font-black text-gray-500 uppercase tracking-widest">Service</th>
+                        <th className="px-10 py-8 text-[10px] font-black text-gray-500 uppercase tracking-widest">Price / 1k</th>
+                        <th className="px-10 py-8 text-[10px] font-black text-gray-500 uppercase tracking-widest">Min/Max</th>
+                        <th className="px-10 py-8 text-[10px] font-black text-gray-500 uppercase tracking-widest text-right">Action</th>
+                      </tr>
+                    </thead>
+                    <tbody className="divide-y divide-white/5">
+                      {categoryServices.map((service, idx) => (
+                        <motion.tr
+                          key={service.apiServiceId}
+                          initial={{ opacity: 0, x: -10 }}
+                          animate={{ opacity: 1, x: 0 }}
+                          transition={{ delay: idx * 0.01 }}
+                          className="hover:bg-white/5 transition-colors group"
                         >
-                          Boost
-                        </Link>
-                      </td>
-                    </motion.tr>
-                  ))}
-                </tbody>
-              </table>
-              {filteredServices.length === 0 && !isLoading && (
-                <div className="py-32 text-center space-y-4">
-                  <div className="w-20 h-20 bg-white/5 rounded-full flex items-center justify-center text-gray-700 text-3xl mx-auto">
-                    <FontAwesomeIcon icon={faList} />
-                  </div>
-                  <div className="text-gray-600 font-black uppercase tracking-widest text-xs">No services found</div>
+                          <td className="px-10 py-8 text-xs font-black text-white group-hover:text-brand-purple transition-colors">#{service.apiServiceId}</td>
+                          <td className="px-10 py-8 text-xs font-bold text-gray-400">{service.name}</td>
+                          <td className="px-10 py-8 text-xs font-black text-brand-purple">UGX {Math.round(service.price || 0).toLocaleString()}</td>
+                          <td className="px-10 py-8 text-[10px] font-black text-gray-500 uppercase tracking-widest">{service.min?.toLocaleString()} / {service.max?.toLocaleString()}</td>
+                          <td className="px-10 py-8 text-right">
+                            <Link
+                              to={service.categoryId ? `/services/${service.categoryId}` : '#'}
+                              state={{ preSelectedService: service }}
+                              className={`px-6 py-3 rounded-xl text-[9px] font-black uppercase tracking-widest transition-all ${
+                                service.categoryId 
+                                ? 'gradient-brand text-white shadow-lg shadow-brand-blue/20 hover:scale-105' 
+                                : 'bg-white/5 text-gray-600 cursor-not-allowed'
+                              }`}
+                            >
+                              Boost
+                            </Link>
+                          </td>
+                        </motion.tr>
+                      ))}
+                    </tbody>
+                  </table>
                 </div>
-              )}
+              </div>
             </div>
-          </div>
+          ))}
+
+          {filteredServices.length === 0 && !isLoading && (
+            <div className="py-32 text-center space-y-4">
+              <div className="w-20 h-20 bg-white/5 rounded-full flex items-center justify-center text-gray-700 text-3xl mx-auto">
+                <FontAwesomeIcon icon={syncFailed ? faExclamationTriangle : faList} className={syncFailed ? 'text-rose-500/50' : ''} />
+              </div>
+              <div className="text-gray-600 font-black uppercase tracking-widest text-xs">
+                {syncFailed ? 'Services unavailable' : 'No services found'}
+              </div>
+            </div>
+          )}
         </div>
       </div>
 

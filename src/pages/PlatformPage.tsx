@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { useParams, useNavigate } from 'react-router-dom';
+import { useParams, useNavigate, useLocation } from 'react-router-dom';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { faInstagram, faTiktok, faYoutube, faFacebook } from '@fortawesome/free-brands-svg-icons';
 import { faArrowLeft, faShoppingCart, faCheckCircle, faInfoCircle, faRocket } from '@fortawesome/free-solid-svg-icons';
@@ -25,6 +25,7 @@ const platformColors: Record<string, string> = {
 export default function PlatformPage() {
   const { platform } = useParams<{ platform: string }>();
   const navigate = useNavigate();
+  const location = useLocation();
   const { user, userData } = useAuth();
   
   const [category, setCategory] = useState<any>(null);
@@ -55,13 +56,21 @@ export default function PlatformPage() {
             .map(([id, value]: [string, any]) => ({ id, ...value }))
             .filter((s: any) => s.categoryId === platform);
           setServices(servicesArray);
+
+          // Handle pre-selected service from navigation state
+          if (location.state?.preSelectedService) {
+            const preSelected = servicesArray.find(s => s.apiServiceId === location.state.preSelectedService.apiServiceId);
+            if (preSelected) {
+              setSelectedService(preSelected);
+            }
+          }
         }
         setIsLoading(false);
       });
     }
   }, [platform]);
 
-  const totalPrice = selectedService ? (selectedService.price * quantity) / 1000 : 0;
+  const totalPrice = selectedService ? Math.round((selectedService.price * quantity) / 1000) : 0;
 
   const handlePlaceOrder = async () => {
     if (!user || !userData) {

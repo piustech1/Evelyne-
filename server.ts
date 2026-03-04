@@ -24,11 +24,11 @@ async function startServer() {
 
       const response = await fetch(SMM_API_URL, {
         method: 'POST',
-        headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
-        body: new URLSearchParams({
-          key: API_KEY,
-          action: 'services'
-        })
+        headers: { 
+          'Content-Type': 'application/x-www-form-urlencoded',
+          'User-Agent': 'Mozilla/5.0'
+        },
+        body: `key=${API_KEY}&action=services`
       });
 
       console.log("API STATUS:", response.status);
@@ -56,14 +56,11 @@ async function startServer() {
 
       const response = await fetch(SMM_API_URL, {
         method: 'POST',
-        headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
-        body: new URLSearchParams({
-          key: API_KEY,
-          action: 'add',
-          service: service.toString(),
-          link,
-          quantity: quantity.toString()
-        })
+        headers: { 
+          'Content-Type': 'application/x-www-form-urlencoded',
+          'User-Agent': 'Mozilla/5.0'
+        },
+        body: `key=${API_KEY}&action=add&service=${encodeURIComponent(service)}&link=${encodeURIComponent(link)}&quantity=${encodeURIComponent(quantity)}`
       });
 
       const data = await response.json();
@@ -81,12 +78,11 @@ async function startServer() {
 
       const response = await fetch(SMM_API_URL, {
         method: 'POST',
-        headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
-        body: new URLSearchParams({
-          key: API_KEY,
-          action: 'status',
-          order: orderId.toString()
-        })
+        headers: { 
+          'Content-Type': 'application/x-www-form-urlencoded',
+          'User-Agent': 'Mozilla/5.0'
+        },
+        body: `key=${API_KEY}&action=status&order=${encodeURIComponent(orderId)}`
       });
 
       const data = await response.json();
