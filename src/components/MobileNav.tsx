@@ -1,6 +1,6 @@
 import { Link, useLocation } from 'react-router-dom';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
-import { faHome, faRocket, faHistory, faUser, faThLarge } from '@fortawesome/free-solid-svg-icons';
+import { faHome, faRocket, faHistory, faUser, faWallet } from '@fortawesome/free-solid-svg-icons';
 import { motion } from 'motion/react';
 
 export default function MobileNav() {
@@ -8,9 +8,8 @@ export default function MobileNav() {
 
   const navItems = [
     { name: 'Home', path: '/dashboard', icon: faHome },
-    { name: 'Services', path: '/services', icon: faThLarge },
-    { name: 'Boost', path: '/services', icon: faRocket, isSpecial: true },
-    { name: 'Orders', path: '/orders', icon: faHistory },
+    { name: 'Boost', path: '/boost', icon: faRocket, isSpecial: true },
+    { name: 'Wallet', path: '/wallet', icon: faWallet },
     { name: 'Profile', path: '/profile', icon: faUser },
   ];
 

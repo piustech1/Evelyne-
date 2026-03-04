@@ -1,38 +1,18 @@
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { faBolt, faShieldAlt, faTag, faChartLine, faCheckCircle } from '@fortawesome/free-solid-svg-icons';
-import { faInstagram, faTiktok, faYoutube, faFacebook, faTelegram } from '@fortawesome/free-brands-svg-icons';
+import { faInstagram, faTiktok, faYoutube, faFacebook, faTelegram, faTwitter, faWhatsapp, faSpotify } from '@fortawesome/free-brands-svg-icons';
 import { motion } from 'motion/react';
 import { Link } from 'react-router-dom';
 
-const platforms = [
-  {
-    icon: faInstagram,
-    name: 'Instagram',
-    price: 'UGX 2,500',
-    desc: 'Followers, Likes, Views & more.',
-    color: 'bg-gradient-to-tr from-[#f9ce34] via-[#ee2a7b] to-[#6228d7]',
-  },
-  {
-    icon: faTiktok,
-    name: 'TikTok',
-    price: 'UGX 1,500',
-    desc: 'Boost your TikTok presence instantly.',
-    color: 'bg-black',
-  },
-  {
-    icon: faYoutube,
-    name: 'YouTube',
-    price: 'UGX 8,000',
-    desc: 'High retention views and subs.',
-    color: 'bg-[#FF0000]',
-  },
-  {
-    icon: faFacebook,
-    name: 'Facebook',
-    price: 'UGX 5,000',
-    desc: 'Page and post engagement tools.',
-    color: 'bg-[#1877F2]',
-  },
+const platformsList = [
+  { icon: faTiktok, color: 'text-black', name: 'TikTok' },
+  { icon: faInstagram, color: 'text-pink-600', name: 'Instagram' },
+  { icon: faYoutube, color: 'text-red-600', name: 'YouTube' },
+  { icon: faFacebook, color: 'text-blue-600', name: 'Facebook' },
+  { icon: faTelegram, color: 'text-sky-500', name: 'Telegram' },
+  { icon: faTwitter, color: 'text-blue-400', name: 'Twitter' },
+  { icon: faWhatsapp, color: 'text-emerald-500', name: 'WhatsApp' },
+  { icon: faSpotify, color: 'text-emerald-400', name: 'Spotify' },
 ];
 
 export default function LandingPage() {
@@ -98,23 +78,21 @@ export default function LandingPage() {
       {/* Platforms Section */}
       <section className="py-12 bg-white relative z-30">
         <div className="max-w-7xl mx-auto px-6">
-          <div className="flex flex-wrap items-center justify-center gap-8 md:gap-16">
-            {[
-              { icon: faTiktok, color: 'text-black' },
-              { icon: faInstagram, color: 'text-pink-600' },
-              { icon: faYoutube, color: 'text-red-600' },
-              { icon: faFacebook, color: 'text-blue-600' },
-              { icon: faTelegram, color: 'text-sky-500' }
-            ].map((platform, idx) => (
+          <div className="flex flex-wrap items-center justify-center gap-8 md:gap-12">
+            {platformsList.map((platform, idx) => (
               <motion.div
                 key={idx}
                 initial={{ opacity: 0, scale: 0.8 }}
                 whileInView={{ opacity: 1, scale: 1 }}
                 viewport={{ once: true }}
                 transition={{ delay: idx * 0.1 }}
-                className={`text-2xl md:text-4xl ${platform.color} opacity-40 hover:opacity-100 transition-opacity cursor-default`}
               >
-                <FontAwesomeIcon icon={platform.icon} />
+                <Link
+                  to={`/platform?platform=${platform.name}`}
+                  className={`text-3xl md:text-5xl ${platform.color} opacity-40 hover:opacity-100 transition-all hover:scale-110 inline-block`}
+                >
+                  <FontAwesomeIcon icon={platform.icon} />
+                </Link>
               </motion.div>
             ))}
           </div>

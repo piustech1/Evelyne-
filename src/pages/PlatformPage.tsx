@@ -1,36 +1,42 @@
 import { useState, useEffect } from 'react';
-import { useParams, useNavigate, useLocation } from 'react-router-dom';
+import { useNavigate, useSearchParams } from 'react-router-dom';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
-import { faInstagram, faTiktok, faYoutube, faFacebook } from '@fortawesome/free-brands-svg-icons';
-import { faArrowLeft, faShoppingCart, faCheckCircle, faInfoCircle, faRocket } from '@fortawesome/free-solid-svg-icons';
+import { faInstagram, faTiktok, faYoutube, faFacebook, faTelegram, faTwitter } from '@fortawesome/free-brands-svg-icons';
+import { faArrowLeft, faShoppingCart, faCheckCircle, faInfoCircle, faRocket, faGlobe } from '@fortawesome/free-solid-svg-icons';
 import { motion, AnimatePresence } from 'motion/react';
 import { useAuth } from '../hooks/useAuth';
 import { db } from '../lib/firebase';
-import { ref, onValue, push, set, runTransaction } from 'firebase/database';
+import { ref, push, set, runTransaction } from 'firebase/database';
+import { fetchServices, Service } from '../lib/servicesStore';
 
 const platformIcons: Record<string, any> = {
   tiktok: faTiktok,
+  facebook: faFacebook,
   instagram: faInstagram,
   youtube: faYoutube,
-  facebook: faFacebook,
+  telegram: faTelegram,
+  twitter: faTwitter,
+  others: faGlobe
 };
 
 const platformColors: Record<string, string> = {
-  tiktok: 'text-white bg-white/10',
+  tiktok: 'text-white bg-black',
+  facebook: 'text-white bg-[#1877F2]',
   instagram: 'text-white bg-gradient-to-tr from-[#f9ce34] via-[#ee2a7b] to-[#6228d7]',
   youtube: 'text-white bg-[#FF0000]',
-  facebook: 'text-white bg-[#1877F2]',
+  telegram: 'text-white bg-[#0088cc]',
+  twitter: 'text-white bg-[#1DA1F2]',
+  others: 'text-white bg-gray-500',
 };
 
 export default function PlatformPage() {
-  const { platform } = useParams<{ platform: string }>();
+  const [searchParams] = useSearchParams();
+  const platform = searchParams.get('platform') || 'Others';
   const navigate = useNavigate();
-  const location = useLocation();
   const { user, userData } = useAuth();
   
-  const [category, setCategory] = useState<any>(null);
-  const [services, setServices] = useState<any[]>([]);
-  const [selectedService, setSelectedService] = useState<any>(null);
+  const [services, setServices] = useState<Service[]>([]);
+  const [selectedService, setSelectedService] = useState<Service | null>(null);
   const [quantity, setQuantity] = useState<number>(100);
   const [link, setLink] = useState('');
   const [isLoading, setIsLoading] = useState(true);
@@ -39,36 +45,19 @@ export default function PlatformPage() {
   const [orderSuccess, setOrderSuccess] = useState(false);
 
   useEffect(() => {
-    if (platform) {
-      const categoryRef = ref(db, `categories/${platform}`);
-      onValue(categoryRef, (snapshot) => {
-        const data = snapshot.val();
-        if (data) {
-          setCategory({ id: platform, ...data });
-        }
-      });
-
-      const servicesRef = ref(db, 'services');
-      onValue(servicesRef, (snapshot) => {
-        const data = snapshot.val();
-        if (data) {
-          const servicesArray = Object.entries(data)
-            .map(([id, value]: [string, any]) => ({ id, ...value }))
-            .filter((s: any) => s.categoryId === platform);
-          setServices(servicesArray);
-
-          // Handle pre-selected service from navigation state
-          if (location.state?.preSelectedService) {
-            const preSelected = servicesArray.find(s => s.apiServiceId === location.state.preSelectedService.apiServiceId);
-            if (preSelected) {
-              setSelectedService(preSelected);
-            }
-          }
-        }
+    const loadServices = async () => {
+      try {
+        const allServices = await fetchServices();
+        const filtered = allServices.filter(s => s.category.toLowerCase() === platform.toLowerCase());
+        setServices(filtered);
+      } catch (err) {
+        console.error(err);
+      } finally {
         setIsLoading(false);
-      });
-    }
-  }, [platform, location.state]);
+      }
+    };
+    loadServices();
+  }, [platform]);
 
   const totalPrice = selectedService ? Math.round((selectedService.price * quantity) / 1000) : 0;
   const hasInsufficientBalance = userData && userData.balance < totalPrice;
@@ -91,9 +80,8 @@ export default function PlatformPage() {
       return;
     }
     
-    // If insufficient balance, we don't block the button but we show error on final step
     if (hasInsufficientBalance) {
-      setOrderError('Insufficient balance. Please top up your wallet.');
+      setOrderError('Insufficient balance. Please top up to continue.');
       return;
     }
 
@@ -101,7 +89,6 @@ export default function PlatformPage() {
     setOrderError('');
 
     try {
-      // 1. Call SMM API Proxy
       const apiResponse = await fetch('/api/smm/order', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
@@ -113,43 +100,32 @@ export default function PlatformPage() {
       });
 
       const apiData = await apiResponse.json();
+      if (apiData.error) throw new Error(apiData.error);
+      if (!apiData.order) throw new Error('Failed to place order with provider');
 
-      if (apiData.error) {
-        throw new Error(apiData.error);
-      }
-
-      if (!apiData.order) {
-        throw new Error('Failed to place order with provider');
-      }
-
-      // 2. Use transaction to safely deduct balance
       const userRef = ref(db, `users/${user.uid}`);
       await runTransaction(userRef, (currentData) => {
         if (currentData) {
-          if (currentData.balance < totalPrice) {
-            throw new Error('Insufficient balance');
-          }
+          if (currentData.balance < totalPrice) throw new Error('Insufficient balance');
           currentData.balance -= totalPrice;
         }
         return currentData;
       });
 
-      // 3. Calculate Profit
       const originalCost = (selectedService.rate * quantity) / 1000;
       const profit = totalPrice - originalCost;
 
-      // 4. Create order in Firebase
       const ordersRef = ref(db, 'orders');
       const newOrderRef = push(ordersRef);
       await set(newOrderRef, {
         userId: user.uid,
         userName: userData.name,
         userEmail: user.email,
-        serviceId: selectedService.id,
+        serviceId: selectedService.service,
         apiServiceId: selectedService.service,
         apiOrderId: apiData.order,
         service: selectedService.name,
-        platform: category?.name || platform,
+        platform: selectedService.category,
         link,
         quantity,
         price: totalPrice,
@@ -160,9 +136,7 @@ export default function PlatformPage() {
       });
 
       setOrderSuccess(true);
-      setTimeout(() => {
-        navigate('/orders');
-      }, 2000);
+      setTimeout(() => navigate('/orders'), 2000);
     } catch (err: any) {
       setOrderError(err.message || 'Failed to place order');
     } finally {
@@ -170,11 +144,10 @@ export default function PlatformPage() {
     }
   };
 
-  if (isLoading) return <div className="pt-32 text-center text-brand-light font-black uppercase tracking-widest">Loading Platform...</div>;
-  if (!category && !isLoading) return <div className="pt-32 text-center text-brand-light font-black uppercase tracking-widest">Platform not found</div>;
+  if (isLoading) return <div className="pt-32 text-center text-brand-light font-black uppercase tracking-widest">Loading {platform} Services...</div>;
 
-  const icon = platformIcons[platform?.toLowerCase() || ''] || faRocket;
-  const colorClass = platformColors[platform?.toLowerCase() || ''] || 'bg-brand-purple text-white';
+  const icon = platformIcons[platform.toLowerCase()] || faRocket;
+  const colorClass = platformColors[platform.toLowerCase()] || 'bg-brand-purple text-white';
 
   return (
     <div className="pt-12 pb-32 px-4 sm:px-6 lg:px-8 max-w-7xl mx-auto space-y-8">
@@ -184,17 +157,17 @@ export default function PlatformPage() {
             <FontAwesomeIcon icon={icon} />
           </div>
           <div>
-            <h1 className="text-3xl font-display font-black text-brand-light tracking-tighter">{category?.name || platform} Services</h1>
+            <h1 className="text-3xl font-display font-black text-brand-light tracking-tighter">{platform} Services</h1>
             <p className="text-gray-400 font-medium text-sm">Boost your presence instantly</p>
           </div>
         </div>
         
         <button 
-          onClick={() => navigate('/services')}
+          onClick={() => navigate('/dashboard')}
           className="flex items-center px-4 py-2 rounded-xl bg-white border border-gray-100 text-[10px] font-black text-gray-400 uppercase tracking-widest hover:text-brand-purple hover:border-brand-purple transition-all shadow-sm group self-start md:self-auto"
         >
           <FontAwesomeIcon icon={faArrowLeft} className="mr-2 group-hover:-translate-x-1 transition-transform" />
-          Back to Services
+          Back to Dashboard
         </button>
       </div>
 

@@ -29,7 +29,7 @@ export default function Navbar() {
   };
 
   const navLinks = [
-    { name: 'Services', path: '/services', icon: faRocket },
+    { name: 'Boost', path: '/boost', icon: faRocket },
     { name: 'Dashboard', path: '/dashboard', icon: faChartLine },
     { name: 'Orders', path: '/orders', icon: faHistory },
     { name: 'Wallet', path: '/wallet', icon: faWallet },

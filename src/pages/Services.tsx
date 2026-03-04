@@ -1,11 +1,10 @@
 import { useState, useEffect } from 'react';
 import { motion } from 'motion/react';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
-import { faTiktok, faInstagram, faYoutube, faFacebook, faTwitter, faTelegram } from '@fortawesome/free-brands-svg-icons';
+import { faTiktok, faInstagram, faYoutube, faFacebook, faTwitter, faTelegram, faSpotify, faLinkedin, faSnapchat } from '@fortawesome/free-brands-svg-icons';
 import { faRocket, faChevronRight, faShieldAlt, faBolt, faCheckCircle, faSearch, faList, faExclamationTriangle, faGlobe } from '@fortawesome/free-solid-svg-icons';
 import { Link, useNavigate } from 'react-router-dom';
-import { db } from '../lib/firebase';
-import { ref, onValue, get, set } from 'firebase/database';
+import { fetchServices, Service } from '../lib/servicesStore';
 
 const platformIcons: Record<string, any> = {
   tiktok: faTiktok,
@@ -14,6 +13,9 @@ const platformIcons: Record<string, any> = {
   facebook: faFacebook,
   twitter: faTwitter,
   telegram: faTelegram,
+  spotify: faSpotify,
+  linkedin: faLinkedin,
+  snapchat: faSnapchat,
   other: faGlobe
 };
 
@@ -24,6 +26,9 @@ const platformColors: Record<string, string> = {
   facebook: 'bg-[#1877F2] text-white',
   twitter: 'bg-[#1DA1F2] text-white',
   telegram: 'bg-[#0088cc] text-white',
+  spotify: 'bg-[#1DB954] text-white',
+  linkedin: 'bg-[#0077B5] text-white',
+  snapchat: 'bg-[#FFFC00] text-black',
   other: 'bg-gray-500 text-white'
 };
 
@@ -63,115 +68,23 @@ const ServiceSkeleton = () => (
 
 export default function Services() {
   const navigate = useNavigate();
-  const [categories, setCategories] = useState<any[]>([]);
-  const [services, setServices] = useState<any[]>([]);
+  const [services, setServices] = useState<Service[]>([]);
   const [searchTerm, setSearchTerm] = useState('');
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState('');
-  const [syncFailed, setSyncFailed] = useState(false);
 
   useEffect(() => {
-    const categoriesRef = ref(db, 'categories');
-    const servicesRef = ref(db, 'services');
-
-    // 1. Listen for Categories
-    onValue(categoriesRef, (snapshot) => {
-      const data = snapshot.val();
-      if (data) {
-        setCategories(Object.entries(data).map(([id, value]: [string, any]) => ({ id, ...value })));
-      } else {
-        setCategories([]);
-      }
-    });
-
-    // 2. Listen for Services
-    onValue(servicesRef, (snapshot) => {
-      const data = snapshot.val();
-      if (data) {
-        setServices(Object.entries(data).map(([id, value]: [string, any]) => ({ id, ...value })));
-      } else {
-        setServices([]);
-      }
-      setIsLoading(false);
-    });
-
-    // 3. Auto-Fetch from API
-    const autoSync = async () => {
+    const loadServices = async () => {
       try {
-        const settingsSnap = await get(ref(db, 'settings'));
-        const profit = settingsSnap.val()?.profitPercentage || 20;
-
-        const catsSnap = await get(ref(db, 'categories'));
-        const catsData = catsSnap.val() || {};
-        const catsList = Object.entries(catsData).map(([id, val]: [string, any]) => ({ id, ...val }));
-
-        const response = await fetch('/api/smm/services', { method: 'POST' });
-        const text = await response.text();
-        
-        if (!text || (!text.startsWith("[") && !text.startsWith("{"))) {
-          throw new Error(`Invalid response from server (Status: ${response.status})`);
-        }
-
-        const apiServices = JSON.parse(text);
-        
-        if (apiServices.error) {
-          throw new Error(`API Error: ${apiServices.error}`);
-        }
-
-        if (!Array.isArray(apiServices)) throw new Error("Invalid format");
-
-        const servicesUpdates: any = {};
-        apiServices.forEach((s: any) => {
-          const usdRate = parseFloat(s.rate);
-          const ugxRate = usdRate * 3800;
-          const finalPrice = ugxRate + (ugxRate * profit / 100);
-          
-          let matchedCatName = detectPlatform(s.name);
-          if (matchedCatName === 'Other') {
-            matchedCatName = detectPlatform(s.category);
-          }
-          
-          let matchedCatId = matchedCatName.toLowerCase();
-          
-          // Try to find a matching category in our DB for custom keywords
-          for (const cat of catsList) {
-            const keywords = (cat.keywords || '').split(',').map((k: string) => k.trim().toLowerCase());
-            const sName = s.name.toLowerCase();
-            const sCat = s.category.toLowerCase();
-            if (keywords.some(k => k && (sName.includes(k) || sCat.includes(k)))) {
-              matchedCatId = cat.id;
-              matchedCatName = cat.name;
-              break;
-            }
-          }
-
-          servicesUpdates[s.service] = {
-            service: s.service,
-            apiServiceId: s.service,
-            name: s.name,
-            type: s.type,
-            category: matchedCatName,
-            categoryId: matchedCatId,
-            rate: usdRate,
-            price: Math.round(finalPrice),
-            min: parseInt(s.min),
-            max: parseInt(s.max),
-            refill: s.refill,
-            cancel: s.cancel,
-            status: 'Active',
-            updatedAt: new Date().toISOString()
-          };
-        });
-
-        await set(ref(db, 'services'), servicesUpdates);
-        setSyncFailed(false);
-      } catch (err: any) {
-        console.error("Auto-sync failed:", err);
-        setSyncFailed(true);
+        const data = await fetchServices();
+        setServices(data);
+      } catch (err) {
+        setError('Failed to load services');
+      } finally {
+        setIsLoading(false);
       }
     };
-
-    autoSync();
+    loadServices();
   }, []);
 
   const filteredServices = services.filter(s => 
@@ -179,15 +92,15 @@ export default function Services() {
     s.category?.toLowerCase().includes(searchTerm.toLowerCase())
   );
 
-  const groupedServices = filteredServices.reduce((acc: Record<string, any[]>, service) => {
+  const groupedServices = filteredServices.reduce((acc: Record<string, Service[]>, service) => {
     const category = service.category || 'Other';
     if (!acc[category]) acc[category] = [];
     acc[category].push(service);
     return acc;
   }, {});
 
-  const handleBoost = (service: any) => {
-    navigate(`/services/${service.categoryId}`, { state: { preSelectedService: service } });
+  const handleBoost = (service: Service) => {
+    navigate(`/boost?service=${service.apiServiceId}`);
   };
 
   return (
@@ -204,10 +117,10 @@ export default function Services() {
           <p className="text-white/80 max-w-md mx-auto font-medium text-sm leading-relaxed">
             Boost your social presence with our high-quality services.
           </p>
-          {syncFailed && (
+          {error && (
             <div className="mt-4 inline-flex items-center px-4 py-1.5 bg-white/10 backdrop-blur-md border border-white/20 rounded-full text-white text-[10px] font-bold uppercase tracking-widest">
               <FontAwesomeIcon icon={faExclamationTriangle} className="mr-2 text-yellow-400" />
-              Failed to load latest services
+              {error}
             </div>
           )}
         </motion.div>
@@ -309,7 +222,7 @@ export default function Services() {
                 <FontAwesomeIcon icon={faList} />
               </div>
               <div className="text-gray-400 font-black uppercase tracking-widest text-[10px]">
-                {syncFailed && services.length === 0 ? 'Services unavailable' : 'No services found'}
+                {error && services.length === 0 ? 'Services unavailable' : 'No services found'}
               </div>
             </div>
           )}
