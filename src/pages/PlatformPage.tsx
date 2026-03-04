@@ -94,7 +94,7 @@ export default function PlatformPage() {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
-          service: selectedService.apiServiceId,
+          service: selectedService.service,
           link,
           quantity
         })
@@ -134,7 +134,7 @@ export default function PlatformPage() {
         userName: userData.name,
         userEmail: user.email,
         serviceId: selectedService.id,
-        apiServiceId: selectedService.apiServiceId,
+        apiServiceId: selectedService.service,
         apiOrderId: apiData.order,
         service: selectedService.name,
         platform: category?.name || platform,

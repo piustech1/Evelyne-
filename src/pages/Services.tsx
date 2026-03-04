@@ -74,6 +74,11 @@ export default function Services() {
         }
 
         const apiServices = JSON.parse(text);
+        
+        if (apiServices.error) {
+          throw new Error(apiServices.error);
+        }
+
         if (!Array.isArray(apiServices)) throw new Error("Invalid format");
 
         const servicesUpdates: any = {};
@@ -97,14 +102,18 @@ export default function Services() {
           }
 
           servicesUpdates[s.service] = {
+            service: s.service,
             apiServiceId: s.service,
             name: s.name,
+            type: s.type,
             category: matchedCatName,
             categoryId: matchedCatId,
             rate: rate,
             price: finalPrice,
             min: parseInt(s.min),
             max: parseInt(s.max),
+            refill: s.refill,
+            cancel: s.cancel,
             status: 'Active',
             updatedAt: new Date().toISOString()
           };
