@@ -25,9 +25,13 @@ async function startServer() {
       const response = await fetch(SMM_API_URL, {
         method: 'POST',
         headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
-        body: `key=${API_KEY}&action=services`
+        body: new URLSearchParams({
+          key: API_KEY,
+          action: 'services'
+        })
       });
 
+      console.log("API STATUS:", response.status);
       const text = await response.text();
       console.log("RAW RESPONSE:", text);
 

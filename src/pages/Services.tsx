@@ -68,15 +68,16 @@ export default function Services() {
         // Fetch from API
         const response = await fetch('/api/smm/services', { method: 'POST' });
         const text = await response.text();
+        console.log("Services API Response:", text);
         
         if (!text || (!text.startsWith("[") && !text.startsWith("{"))) {
-          throw new Error("Failed to load services");
+          throw new Error(`Invalid response from server (Status: ${response.status}). Response: ${text.substring(0, 100)}`);
         }
 
         const apiServices = JSON.parse(text);
         
         if (apiServices.error) {
-          throw new Error(apiServices.error);
+          throw new Error(`API Error: ${apiServices.error}`);
         }
 
         if (!Array.isArray(apiServices)) throw new Error("Invalid format");
@@ -122,7 +123,7 @@ export default function Services() {
         await set(ref(db, 'services'), servicesUpdates);
       } catch (err: any) {
         console.error("Auto-sync failed:", err);
-        setError("Failed to fetch latest services. Try again later.");
+        setError(err.message || "Failed to fetch latest services. Try again later.");
       }
     };
 
