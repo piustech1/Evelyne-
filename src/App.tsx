@@ -67,10 +67,10 @@ export default function App() {
         <Route
           path="*"
           element={
-            <div className="min-h-screen flex flex-col bg-brand-dark">
+            <div className="min-h-screen flex flex-col bg-white">
               <Navbar isLoggedIn={!!user} />
               
-              <main className="flex-grow">
+              <main className="flex-grow pt-16 md:pt-20">
                 <Routes>
                   <Route path="/" element={<LandingPage />} />
                   <Route path="/login" element={!user ? <Login /> : <Navigate to="/dashboard" />} />

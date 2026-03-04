@@ -104,10 +104,10 @@ export default function Wallet() {
             </div>
           </motion.div>
 
-          <div className="bg-white p-6 md:p-8 rounded-3xl shadow-sm border border-gray-100">
-            <h2 className="text-lg font-black text-brand-light mb-8 flex items-center tracking-tighter">
-              <div className="w-10 h-10 rounded-xl bg-brand-blue/5 flex items-center justify-center mr-3">
-                <FontAwesomeIcon icon={faPlus} className="text-brand-blue text-xs" />
+          <div className="bg-gray-50 p-6 md:p-8 rounded-3xl shadow-sm border border-gray-200">
+            <h2 className="text-lg font-black text-gray-900 mb-8 flex items-center tracking-tighter">
+              <div className="w-10 h-10 rounded-xl bg-blue-50 flex items-center justify-center mr-3 border border-blue-100 shadow-sm">
+                <FontAwesomeIcon icon={faPlus} className="text-blue-600 text-xs" />
               </div>
               Add Funds
             </h2>
@@ -122,18 +122,18 @@ export default function Wallet() {
 
             <form className="space-y-6" onSubmit={handleDeposit}>
               <div className="space-y-3">
-                <label className="text-[9px] font-black text-gray-400 ml-1 uppercase tracking-widest">Payment Method</label>
+                <label className="text-[9px] font-black text-gray-500 ml-1 uppercase tracking-widest">Payment Method</label>
                 <div className="grid grid-cols-2 gap-3">
                   <button 
                     type="button" 
                     onClick={() => setPaymentMethod('mtn')}
                     className={`flex flex-col items-center justify-center p-4 rounded-xl border-2 transition-all ${
                       paymentMethod === 'mtn' 
-                      ? 'border-brand-purple bg-brand-purple/5 text-brand-purple' 
-                      : 'border-gray-50 bg-gray-50 text-gray-400 hover:border-brand-purple/20'
+                      ? 'border-brand-purple bg-brand-purple/5 text-brand-purple shadow-sm' 
+                      : 'border-white bg-white text-gray-400 hover:border-brand-purple/20 shadow-sm'
                     }`}
                   >
-                    <div className="w-10 h-10 bg-[#FFCC00] rounded-full flex items-center justify-center mb-2 shadow-sm">
+                    <div className="w-10 h-10 bg-[#FFCC00] rounded-full flex items-center justify-center mb-2 shadow-sm border border-white">
                       <FontAwesomeIcon icon={faMobileAlt} className="text-black text-sm" />
                     </div>
                     <span className="text-[8px] font-black uppercase tracking-widest">MTN MoMo</span>
@@ -143,11 +143,11 @@ export default function Wallet() {
                     onClick={() => setPaymentMethod('airtel')}
                     className={`flex flex-col items-center justify-center p-4 rounded-xl border-2 transition-all ${
                       paymentMethod === 'airtel' 
-                      ? 'border-brand-purple bg-brand-purple/5 text-brand-purple' 
-                      : 'border-gray-50 bg-gray-50 text-gray-400 hover:border-brand-purple/20'
+                      ? 'border-brand-purple bg-brand-purple/5 text-brand-purple shadow-sm' 
+                      : 'border-white bg-white text-gray-400 hover:border-brand-purple/20 shadow-sm'
                     }`}
                   >
-                    <div className="w-10 h-10 bg-[#FF0000] rounded-full flex items-center justify-center mb-2 shadow-sm">
+                    <div className="w-10 h-10 bg-[#FF0000] rounded-full flex items-center justify-center mb-2 shadow-sm border border-white">
                       <FontAwesomeIcon icon={faMobileAlt} className="text-white text-sm" />
                     </div>
                     <span className="text-[8px] font-black uppercase tracking-widest">Airtel Money</span>
@@ -157,19 +157,19 @@ export default function Wallet() {
 
               <div className="space-y-4">
                 <div className="space-y-1.5">
-                  <label className="text-[9px] font-black text-gray-400 ml-1 uppercase tracking-widest">Phone Number</label>
+                  <label className="text-[9px] font-black text-gray-500 ml-1 uppercase tracking-widest">Phone Number</label>
                   <input
                     type="tel"
                     required
                     value={phoneNumber}
                     onChange={(e) => setPhoneNumber(e.target.value)}
                     placeholder="07XX XXX XXX"
-                    className="w-full p-4 bg-gray-50 border border-gray-100 rounded-xl text-brand-light placeholder-gray-300 focus:outline-none focus:ring-2 focus:ring-brand-purple/5 focus:border-brand-purple transition-all font-bold text-xs"
+                    className="w-full p-4 bg-white border border-gray-200 rounded-xl text-gray-900 placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-brand-purple/5 focus:border-brand-purple transition-all font-bold text-xs shadow-sm"
                   />
                 </div>
 
                 <div className="space-y-1.5">
-                  <label className="text-[9px] font-black text-gray-400 ml-1 uppercase tracking-widest">Amount (UGX)</label>
+                  <label className="text-[9px] font-black text-gray-500 ml-1 uppercase tracking-widest">Amount (UGX)</label>
                   <div className="relative group">
                     <div className="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none text-brand-purple font-black text-[10px]">
                       UGX
@@ -180,7 +180,7 @@ export default function Wallet() {
                       value={amount}
                       onChange={(e) => setAmount(e.target.value)}
                       placeholder="5,000"
-                      className="w-full pl-12 pr-4 py-4 bg-gray-50 border border-gray-100 rounded-xl text-brand-light placeholder-gray-300 focus:outline-none focus:ring-2 focus:ring-brand-purple/5 focus:border-brand-purple transition-all font-display font-black text-xl"
+                      className="w-full pl-12 pr-4 py-4 bg-white border border-gray-200 rounded-xl text-gray-900 placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-brand-purple/5 focus:border-brand-purple transition-all font-display font-black text-xl shadow-sm"
                     />
                   </div>
                   <p className="text-[8px] text-gray-400 font-black uppercase tracking-widest ml-1">Min: UGX 5,000</p>
@@ -189,7 +189,7 @@ export default function Wallet() {
 
               <button 
                 disabled={isLoading}
-                className="w-full py-4 gradient-brand text-white font-black uppercase tracking-widest rounded-xl shadow-sm hover:scale-[1.02] active:scale-[0.98] transition-all text-[10px] disabled:opacity-50 disabled:cursor-not-allowed"
+                className="w-full py-4 bg-gradient-to-r from-blue-600 to-purple-600 text-white font-black uppercase tracking-widest rounded-xl shadow-sm hover:scale-[1.02] active:scale-[0.98] transition-all text-[10px] disabled:opacity-50 disabled:cursor-not-allowed"
               >
                 {isLoading ? 'Processing...' : 'Deposit Funds'}
               </button>
@@ -199,10 +199,10 @@ export default function Wallet() {
 
         {/* Transaction History */}
         <div className="lg:col-span-8">
-          <div className="bg-white p-6 md:p-10 rounded-3xl shadow-sm border border-gray-100 h-full relative overflow-hidden">
+          <div className="bg-gray-50 p-6 md:p-10 rounded-3xl shadow-sm border border-gray-200 h-full relative overflow-hidden">
             <div className="flex items-center justify-between mb-8 relative z-10">
-              <h2 className="text-xl font-display font-black text-brand-light flex items-center tracking-tighter">
-                <div className="w-10 h-10 rounded-xl bg-brand-purple/5 flex items-center justify-center mr-3">
+              <h2 className="text-xl font-display font-black text-gray-900 flex items-center tracking-tighter">
+                <div className="w-10 h-10 rounded-xl bg-purple-50 flex items-center justify-center mr-3 border border-purple-100 shadow-sm">
                   <FontAwesomeIcon icon={faHistory} className="text-brand-purple text-xs" />
                 </div>
                 Transaction History
@@ -217,7 +217,7 @@ export default function Wallet() {
                     initial={{ opacity: 0, y: 10 }}
                     animate={{ opacity: 1, y: 0 }}
                     transition={{ delay: idx * 0.05 }}
-                    className="flex items-center justify-between p-4 rounded-2xl bg-gray-50 border border-gray-100 hover:border-brand-purple/20 transition-all group"
+                    className="flex items-center justify-between p-4 rounded-2xl bg-white border border-gray-100 hover:border-brand-purple/20 transition-all group shadow-sm"
                   >
                     <div className="flex items-center space-x-4">
                       <div className={`w-10 h-10 rounded-xl flex items-center justify-center text-white text-sm shadow-sm transition-transform group-hover:scale-110 ${
@@ -227,13 +227,13 @@ export default function Wallet() {
                         <FontAwesomeIcon icon={txn.type === 'Deposit' ? faArrowDown : faArrowUp} />
                       </div>
                       <div>
-                        <div className="text-sm font-black text-brand-light group-hover:text-brand-purple transition-colors tracking-tight">{txn.type} via {txn.method}</div>
+                        <div className="text-sm font-black text-gray-900 group-hover:text-brand-purple transition-colors tracking-tight">{txn.type} via {txn.method}</div>
                         <div className="text-[9px] text-gray-400 font-bold uppercase tracking-widest mt-0.5">{new Date(txn.createdAt).toLocaleDateString()} • {txn.id.slice(-8)}</div>
                       </div>
                     </div>
                     <div className="text-right">
                       <div className={`text-lg font-display font-black ${
-                        txn.status === 'Approved' ? 'text-emerald-500' : 'text-brand-light'
+                        txn.status === 'Approved' ? 'text-emerald-500' : 'text-gray-900'
                       }`}>UGX {txn.amount?.toLocaleString()}</div>
                       <div className={`text-[9px] font-black uppercase tracking-widest flex items-center justify-end gap-1 mt-0.5 ${
                         txn.status === 'Approved' ? 'text-emerald-500' : 
@@ -247,11 +247,11 @@ export default function Wallet() {
                 ))
               ) : (
                 <div className="flex flex-col items-center justify-center py-20 text-center space-y-4">
-                  <div className="w-16 h-16 bg-gray-50 rounded-full flex items-center justify-center text-gray-200 text-2xl">
+                  <div className="w-16 h-16 bg-white rounded-full flex items-center justify-center text-gray-200 text-2xl border border-gray-100">
                     <FontAwesomeIcon icon={faWallet} />
                   </div>
                   <div className="space-y-1">
-                    <h3 className="text-lg font-black text-brand-light tracking-tighter">No transactions yet</h3>
+                    <h3 className="text-lg font-black text-gray-900 tracking-tighter">No transactions yet</h3>
                     <p className="text-gray-400 text-[10px] font-medium max-w-xs mx-auto leading-relaxed">Your transaction history will appear here once you start using your wallet.</p>
                   </div>
                 </div>

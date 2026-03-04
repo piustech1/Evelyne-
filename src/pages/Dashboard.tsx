@@ -92,15 +92,15 @@ export default function Dashboard() {
             initial={{ opacity: 0, scale: 0.9 }}
             animate={{ opacity: 1, scale: 1 }}
             transition={{ delay: idx * 0.05 }}
-            className="bg-white p-4 md:p-5 rounded-2xl shadow-sm border border-gray-100 hover:border-brand-purple/20 transition-all group"
+            className="bg-gray-50 p-4 md:p-5 rounded-2xl shadow-sm border border-gray-200 hover:border-brand-purple/20 transition-all group"
           >
             <div className="flex items-center justify-between mb-3">
-              <div className={`w-8 h-8 md:w-10 md:h-10 ${stat.bg} ${stat.color} rounded-lg flex items-center justify-center text-sm md:text-base transition-transform group-hover:scale-110 shadow-sm`}>
+              <div className={`w-8 h-8 md:w-10 md:h-10 ${stat.bg} ${stat.color} rounded-lg flex items-center justify-center text-sm md:text-base transition-transform group-hover:scale-110 shadow-sm border border-white`}>
                 <FontAwesomeIcon icon={stat.icon} />
               </div>
               <span className="text-[8px] md:text-[9px] font-black text-gray-400 uppercase tracking-widest">{stat.title}</span>
             </div>
-            <div className="text-lg md:text-xl font-display font-black text-brand-light tracking-tight">{stat.value}</div>
+            <div className="text-lg md:text-xl font-display font-black text-gray-900 tracking-tight">{stat.value}</div>
           </motion.div>
         ))}
       </div>
@@ -111,9 +111,9 @@ export default function Dashboard() {
           {/* Platforms Grid */}
           <section className="space-y-4">
             <div className="flex items-center justify-between px-2">
-              <h2 className="text-lg font-black text-brand-light flex items-center tracking-tighter">
-                <div className="w-8 h-8 rounded-lg bg-brand-blue/5 flex items-center justify-center mr-3">
-                  <FontAwesomeIcon icon={faThLarge} className="text-brand-blue text-sm" />
+              <h2 className="text-lg font-black text-gray-900 flex items-center tracking-tighter">
+                <div className="w-8 h-8 rounded-lg bg-blue-50 flex items-center justify-center mr-3 border border-blue-100">
+                  <FontAwesomeIcon icon={faThLarge} className="text-blue-600 text-sm" />
                 </div>
                 Select Platform
               </h2>
@@ -124,16 +124,16 @@ export default function Dashboard() {
                 <Link
                   key={idx}
                   to={`/services/${platform.id}`}
-                  className="bg-white p-5 rounded-2xl shadow-sm border border-gray-100 flex items-center space-x-4 hover:border-brand-purple/20 transition-all group relative overflow-hidden"
+                  className="bg-gray-50 p-5 rounded-2xl shadow-sm border border-gray-200 flex items-center space-x-4 hover:border-brand-purple/20 transition-all group relative overflow-hidden"
                 >
-                  <div className={`w-12 h-12 ${platform.bg} ${platform.color} rounded-xl flex items-center justify-center text-xl group-hover:scale-110 transition-transform shadow-sm relative z-10`}>
+                  <div className={`w-12 h-12 ${platform.bg} ${platform.color} rounded-xl flex items-center justify-center text-xl group-hover:scale-110 transition-transform shadow-sm relative z-10 border border-white`}>
                     <FontAwesomeIcon icon={platform.icon} />
                   </div>
                   <div className="flex-grow relative z-10">
-                    <div className="text-base font-black text-brand-light group-hover:text-brand-purple transition-colors tracking-tight">{platform.name}</div>
+                    <div className="text-base font-black text-gray-900 group-hover:text-brand-purple transition-colors tracking-tight">{platform.name}</div>
                     <div className="text-[10px] text-gray-400 font-medium">{platform.desc}</div>
                   </div>
-                  <div className="w-8 h-8 rounded-full bg-gray-50 flex items-center justify-center text-gray-300 group-hover:gradient-brand group-hover:text-white transition-all relative z-10 border border-gray-100">
+                  <div className="w-8 h-8 rounded-full bg-white flex items-center justify-center text-gray-300 group-hover:bg-gradient-to-r group-hover:from-blue-600 group-hover:to-purple-600 group-hover:text-white transition-all relative z-10 border border-gray-200">
                     <FontAwesomeIcon icon={faArrowRight} className="text-xs" />
                   </div>
                 </Link>
@@ -142,13 +142,13 @@ export default function Dashboard() {
           </section>
 
           {/* Quick Info Card */}
-          <section className="bg-white p-6 md:p-8 rounded-3xl shadow-sm border border-gray-100 flex flex-col md:flex-row items-center gap-6 relative overflow-hidden">
-            <div className="w-16 h-16 bg-brand-blue/5 rounded-2xl flex items-center justify-center text-brand-blue text-3xl shadow-inner border border-brand-blue/5">
+          <section className="bg-gray-50 p-6 md:p-8 rounded-3xl shadow-sm border border-gray-200 flex flex-col md:flex-row items-center gap-6 relative overflow-hidden">
+            <div className="w-16 h-16 bg-white rounded-2xl flex items-center justify-center text-blue-600 text-3xl shadow-sm border border-gray-100">
               <FontAwesomeIcon icon={faRocket} />
             </div>
             <div className="text-center md:text-left space-y-2 relative z-10">
-              <h3 className="text-xl font-black text-brand-light tracking-tighter">Boost Your Growth Instantly</h3>
-              <p className="text-gray-400 text-xs md:text-sm max-w-md leading-relaxed">
+              <h3 className="text-xl font-black text-gray-900 tracking-tighter">Boost Your Growth Instantly</h3>
+              <p className="text-gray-500 text-xs md:text-sm max-w-md leading-relaxed">
                 Select a platform above to see our high-quality services. We offer the fastest delivery and most competitive prices in the market.
               </p>
             </div>
@@ -158,39 +158,39 @@ export default function Dashboard() {
         {/* Sidebar */}
         <div className="lg:col-span-4 space-y-8">
           {/* Recent Orders */}
-          <section className="bg-white p-6 rounded-3xl shadow-sm border border-gray-100">
+          <section className="bg-gray-50 p-6 rounded-3xl shadow-sm border border-gray-200">
             <div className="flex items-center justify-between mb-6">
-              <h2 className="text-base font-black text-brand-light tracking-tighter">Recent Activity</h2>
+              <h2 className="text-base font-black text-gray-900 tracking-tighter">Recent Activity</h2>
               <Link to="/orders" className="text-[9px] font-black text-brand-purple hover:text-brand-accent uppercase tracking-widest">View History</Link>
             </div>
             <div className="space-y-3">
               {recentOrders.length > 0 ? (
                 recentOrders.map((order, idx) => (
-                  <div key={idx} className="flex items-center justify-between p-3 rounded-xl bg-gray-50 border border-gray-100 hover:border-brand-purple/20 transition-all group">
+                  <div key={idx} className="flex items-center justify-between p-3 rounded-xl bg-white border border-gray-100 hover:border-brand-purple/20 transition-all group">
                     <div className="flex items-center space-x-3">
                       <div className={`w-8 h-8 rounded-lg flex items-center justify-center text-white text-[10px] shadow-sm transition-transform group-hover:scale-110 ${
                         order.status === 'Completed' ? 'bg-emerald-500' : 
-                        order.status === 'Processing' ? 'bg-brand-blue' : 'bg-amber-500'
+                        order.status === 'Processing' ? 'bg-blue-600' : 'bg-amber-500'
                       }`}>
                         <FontAwesomeIcon icon={order.status === 'Completed' ? faCheckCircle : faClock} />
                       </div>
                       <div className="max-w-[100px]">
-                        <div className="text-[10px] font-bold text-brand-light truncate">{order.service}</div>
+                        <div className="text-[10px] font-bold text-gray-900 truncate">{order.service}</div>
                         <div className="text-[8px] text-gray-400 font-bold uppercase tracking-wider">{new Date(order.createdAt).toLocaleDateString()}</div>
                       </div>
                     </div>
                     <div className="text-right">
-                      <div className="text-[10px] font-bold text-brand-light">UGX {order.price || 0}</div>
+                      <div className="text-[10px] font-bold text-gray-900">UGX {order.price || 0}</div>
                       <div className={`text-[8px] font-black uppercase tracking-widest ${
                         order.status === 'Completed' ? 'text-emerald-500' : 
-                        order.status === 'Processing' ? 'text-brand-blue' : 'text-amber-500'
+                        order.status === 'Processing' ? 'text-blue-600' : 'text-amber-500'
                       }`}>{order.status}</div>
                     </div>
                   </div>
                 ))
               ) : (
                 <div className="flex flex-col items-center justify-center py-8 text-center space-y-2">
-                  <div className="w-10 h-10 bg-gray-50 rounded-full flex items-center justify-center text-gray-200">
+                  <div className="w-10 h-10 bg-white rounded-full flex items-center justify-center text-gray-200 border border-gray-100">
                     <FontAwesomeIcon icon={faClock} />
                   </div>
                   <p className="text-[9px] font-black text-gray-300 uppercase tracking-widest">No orders yet</p>
@@ -200,7 +200,7 @@ export default function Dashboard() {
           </section>
 
           {/* Support Card */}
-          <section className="p-8 rounded-3xl bg-gradient-to-br from-brand-blue to-brand-purple text-white relative overflow-hidden shadow-sm">
+          <section className="p-8 rounded-3xl bg-gradient-to-br from-blue-600 to-purple-600 text-white relative overflow-hidden shadow-sm">
             <div className="relative z-10 space-y-4">
               <div className="w-12 h-12 bg-white/20 backdrop-blur-md rounded-xl flex items-center justify-center shadow-sm border border-white/20">
                 <FontAwesomeIcon icon={faShieldAlt} className="text-xl" />
@@ -209,7 +209,7 @@ export default function Dashboard() {
                 <h3 className="font-black text-xl tracking-tighter">24/7 Support</h3>
                 <p className="text-[10px] text-white/70 leading-relaxed font-medium">Need help with an order or have a question? Our team is here for you.</p>
               </div>
-              <button className="w-full py-3 bg-white text-brand-blue hover:bg-white/90 rounded-xl text-[10px] font-black uppercase tracking-widest transition-all flex items-center justify-center group shadow-sm">
+              <button className="w-full py-3 bg-white text-blue-600 hover:bg-white/90 rounded-xl text-[10px] font-black uppercase tracking-widest transition-all flex items-center justify-center group shadow-sm">
                 Contact Us
                 <FontAwesomeIcon icon={faArrowRight} className="ml-2 group-hover:translate-x-1 transition-transform" />
               </button>

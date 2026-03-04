@@ -33,10 +33,33 @@ const detectPlatform = (name: string): string => {
   if (n.includes('instagram')) return 'Instagram';
   if (n.includes('youtube')) return 'YouTube';
   if (n.includes('facebook')) return 'Facebook';
-  if (n.includes('twitter') || n.includes(' x ')) return 'Twitter';
+  if (n.includes('twitter') || n.includes(' x ') || n.includes(' x-')) return 'Twitter';
   if (n.includes('telegram')) return 'Telegram';
+  if (n.includes('spotify')) return 'Spotify';
+  if (n.includes('linkedin')) return 'LinkedIn';
+  if (n.includes('snapchat')) return 'Snapchat';
   return 'Other';
 };
+
+const ServiceSkeleton = () => (
+  <div className="bg-gray-50 rounded-2xl p-5 border border-gray-100 shadow-sm animate-pulse space-y-4">
+    <div className="flex justify-between items-start gap-2">
+      <div className="h-4 bg-gray-200 rounded w-3/4"></div>
+      <div className="h-3 bg-gray-200 rounded w-1/4"></div>
+    </div>
+    <div className="grid grid-cols-2 gap-3 pt-2">
+      <div className="space-y-2">
+        <div className="h-2 bg-gray-200 rounded w-1/2"></div>
+        <div className="h-4 bg-gray-200 rounded w-full"></div>
+      </div>
+      <div className="space-y-2">
+        <div className="h-2 bg-gray-200 rounded w-1/2 ml-auto"></div>
+        <div className="h-4 bg-gray-200 rounded w-full"></div>
+      </div>
+    </div>
+    <div className="h-10 bg-gray-200 rounded-xl w-full mt-4"></div>
+  </div>
+);
 
 export default function Services() {
   const navigate = useNavigate();
@@ -103,10 +126,14 @@ export default function Services() {
           const ugxRate = usdRate * 3800;
           const finalPrice = ugxRate + (ugxRate * profit / 100);
           
-          let matchedCatId = '';
           let matchedCatName = detectPlatform(s.name);
+          if (matchedCatName === 'Other') {
+            matchedCatName = detectPlatform(s.category);
+          }
           
-          // Try to find a matching category in our DB
+          let matchedCatId = matchedCatName.toLowerCase();
+          
+          // Try to find a matching category in our DB for custom keywords
           for (const cat of catsList) {
             const keywords = (cat.keywords || '').split(',').map((k: string) => k.trim().toLowerCase());
             const sName = s.name.toLowerCase();
@@ -116,12 +143,6 @@ export default function Services() {
               matchedCatName = cat.name;
               break;
             }
-          }
-
-          // If no matchedCatId, we still use the detected platform name for grouping
-          if (!matchedCatId) {
-            // We could optionally create a category here, but for now we just group by name
-            matchedCatId = matchedCatName.toLowerCase();
           }
 
           servicesUpdates[s.service] = {
@@ -209,7 +230,21 @@ export default function Services() {
 
         {/* Services by Category */}
         <div className="space-y-16">
-          {Object.entries(groupedServices).sort().map(([categoryName, categoryServices]: [string, any[]]) => (
+          {isLoading ? (
+            <div className="space-y-12">
+              {[1, 2].map((i) => (
+                <div key={i} className="space-y-6">
+                  <div className="flex items-center space-x-4 px-2">
+                    <div className="w-10 h-10 rounded-xl bg-gray-100 animate-pulse"></div>
+                    <div className="h-6 bg-gray-100 rounded w-48 animate-pulse"></div>
+                  </div>
+                  <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
+                    {[1, 2, 3, 4].map((j) => <ServiceSkeleton key={j} />)}
+                  </div>
+                </div>
+              ))}
+            </div>
+          ) : Object.entries(groupedServices).sort().map(([categoryName, categoryServices]: [string, any[]]) => (
             <div key={categoryName} className="space-y-6">
               <div className="flex items-center space-x-4 px-2">
                 <div className={`w-10 h-10 rounded-xl flex items-center justify-center ${platformColors[categoryName.toLowerCase()] || 'bg-brand-purple text-white'} shadow-sm`}>
@@ -229,14 +264,14 @@ export default function Services() {
                     initial={{ opacity: 0, scale: 0.95 }}
                     animate={{ opacity: 1, scale: 1 }}
                     transition={{ delay: idx * 0.02 }}
-                    className="bg-white rounded-2xl p-5 border border-gray-100 shadow-sm hover:shadow-md transition-all group flex flex-col h-full"
+                    className="bg-gray-50 rounded-2xl p-5 border border-gray-200 shadow-sm hover:shadow-md transition-all group flex flex-col h-full"
                   >
                     <div className="flex-grow space-y-3">
                       <div className="flex justify-between items-start gap-2">
                         <h4 className="text-sm font-bold text-brand-light leading-snug group-hover:text-brand-purple transition-colors line-clamp-2">
                           {service.name}
                         </h4>
-                        <span className="text-[8px] font-black px-2 py-1 bg-gray-50 text-gray-400 rounded-md uppercase tracking-tighter whitespace-nowrap">
+                        <span className="text-[8px] font-black px-2 py-1 bg-white text-gray-400 rounded-md uppercase tracking-tighter border border-gray-100 whitespace-nowrap">
                           ID: {service.apiServiceId}
                         </span>
                       </div>
@@ -257,7 +292,7 @@ export default function Services() {
 
                     <button
                       onClick={() => handleBoost(service)}
-                      className="mt-5 w-full py-3 gradient-brand text-white text-[10px] font-black uppercase tracking-widest rounded-xl shadow-sm hover:shadow-md hover:scale-[1.02] active:scale-[0.98] transition-all flex items-center justify-center space-x-2"
+                      className="mt-5 w-full py-3 bg-gradient-to-r from-blue-600 to-purple-600 text-white text-[10px] font-black uppercase tracking-widest rounded-xl shadow-sm hover:shadow-md hover:scale-[1.02] active:scale-[0.98] transition-all flex items-center justify-center space-x-2"
                     >
                       <FontAwesomeIcon icon={faRocket} className="text-[8px]" />
                       <span>Boost Now</span>

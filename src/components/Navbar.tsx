@@ -37,19 +37,17 @@ export default function Navbar() {
 
   return (
     <nav className={`fixed top-0 left-0 right-0 z-50 transition-all duration-300 ${
-      isScrolled ? 'bg-white/80 backdrop-blur-lg shadow-sm py-2' : 'bg-transparent py-4'
+      isScrolled ? 'bg-gradient-to-r from-blue-600 to-purple-600 shadow-md py-2' : 'bg-gradient-to-r from-blue-500 to-purple-500 py-3'
     }`}>
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="flex justify-between items-center h-12">
           {/* Logo */}
           <Link to="/" className="flex items-center space-x-3 group">
-            <div className="w-8 h-8 gradient-brand rounded-lg flex items-center justify-center shadow-sm group-hover:scale-110 transition-transform">
-              <FontAwesomeIcon icon={faRocket} className="text-white text-sm" />
+            <div className="w-8 h-8 bg-white rounded-lg flex items-center justify-center shadow-sm group-hover:scale-110 transition-transform">
+              <FontAwesomeIcon icon={faRocket} className="text-blue-600 text-sm" />
             </div>
-            <span className={`text-lg font-display font-black tracking-tighter transition-colors ${
-              isScrolled ? 'text-brand-light' : 'text-white'
-            }`}>
-              Easy<span className="text-brand-purple">Boost</span>
+            <span className="text-lg font-display font-black tracking-tighter text-white">
+              Easy<span className="text-white/80">Boost</span>
             </span>
           </Link>
 
@@ -59,11 +57,7 @@ export default function Navbar() {
               <Link
                 key={link.name}
                 to={link.path}
-                className={`px-3 py-1.5 rounded-lg text-[9px] font-black uppercase tracking-widest transition-all flex items-center space-x-2 ${
-                  isScrolled 
-                    ? 'text-gray-500 hover:text-brand-purple hover:bg-brand-purple/5' 
-                    : 'text-white/70 hover:text-white hover:bg-white/10'
-                }`}
+                className="px-3 py-1.5 rounded-lg text-[9px] font-black uppercase tracking-widest transition-all flex items-center space-x-2 text-white/90 hover:text-white hover:bg-white/10"
               >
                 <FontAwesomeIcon icon={link.icon} className="text-[7px]" />
                 <span>{link.name}</span>
@@ -71,35 +65,29 @@ export default function Navbar() {
             ))}
             
             {user ? (
-              <div className="flex items-center space-x-4 ml-4 pl-4 border-l border-gray-200/20">
+              <div className="flex items-center space-x-4 ml-4 pl-4 border-l border-white/20">
                 <div className="text-right hidden lg:block">
-                  <div className={`text-[7px] font-black uppercase tracking-widest ${isScrolled ? 'text-gray-400' : 'text-white/50'}`}>Balance</div>
-                  <div className={`text-[10px] font-black ${isScrolled ? 'text-brand-purple' : 'text-white'}`}>UGX {userData?.balance?.toLocaleString() || 0}</div>
+                  <div className="text-[7px] font-black uppercase tracking-widest text-white/60">Balance</div>
+                  <div className="text-[10px] font-black text-white">UGX {userData?.balance?.toLocaleString() || 0}</div>
                 </div>
-                <Link to="/profile" className={`w-8 h-8 rounded-lg flex items-center justify-center transition-all ${
-                  isScrolled ? 'bg-gray-50 text-gray-400 hover:text-brand-purple' : 'bg-white/10 text-white/70 hover:text-white'
-                }`}>
+                <Link to="/profile" className="w-8 h-8 rounded-lg flex items-center justify-center transition-all bg-white/10 text-white hover:bg-white/20">
                   <FontAwesomeIcon icon={faUserCircle} className="text-lg" />
                 </Link>
                 <button
                   onClick={handleLogout}
-                  className={`w-8 h-8 rounded-lg flex items-center justify-center transition-all ${
-                    isScrolled 
-                      ? 'bg-gray-50 text-gray-400 hover:text-rose-500 hover:bg-rose-50' 
-                      : 'bg-white/10 text-white/70 hover:text-white hover:bg-white/20'
-                  }`}
+                  className="w-8 h-8 rounded-lg flex items-center justify-center transition-all bg-white/10 text-white hover:bg-rose-500 hover:text-white"
                 >
                   <FontAwesomeIcon icon={faSignOutAlt} className="text-sm" />
                 </button>
               </div>
             ) : (
               <div className="flex items-center space-x-3">
-                <Link to="/login" className={`text-[9px] font-black uppercase tracking-widest transition-colors ${isScrolled ? 'text-gray-500 hover:text-brand-purple' : 'text-white/70 hover:text-white'}`}>
+                <Link to="/login" className="text-[9px] font-black uppercase tracking-widest transition-colors text-white/80 hover:text-white">
                   Login
                 </Link>
                 <Link
                   to="/signup"
-                  className="px-5 py-2 gradient-brand text-white font-black text-[9px] uppercase tracking-widest rounded-lg shadow-sm hover:shadow-md hover:scale-105 transition-all"
+                  className="px-5 py-2 bg-white text-blue-600 font-black text-[9px] uppercase tracking-widest rounded-lg shadow-sm hover:shadow-md hover:scale-105 transition-all"
                 >
                   Sign Up
                 </Link>
@@ -111,15 +99,13 @@ export default function Navbar() {
           <div className="md:hidden flex items-center space-x-4">
             {user && (
               <div className="text-right">
-                <div className={`text-[7px] font-black uppercase tracking-widest ${isScrolled ? 'text-gray-400' : 'text-white/50'}`}>Balance</div>
-                <div className={`text-[10px] font-black ${isScrolled ? 'text-brand-purple' : 'text-white'}`}>UGX {userData?.balance?.toLocaleString() || 0}</div>
+                <div className="text-[7px] font-black uppercase tracking-widest text-white/60">Balance</div>
+                <div className="text-[10px] font-black text-white">UGX {userData?.balance?.toLocaleString() || 0}</div>
               </div>
             )}
             <button
               onClick={() => setIsOpen(!isOpen)}
-              className={`w-8 h-8 rounded-lg flex items-center justify-center transition-all ${
-                isScrolled ? 'bg-gray-50 text-brand-light' : 'bg-white/10 text-white'
-              }`}
+              className="w-8 h-8 rounded-lg flex items-center justify-center transition-all bg-white/10 text-white"
             >
               <FontAwesomeIcon icon={isOpen ? faTimes : faBars} className="text-base" />
             </button>

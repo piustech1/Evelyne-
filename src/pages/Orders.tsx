@@ -66,15 +66,15 @@ export default function Orders() {
               placeholder="Search orders..."
               value={searchTerm}
               onChange={(e) => setSearchTerm(e.target.value)}
-              className="pl-10 pr-4 py-3 bg-white border border-gray-100 rounded-2xl focus:outline-none focus:ring-2 focus:ring-brand-purple/5 focus:border-brand-purple transition-all w-full font-bold text-brand-light shadow-sm text-xs"
+              className="pl-10 pr-4 py-3 bg-gray-50 border border-gray-200 rounded-2xl focus:outline-none focus:ring-2 focus:ring-brand-purple/5 focus:border-brand-purple transition-all w-full font-bold text-gray-900 shadow-sm text-xs"
             />
           </div>
-          <button className="p-3 bg-white border border-gray-100 rounded-2xl text-gray-400 hover:text-brand-purple hover:border-brand-purple transition-all shadow-sm group">
+          <button className="p-3 bg-gray-50 border border-gray-200 rounded-2xl text-gray-400 hover:text-brand-purple hover:border-brand-purple transition-all shadow-sm group">
             <FontAwesomeIcon icon={faFilter} className="group-hover:scale-110 transition-transform text-xs" />
           </button>
         </div>
         
-        <div className="flex items-center space-x-2 text-[9px] font-black text-gray-400 uppercase tracking-widest bg-white px-4 py-2.5 rounded-full border border-gray-100 shadow-sm self-start md:self-auto">
+        <div className="flex items-center space-x-2 text-[9px] font-black text-gray-400 uppercase tracking-widest bg-gray-50 px-4 py-2.5 rounded-full border border-gray-200 shadow-sm self-start md:self-auto">
           <FontAwesomeIcon icon={faHistory} className="text-brand-purple" />
           <span>Showing {filteredOrders.length} Orders</span>
         </div>
@@ -83,10 +83,10 @@ export default function Orders() {
       {filteredOrders.length > 0 ? (
         <>
           {/* Desktop Table */}
-          <div className="hidden lg:block bg-white rounded-3xl shadow-sm border border-gray-100 overflow-hidden">
+          <div className="hidden lg:block bg-white rounded-3xl shadow-sm border border-gray-200 overflow-hidden">
             <table className="w-full text-left border-collapse">
               <thead>
-                <tr className="bg-gray-50 border-b border-gray-100">
+                <tr className="bg-gray-50 border-b border-gray-200">
                   <th className="px-8 py-5 text-[9px] font-black text-gray-400 uppercase tracking-widest">Order ID</th>
                   <th className="px-8 py-5 text-[9px] font-black text-gray-400 uppercase tracking-widest">Service</th>
                   <th className="px-8 py-5 text-[9px] font-black text-gray-400 uppercase tracking-widest">Link</th>
@@ -96,7 +96,7 @@ export default function Orders() {
                   <th className="px-8 py-5 text-[9px] font-black text-gray-400 uppercase tracking-widest">Date</th>
                 </tr>
               </thead>
-              <tbody className="divide-y divide-gray-50">
+              <tbody className="divide-y divide-gray-100">
                 {filteredOrders.map((order, idx) => (
                   <motion.tr
                     key={order.id}
@@ -105,13 +105,13 @@ export default function Orders() {
                     transition={{ delay: idx * 0.05 }}
                     className="hover:bg-gray-50 transition-colors group cursor-pointer"
                   >
-                    <td className="px-8 py-5 text-[10px] font-black text-brand-light group-hover:text-brand-purple transition-colors truncate max-w-[100px]">#{order.id.slice(-6)}</td>
-                    <td className="px-8 py-5 text-[10px] font-bold text-gray-400 max-w-[200px] truncate">{order.service}</td>
+                    <td className="px-8 py-5 text-[10px] font-black text-gray-900 group-hover:text-brand-purple transition-colors truncate max-w-[100px]">#{order.id.slice(-6)}</td>
+                    <td className="px-8 py-5 text-[10px] font-bold text-gray-500 max-w-[200px] truncate">{order.service}</td>
                     <td className="px-8 py-5 text-[10px] text-brand-purple font-black truncate max-w-[150px] hover:underline transition-all underline-offset-4">{order.link}</td>
-                    <td className="px-8 py-5 text-[10px] font-black text-brand-light text-center">{order.quantity}</td>
-                    <td className="px-8 py-5 text-[10px] font-black text-brand-light">UGX {order.price?.toLocaleString()}</td>
+                    <td className="px-8 py-5 text-[10px] font-black text-gray-900 text-center">{order.quantity}</td>
+                    <td className="px-8 py-5 text-[10px] font-black text-gray-900">UGX {order.price?.toLocaleString()}</td>
                     <td className="px-8 py-5">
-                      <span className={`inline-flex items-center px-4 py-1.5 rounded-full text-[8px] font-black uppercase tracking-widest ${statusStyles[order.status as keyof typeof statusStyles]?.bg || 'bg-gray-50'} ${statusStyles[order.status as keyof typeof statusStyles]?.text || 'text-gray-400'} shadow-sm`}>
+                      <span className={`inline-flex items-center px-4 py-1.5 rounded-full text-[8px] font-black uppercase tracking-widest ${statusStyles[order.status as keyof typeof statusStyles]?.bg || 'bg-gray-50'} ${statusStyles[order.status as keyof typeof statusStyles]?.text || 'text-gray-400'} shadow-sm border border-white/50`}>
                         <FontAwesomeIcon icon={statusStyles[order.status as keyof typeof statusStyles]?.icon || faClock} className={`mr-1.5 ${order.status === 'Processing' ? 'animate-spin' : ''}`} />
                         {order.status}
                       </span>
@@ -131,22 +131,22 @@ export default function Orders() {
                 initial={{ opacity: 0, y: 10 }}
                 animate={{ opacity: 1, y: 0 }}
                 transition={{ delay: idx * 0.05 }}
-                className="bg-white p-5 rounded-2xl shadow-sm border border-gray-100 flex flex-col space-y-3"
+                className="bg-gray-50 p-5 rounded-2xl shadow-sm border border-gray-200 flex flex-col space-y-3"
               >
                 <div className="flex justify-between items-center">
                   <div className="flex flex-col">
                     <span className="text-[8px] font-black text-gray-300 uppercase tracking-widest">#{order.id.slice(-6)}</span>
-                    <span className="text-xs font-black text-brand-light tracking-tight truncate max-w-[180px]">{order.service}</span>
+                    <span className="text-xs font-black text-gray-900 tracking-tight truncate max-w-[180px]">{order.service}</span>
                   </div>
-                  <span className={`inline-flex items-center px-3 py-1 rounded-full text-[8px] font-black uppercase tracking-widest ${statusStyles[order.status as keyof typeof statusStyles]?.bg || 'bg-gray-50'} ${statusStyles[order.status as keyof typeof statusStyles]?.text || 'text-gray-400'}`}>
+                  <span className={`inline-flex items-center px-3 py-1 rounded-full text-[8px] font-black uppercase tracking-widest ${statusStyles[order.status as keyof typeof statusStyles]?.bg || 'bg-white'} ${statusStyles[order.status as keyof typeof statusStyles]?.text || 'text-gray-400'} border border-gray-100`}>
                     {order.status}
                   </span>
                 </div>
                 
-                <div className="flex justify-between items-center pt-3 border-t border-gray-50">
+                <div className="flex justify-between items-center pt-3 border-t border-gray-200">
                   <div className="flex flex-col">
                     <span className="text-[8px] font-black text-gray-300 uppercase tracking-widest">Quantity</span>
-                    <span className="text-[10px] font-black text-brand-light">{order.quantity}</span>
+                    <span className="text-[10px] font-black text-gray-900">{order.quantity}</span>
                   </div>
                   <div className="flex flex-col text-right">
                     <span className="text-[8px] font-black text-gray-300 uppercase tracking-widest">Price</span>
@@ -158,15 +158,15 @@ export default function Orders() {
           </div>
         </>
       ) : (
-        <div className="flex flex-col items-center justify-center py-24 text-center space-y-6 bg-white rounded-3xl border border-gray-100 shadow-sm">
-          <div className="w-16 h-16 bg-gray-50 rounded-full flex items-center justify-center text-gray-200 text-2xl">
+        <div className="flex flex-col items-center justify-center py-24 text-center space-y-6 bg-gray-50 rounded-3xl border border-gray-200 shadow-sm">
+          <div className="w-16 h-16 bg-white rounded-full flex items-center justify-center text-gray-200 text-2xl border border-gray-100">
             <FontAwesomeIcon icon={faHistory} />
           </div>
           <div className="space-y-1">
-            <h3 className="text-xl font-display font-black text-brand-light tracking-tighter">No orders found</h3>
+            <h3 className="text-xl font-display font-black text-gray-900 tracking-tighter">No orders found</h3>
             <p className="text-gray-400 max-w-xs mx-auto font-medium text-xs">Your order history will appear here once you start boosting your social media.</p>
           </div>
-          <Link to="/services" className="px-8 py-4 gradient-brand text-white font-black uppercase tracking-widest rounded-xl shadow-sm hover:scale-105 transition-all flex items-center space-x-3 text-[10px]">
+          <Link to="/services" className="px-8 py-4 bg-gradient-to-r from-blue-600 to-purple-600 text-white font-black uppercase tracking-widest rounded-xl shadow-sm hover:scale-105 transition-all flex items-center space-x-3 text-[10px]">
             <FontAwesomeIcon icon={faRocket} className="text-[10px]" />
             <span>Boost Now</span>
           </Link>

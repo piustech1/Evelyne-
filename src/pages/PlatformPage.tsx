@@ -221,14 +221,14 @@ export default function PlatformPage() {
                   className={`p-4 md:p-5 rounded-2xl border transition-all flex items-center justify-between group cursor-pointer ${
                     selectedService?.id === service.id 
                     ? 'border-brand-purple bg-brand-purple/5 shadow-sm' 
-                    : 'border-gray-100 bg-white hover:border-brand-purple/20 shadow-sm'
+                    : 'border-gray-200 bg-gray-50 hover:border-brand-purple/20 shadow-sm'
                   }`}
                 >
                   <div className="flex items-center space-x-4">
                     <div className={`w-10 h-10 rounded-xl flex items-center justify-center transition-all border ${
                       selectedService?.id === service.id 
                       ? 'bg-brand-purple text-white border-brand-purple shadow-sm' 
-                      : 'bg-gray-50 text-gray-300 border-gray-100 group-hover:bg-brand-purple/10 group-hover:text-brand-purple group-hover:border-brand-purple/20'
+                      : 'bg-white text-gray-300 border-gray-200 group-hover:bg-brand-purple/10 group-hover:text-brand-purple group-hover:border-brand-purple/20'
                     }`}>
                       <FontAwesomeIcon icon={faCheckCircle} className="text-xs" />
                     </div>
@@ -244,8 +244,8 @@ export default function PlatformPage() {
                 </motion.div>
               ))
             ) : (
-              <div className="bg-white p-12 rounded-3xl border border-gray-100 text-center space-y-3 shadow-sm">
-                <div className="w-12 h-12 bg-gray-50 rounded-full flex items-center justify-center text-gray-300 mx-auto">
+              <div className="bg-gray-50 p-12 rounded-3xl border border-gray-200 text-center space-y-3 shadow-sm">
+                <div className="w-12 h-12 bg-white rounded-full flex items-center justify-center text-gray-200 mx-auto border border-gray-100">
                   <FontAwesomeIcon icon={faInfoCircle} />
                 </div>
                 <p className="text-gray-400 font-bold uppercase tracking-widest text-[10px]">No services available for this platform yet.</p>
@@ -264,9 +264,9 @@ export default function PlatformPage() {
                   initial={{ opacity: 0, scale: 0.98 }}
                   animate={{ opacity: 1, scale: 1 }}
                   exit={{ opacity: 0, scale: 0.98 }}
-                  className="bg-white p-10 rounded-3xl border-2 border-dashed border-gray-100 flex flex-col items-center justify-center text-center space-y-6 h-full min-h-[350px] shadow-sm"
+                  className="bg-gray-50 p-10 rounded-3xl border-2 border-dashed border-gray-200 flex flex-col items-center justify-center text-center space-y-6 h-full min-h-[350px] shadow-sm"
                 >
-                  <div className="w-16 h-16 bg-gray-50 rounded-full flex items-center justify-center text-gray-200 text-3xl">
+                  <div className="w-16 h-16 bg-white rounded-full flex items-center justify-center text-gray-200 text-3xl border border-gray-100">
                     <FontAwesomeIcon icon={faInfoCircle} />
                   </div>
                   <div className="space-y-2">
@@ -280,14 +280,14 @@ export default function PlatformPage() {
                   initial={{ opacity: 0, y: 10 }}
                   animate={{ opacity: 1, y: 0 }}
                   exit={{ opacity: 0, y: -10 }}
-                  className="bg-white p-6 md:p-8 rounded-3xl shadow-sm border border-gray-100 space-y-6"
+                  className="bg-white p-6 md:p-8 rounded-3xl shadow-md border border-gray-200 space-y-6"
                 >
-                  <div className="flex items-center space-x-4 pb-6 border-b border-gray-50">
-                    <div className="w-12 h-12 gradient-brand rounded-xl flex items-center justify-center text-white text-xl shadow-sm">
+                  <div className="flex items-center space-x-4 pb-6 border-b border-gray-100">
+                    <div className="w-12 h-12 bg-gradient-to-r from-blue-600 to-purple-600 rounded-xl flex items-center justify-center text-white text-xl shadow-sm">
                       <FontAwesomeIcon icon={faShoppingCart} />
                     </div>
                     <div>
-                      <h2 className="text-xl font-black text-brand-light tracking-tighter">Configure Order</h2>
+                      <h2 className="text-xl font-black text-brand-light tracking-tighter text-gray-900">Configure Order</h2>
                       <p className="text-[9px] text-brand-purple font-black uppercase tracking-widest mt-0.5">{selectedService.name}</p>
                     </div>
                   </div>
@@ -315,24 +315,24 @@ export default function PlatformPage() {
 
                   <div className="space-y-6">
                     <div className="space-y-2">
-                      <label className="text-[9px] font-black text-gray-400 ml-1 uppercase tracking-[0.2em]">Target Link / URL</label>
+                      <label className="text-[9px] font-black text-gray-500 ml-1 uppercase tracking-[0.2em]">Target Link / URL</label>
                       <input
                         type="url"
                         value={link}
                         onChange={(e) => setLink(e.target.value)}
                         placeholder="https://platform.com/username"
-                        className="w-full p-4 bg-gray-50 border border-gray-100 rounded-xl text-brand-light placeholder-gray-300 focus:outline-none focus:ring-2 focus:ring-brand-purple/5 focus:border-brand-purple transition-all text-xs font-bold"
+                        className="w-full p-4 bg-gray-50 border border-gray-200 rounded-xl text-gray-900 placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-brand-purple/5 focus:border-brand-purple transition-all text-xs font-bold"
                       />
                     </div>
 
                     <div className="space-y-2">
-                      <label className="text-[9px] font-black text-gray-400 ml-1 uppercase tracking-[0.2em]">Order Quantity</label>
+                      <label className="text-[9px] font-black text-gray-500 ml-1 uppercase tracking-[0.2em]">Order Quantity</label>
                       <input
                         type="number"
                         value={quantity}
                         onChange={(e) => setQuantity(Number(e.target.value))}
                         placeholder={`Min: ${selectedService.min || 100}`}
-                        className="w-full p-4 bg-gray-50 border border-gray-100 rounded-xl text-brand-light placeholder-gray-300 focus:outline-none focus:ring-2 focus:ring-brand-purple/5 focus:border-brand-purple transition-all text-xl font-display font-black"
+                        className="w-full p-4 bg-gray-50 border border-gray-200 rounded-xl text-gray-900 placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-brand-purple/5 focus:border-brand-purple transition-all text-xl font-display font-black"
                       />
                       <div className="flex justify-between px-1">
                         <span className="text-[8px] font-black text-gray-400 uppercase tracking-widest">Min: {selectedService.min || 100}</span>
@@ -340,21 +340,21 @@ export default function PlatformPage() {
                       </div>
                     </div>
 
-                    <div className="p-5 bg-gray-50 rounded-2xl border border-gray-100 flex justify-between items-center shadow-inner">
+                    <div className="p-5 bg-gray-50 rounded-2xl border border-gray-200 flex justify-between items-center shadow-inner">
                       <div>
                         <div className="text-[8px] font-black text-gray-400 uppercase tracking-widest mb-1">Total Price</div>
                         <div className="text-2xl font-display font-black text-brand-purple tracking-tighter">UGX {totalPrice.toLocaleString()}</div>
                       </div>
                       <div className="text-right">
                         <div className="text-[8px] font-black text-gray-400 uppercase tracking-widest mb-1">Rate</div>
-                        <div className="text-[10px] font-black text-brand-light">UGX {selectedService.price}/1k</div>
+                        <div className="text-[10px] font-black text-gray-900">UGX {selectedService.price}/1k</div>
                       </div>
                     </div>
 
                     <button 
                       onClick={handlePlaceOrder}
                       disabled={isOrdering || orderSuccess}
-                      className="w-full py-4 gradient-brand text-white font-black uppercase tracking-widest rounded-xl shadow-sm hover:shadow-md hover:scale-[1.01] active:scale-[0.99] transition-all text-[10px] flex items-center justify-center space-x-2 group disabled:opacity-50"
+                      className="w-full py-4 bg-gradient-to-r from-blue-600 to-purple-600 text-white font-black uppercase tracking-widest rounded-xl shadow-sm hover:shadow-md hover:scale-[1.01] active:scale-[0.99] transition-all text-[10px] flex items-center justify-center space-x-2 group disabled:opacity-50"
                     >
                       <span>{isOrdering ? 'Processing...' : 'Place Order Now'}</span>
                       {!isOrdering && <FontAwesomeIcon icon={faRocket} className="text-[8px] group-hover:translate-x-0.5 transition-transform" />}

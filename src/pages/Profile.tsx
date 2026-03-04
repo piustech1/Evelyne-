@@ -131,18 +131,18 @@ export default function Profile() {
         <div className="lg:col-span-8 space-y-8">
           {/* Quick Actions Grid */}
           <section>
-            <h3 className="text-[9px] font-black text-gray-400 uppercase tracking-[0.2em] mb-4 ml-1">Quick Actions</h3>
+            <h3 className="text-[9px] font-black text-gray-500 uppercase tracking-[0.2em] mb-4 ml-1">Quick Actions</h3>
             <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
               {quickActions.map((action, idx) => (
                 <Link
                   key={idx}
                   to={action.path}
-                  className="bg-white p-5 rounded-2xl border border-gray-100 shadow-sm hover:border-brand-purple/30 hover:-translate-y-1 transition-all group text-center"
+                  className="bg-gray-50 p-5 rounded-2xl border border-gray-200 shadow-sm hover:border-brand-purple/30 hover:-translate-y-1 transition-all group text-center"
                 >
                   <div className={`w-10 h-10 ${action.color} rounded-xl flex items-center justify-center text-white mx-auto mb-3 shadow-sm group-hover:scale-110 transition-transform`}>
                     <FontAwesomeIcon icon={action.icon} className="text-xs" />
                   </div>
-                  <span className="text-[9px] font-black text-brand-light uppercase tracking-widest">{action.title}</span>
+                  <span className="text-[9px] font-black text-gray-900 uppercase tracking-widest">{action.title}</span>
                 </Link>
               ))}
             </div>
@@ -150,16 +150,16 @@ export default function Profile() {
 
           {/* Stats Section */}
           <section>
-            <h3 className="text-[9px] font-black text-gray-400 uppercase tracking-[0.2em] mb-4 ml-1">Account Statistics</h3>
+            <h3 className="text-[9px] font-black text-gray-500 uppercase tracking-[0.2em] mb-4 ml-1">Account Statistics</h3>
             <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
               {stats.map((stat, idx) => (
-                <div key={idx} className="bg-white p-5 rounded-2xl border border-gray-100 shadow-sm">
+                <div key={idx} className="bg-gray-50 p-5 rounded-2xl border border-gray-200 shadow-sm">
                   <div className="flex items-center justify-between mb-3">
-                    <div className="w-7 h-7 bg-gray-50 rounded-lg flex items-center justify-center text-gray-400 text-[10px]">
+                    <div className="w-7 h-7 bg-white rounded-lg flex items-center justify-center text-gray-400 text-[10px] border border-gray-100 shadow-sm">
                       <FontAwesomeIcon icon={stat.icon} />
                     </div>
                   </div>
-                  <div className="text-base font-black text-brand-light mb-0.5 tracking-tight">{stat.value}</div>
+                  <div className="text-base font-black text-gray-900 mb-0.5 tracking-tight">{stat.value}</div>
                   <div className="text-[8px] font-black text-gray-400 uppercase tracking-widest">{stat.label}</div>
                 </div>
               ))}
@@ -170,9 +170,9 @@ export default function Profile() {
           <motion.div
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
-            className="bg-white p-6 md:p-10 rounded-3xl shadow-sm border border-gray-100"
+            className="bg-gray-50 p-6 md:p-10 rounded-3xl shadow-sm border border-gray-200"
           >
-            <h3 className="text-xl font-display font-black text-brand-light tracking-tighter mb-8">Edit Profile</h3>
+            <h3 className="text-xl font-display font-black text-gray-900 tracking-tighter mb-8">Edit Profile</h3>
             
             {message.text && (
               <div className={`mb-6 p-3 rounded-xl text-[10px] font-bold text-center border ${
@@ -185,22 +185,22 @@ export default function Profile() {
             <form className="space-y-8" onSubmit={handleUpdateProfile}>
               <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                 <div className="space-y-2">
-                  <label className="text-[9px] font-black text-gray-400 uppercase tracking-widest ml-1">Full Name</label>
+                  <label className="text-[9px] font-black text-gray-500 uppercase tracking-widest ml-1">Full Name</label>
                   <input
                     type="text"
                     value={name}
                     onChange={(e) => setName(e.target.value)}
                     placeholder="Your Name"
-                    className="block w-full px-4 py-3 bg-gray-50 border border-gray-100 rounded-xl text-brand-light focus:outline-none focus:ring-2 focus:ring-brand-purple/5 focus:border-brand-purple transition-all font-bold text-xs"
+                    className="block w-full px-4 py-3 bg-white border border-gray-200 rounded-xl text-gray-900 focus:outline-none focus:ring-2 focus:ring-brand-purple/5 focus:border-brand-purple transition-all font-bold text-xs shadow-sm"
                   />
                 </div>
                 <div className="space-y-2">
-                  <label className="text-[9px] font-black text-gray-400 uppercase tracking-widest ml-1">Email Address</label>
+                  <label className="text-[9px] font-black text-gray-500 uppercase tracking-widest ml-1">Email Address</label>
                   <input
                     type="email"
                     disabled
                     value={user?.email || ''}
-                    className="block w-full px-4 py-3 bg-gray-50 border border-gray-100 rounded-xl text-gray-400 cursor-not-allowed font-bold text-xs"
+                    className="block w-full px-4 py-3 bg-white border border-gray-200 rounded-xl text-gray-400 cursor-not-allowed font-bold text-xs shadow-sm"
                   />
                 </div>
               </div>
@@ -208,7 +208,7 @@ export default function Profile() {
                 <button 
                   type="submit" 
                   disabled={isLoading}
-                  className="px-8 py-4 gradient-brand text-white font-black uppercase tracking-widest text-[10px] rounded-xl shadow-sm hover:scale-[1.02] active:scale-[0.98] transition-all disabled:opacity-50"
+                  className="px-8 py-4 bg-gradient-to-r from-blue-600 to-purple-600 text-white font-black uppercase tracking-widest text-[10px] rounded-xl shadow-sm hover:scale-[1.02] active:scale-[0.98] transition-all disabled:opacity-50"
                 >
                   {isLoading ? 'Updating...' : 'Update Profile'}
                 </button>
@@ -219,7 +219,7 @@ export default function Profile() {
 
         {/* Sidebar: Security & Logout */}
         <div className="lg:col-span-4 space-y-8">
-          <div className="bg-brand-light p-8 rounded-3xl text-white space-y-8 shadow-lg relative overflow-hidden">
+          <div className="bg-gray-900 p-8 rounded-3xl text-white space-y-8 shadow-lg relative overflow-hidden">
             <div className="absolute top-0 right-0 w-32 h-32 bg-white/5 rounded-full -translate-x-1/2 -translate-y-1/2 blur-2xl" />
             
             <div>
@@ -230,7 +230,7 @@ export default function Profile() {
             <div className="space-y-3">
               <button className="w-full p-4 rounded-2xl bg-white/5 hover:bg-white/10 flex items-center justify-between transition-all group border border-white/5">
                 <div className="flex items-center space-x-3">
-                  <div className="w-8 h-8 rounded-lg bg-brand-purple/20 flex items-center justify-center text-brand-purple border border-brand-purple/10">
+                  <div className="w-8 h-8 rounded-lg bg-purple-500/20 flex items-center justify-center text-purple-400 border border-purple-500/10">
                     <FontAwesomeIcon icon={faShieldAlt} className="text-xs" />
                   </div>
                   <span className="text-xs font-bold">Two-Factor Auth</span>
@@ -241,12 +241,12 @@ export default function Profile() {
               </button>
               <button className="w-full p-4 rounded-2xl bg-white/5 hover:bg-white/10 flex items-center justify-between transition-all group border border-white/5">
                 <div className="flex items-center space-x-3">
-                  <div className="w-8 h-8 rounded-lg bg-brand-blue/20 flex items-center justify-center text-brand-blue border border-brand-blue/10">
+                  <div className="w-8 h-8 rounded-lg bg-blue-500/20 flex items-center justify-center text-blue-400 border border-blue-500/10">
                     <FontAwesomeIcon icon={faBell} className="text-xs" />
                   </div>
                   <span className="text-xs font-bold">Notifications</span>
                 </div>
-                <div className="w-8 h-4 bg-brand-purple rounded-full relative">
+                <div className="w-8 h-4 bg-purple-600 rounded-full relative">
                   <div className="absolute right-0.5 top-0.5 w-3 h-3 bg-white rounded-full" />
                 </div>
               </button>
@@ -264,14 +264,14 @@ export default function Profile() {
           </div>
 
           {/* Support Card */}
-          <div className="bg-white p-8 rounded-3xl border border-gray-100 shadow-sm text-center relative overflow-hidden">
-            <div className="absolute top-0 right-0 w-32 h-32 bg-brand-blue/5 rounded-full translate-x-1/2 -translate-y-1/2 blur-2xl" />
-            <div className="w-12 h-12 bg-brand-blue/5 rounded-xl flex items-center justify-center text-brand-blue text-xl mx-auto mb-4 border border-brand-blue/10">
+          <div className="bg-gray-50 p-8 rounded-3xl border border-gray-200 shadow-sm text-center relative overflow-hidden">
+            <div className="absolute top-0 right-0 w-32 h-32 bg-blue-500/5 rounded-full translate-x-1/2 -translate-y-1/2 blur-2xl" />
+            <div className="w-12 h-12 bg-white rounded-xl flex items-center justify-center text-blue-600 text-xl mx-auto mb-4 border border-gray-100 shadow-sm">
               <FontAwesomeIcon icon={faRocket} />
             </div>
-            <h4 className="text-xl font-display font-black text-brand-light tracking-tighter mb-2">Need Help?</h4>
+            <h4 className="text-xl font-display font-black text-gray-900 tracking-tighter mb-2">Need Help?</h4>
             <p className="text-gray-400 text-[10px] font-medium mb-6 leading-relaxed">Our support team is available 24/7 to assist you.</p>
-            <button className="w-full py-3 bg-gray-50 text-brand-light font-black uppercase tracking-widest text-[9px] rounded-xl hover:gradient-brand hover:text-white transition-all border border-gray-100">
+            <button className="w-full py-3 bg-white text-gray-900 font-black uppercase tracking-widest text-[9px] rounded-xl hover:bg-gradient-to-r hover:from-blue-600 hover:to-purple-600 hover:text-white transition-all border border-gray-200 shadow-sm">
               Contact Support
             </button>
           </div>
