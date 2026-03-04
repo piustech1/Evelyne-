@@ -12,6 +12,7 @@ import Dashboard from './pages/Dashboard';
 import Services from './pages/Services';
 import PlatformPage from './pages/PlatformPage';
 import Boost from './pages/Boost';
+import OrderPage from './pages/OrderPage';
 import Orders from './pages/Orders';
 import Wallet from './pages/Wallet';
 import Profile from './pages/Profile';
@@ -82,6 +83,7 @@ export default function App() {
                   <Route path="/services" element={user ? <Services /> : <Navigate to="/login" />} />
                   <Route path="/platform" element={user ? <PlatformPage /> : <Navigate to="/login" />} />
                   <Route path="/boost" element={user ? <Boost /> : <Navigate to="/login" />} />
+                  <Route path="/order" element={user ? <OrderPage /> : <Navigate to="/login" />} />
                   <Route path="/orders" element={user ? <Orders /> : <Navigate to="/login" />} />
                   <Route path="/wallet" element={user ? <Wallet /> : <Navigate to="/login" />} />
                   <Route path="/profile" element={user ? <Profile /> : <Navigate to="/login" />} />

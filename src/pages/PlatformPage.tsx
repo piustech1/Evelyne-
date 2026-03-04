@@ -1,12 +1,10 @@
 import { useState, useEffect } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
-import { faInstagram, faTiktok, faYoutube, faFacebook, faTelegram, faTwitter } from '@fortawesome/free-brands-svg-icons';
-import { faArrowLeft, faShoppingCart, faCheckCircle, faInfoCircle, faRocket, faGlobe } from '@fortawesome/free-solid-svg-icons';
+import { faInstagram, faTiktok, faYoutube, faFacebook, faTelegram, faTwitter, faSpotify, faSnapchat, faLinkedin, faWhatsapp } from '@fortawesome/free-brands-svg-icons';
+import { faArrowLeft, faShoppingCart, faCheckCircle, faInfoCircle, faRocket, faGlobe, faSearch, faFilter, faList } from '@fortawesome/free-solid-svg-icons';
 import { motion, AnimatePresence } from 'motion/react';
 import { useAuth } from '../hooks/useAuth';
-import { db } from '../lib/firebase';
-import { ref, push, set, runTransaction } from 'firebase/database';
 import { fetchServices, Service } from '../lib/servicesStore';
 
 const platformIcons: Record<string, any> = {
@@ -16,6 +14,10 @@ const platformIcons: Record<string, any> = {
   youtube: faYoutube,
   telegram: faTelegram,
   twitter: faTwitter,
+  spotify: faSpotify,
+  snapchat: faSnapchat,
+  linkedin: faLinkedin,
+  whatsapp: faWhatsapp,
   others: faGlobe
 };
 
@@ -26,23 +28,38 @@ const platformColors: Record<string, string> = {
   youtube: 'text-white bg-[#FF0000]',
   telegram: 'text-white bg-[#0088cc]',
   twitter: 'text-white bg-[#1DA1F2]',
+  spotify: 'text-white bg-[#1DB954]',
+  snapchat: 'text-black bg-[#FFFC00]',
+  linkedin: 'text-white bg-[#0077B5]',
+  whatsapp: 'text-white bg-[#25D366]',
   others: 'text-white bg-gray-500',
 };
+
+const ServiceSkeleton = () => (
+  <div className="bg-gray-50 rounded-2xl p-4 border border-gray-100 shadow-sm animate-pulse space-y-4">
+    <div className="flex items-center space-x-3">
+      <div className="w-10 h-10 bg-gray-200 rounded-xl"></div>
+      <div className="h-4 bg-gray-200 rounded w-2/3"></div>
+    </div>
+    <div className="grid grid-cols-2 gap-3">
+      <div className="h-8 bg-gray-200 rounded-lg"></div>
+      <div className="h-8 bg-gray-200 rounded-lg"></div>
+    </div>
+    <div className="h-10 bg-gray-200 rounded-xl w-full"></div>
+  </div>
+);
 
 export default function PlatformPage() {
   const [searchParams] = useSearchParams();
   const platform = searchParams.get('platform') || 'Others';
   const navigate = useNavigate();
-  const { user, userData } = useAuth();
   
   const [services, setServices] = useState<Service[]>([]);
-  const [selectedService, setSelectedService] = useState<Service | null>(null);
-  const [quantity, setQuantity] = useState<number>(100);
-  const [link, setLink] = useState('');
   const [isLoading, setIsLoading] = useState(true);
-  const [isOrdering, setIsOrdering] = useState(false);
-  const [orderError, setOrderError] = useState('');
-  const [orderSuccess, setOrderSuccess] = useState(false);
+  const [activeFilter, setActiveFilter] = useState('All');
+  const [searchTerm, setSearchTerm] = useState('');
+
+  const filters = ['All', 'Followers', 'Likes', 'Views', 'Comments', 'Shares', 'Other'];
 
   useEffect(() => {
     const loadServices = async () => {
@@ -59,288 +76,157 @@ export default function PlatformPage() {
     loadServices();
   }, [platform]);
 
-  const totalPrice = selectedService ? Math.round((selectedService.price * quantity) / 1000) : 0;
-  const hasInsufficientBalance = userData && userData.balance < totalPrice;
-
-  const handlePlaceOrder = async () => {
-    if (!user || !userData) {
-      setOrderError('Please login to place an order');
-      return;
+  const filteredServices = services.filter(s => {
+    const matchesSearch = s.name.toLowerCase().includes(searchTerm.toLowerCase());
+    if (activeFilter === 'All') return matchesSearch;
+    if (activeFilter === 'Other') {
+      const knownFilters = ['Followers', 'Likes', 'Views', 'Comments', 'Shares'];
+      return matchesSearch && !knownFilters.some(f => s.name.toLowerCase().includes(f.toLowerCase()));
     }
-    if (!selectedService) {
-      setOrderError('Please select a service');
-      return;
-    }
-    if (!link) {
-      setOrderError('Please provide a target link');
-      return;
-    }
-    if (quantity < (selectedService.min || 100)) {
-      setOrderError(`Minimum quantity is ${selectedService.min || 100}`);
-      return;
-    }
-    
-    if (hasInsufficientBalance) {
-      setOrderError('Insufficient balance. Please top up to continue.');
-      return;
-    }
+    return matchesSearch && s.name.toLowerCase().includes(activeFilter.toLowerCase());
+  });
 
-    setIsOrdering(true);
-    setOrderError('');
-
-    try {
-      const apiResponse = await fetch('/api/smm/order', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          service: selectedService.service,
-          link,
-          quantity
-        })
-      });
-
-      const apiData = await apiResponse.json();
-      if (apiData.error) throw new Error(apiData.error);
-      if (!apiData.order) throw new Error('Failed to place order with provider');
-
-      const userRef = ref(db, `users/${user.uid}`);
-      await runTransaction(userRef, (currentData) => {
-        if (currentData) {
-          if (currentData.balance < totalPrice) throw new Error('Insufficient balance');
-          currentData.balance -= totalPrice;
-        }
-        return currentData;
-      });
-
-      const originalCost = (selectedService.rate * quantity) / 1000;
-      const profit = totalPrice - originalCost;
-
-      const ordersRef = ref(db, 'orders');
-      const newOrderRef = push(ordersRef);
-      await set(newOrderRef, {
-        userId: user.uid,
-        userName: userData.name,
-        userEmail: user.email,
-        serviceId: selectedService.service,
-        apiServiceId: selectedService.service,
-        apiOrderId: apiData.order,
-        service: selectedService.name,
-        platform: selectedService.category,
-        link,
-        quantity,
-        price: totalPrice,
-        originalCost,
-        profit,
-        status: 'Pending',
-        createdAt: new Date().toISOString(),
-      });
-
-      setOrderSuccess(true);
-      setTimeout(() => navigate('/orders'), 2000);
-    } catch (err: any) {
-      setOrderError(err.message || 'Failed to place order');
-    } finally {
-      setIsOrdering(false);
-    }
+  const handleBoost = (service: Service) => {
+    navigate(`/order?service=${service.apiServiceId}`);
   };
 
-  if (isLoading) return <div className="pt-32 text-center text-brand-light font-black uppercase tracking-widest">Loading {platform} Services...</div>;
+  const shortenName = (name: string) => {
+    if (name.length > 45) return name.substring(0, 42) + '...';
+    return name;
+  };
 
   const icon = platformIcons[platform.toLowerCase()] || faRocket;
   const colorClass = platformColors[platform.toLowerCase()] || 'bg-brand-purple text-white';
 
   return (
-    <div className="pt-12 pb-32 px-4 sm:px-6 lg:px-8 max-w-7xl mx-auto space-y-8">
-      <div className="flex flex-col md:flex-row md:items-center justify-between gap-6">
-        <div className="flex items-center space-x-4">
-          <div className={`w-14 h-14 ${colorClass} rounded-2xl flex items-center justify-center text-2xl shadow-sm border border-white/10`}>
-            <FontAwesomeIcon icon={icon} />
-          </div>
-          <div>
-            <h1 className="text-3xl font-display font-black text-brand-light tracking-tighter">{platform} Services</h1>
-            <p className="text-gray-400 font-medium text-sm">Boost your presence instantly</p>
-          </div>
-        </div>
-        
-        <button 
-          onClick={() => navigate('/dashboard')}
-          className="flex items-center px-4 py-2 rounded-xl bg-white border border-gray-100 text-[10px] font-black text-gray-400 uppercase tracking-widest hover:text-brand-purple hover:border-brand-purple transition-all shadow-sm group self-start md:self-auto"
+    <div className="min-h-screen bg-white pb-32">
+      {/* Curved Header */}
+      <div className="gradient-brand pt-12 pb-24 px-6 text-white text-center rounded-b-[3rem] shadow-lg relative overflow-hidden">
+        <div className="absolute top-0 right-0 w-64 h-64 bg-white/10 rounded-full -translate-x-1/2 -translate-y-1/2 blur-3xl" />
+        <motion.div
+          initial={{ opacity: 0, y: -20 }}
+          animate={{ opacity: 1, y: 0 }}
+          className="max-w-4xl mx-auto relative z-10 space-y-4"
         >
-          <FontAwesomeIcon icon={faArrowLeft} className="mr-2 group-hover:-translate-x-1 transition-transform" />
-          Back to Dashboard
-        </button>
+          <div className="flex items-center justify-center space-x-4">
+            <button 
+              onClick={() => navigate('/dashboard')}
+              className="w-10 h-10 rounded-xl bg-white/10 backdrop-blur-md border border-white/20 flex items-center justify-center hover:bg-white/20 transition-all"
+            >
+              <FontAwesomeIcon icon={faArrowLeft} />
+            </button>
+            <div className={`w-12 h-12 ${colorClass} rounded-xl flex items-center justify-center text-xl shadow-lg border-2 border-white/20`}>
+              <FontAwesomeIcon icon={icon} />
+            </div>
+            <h1 className="text-2xl md:text-4xl font-display font-black tracking-tighter">{platform} Services</h1>
+          </div>
+          <p className="text-white/80 max-w-md mx-auto font-medium text-xs uppercase tracking-widest">
+            Boost your {platform} presence with our premium tools.
+          </p>
+        </motion.div>
       </div>
 
-      <div className="grid grid-cols-1 lg:grid-cols-12 gap-8">
-        {/* Services List */}
-        <div className="lg:col-span-7 space-y-4">
-          <div className="flex items-center justify-between px-2">
-            <h2 className="text-[10px] font-black text-gray-400 uppercase tracking-[0.2em]">Available Services</h2>
-            <span className="text-[9px] font-black text-brand-purple bg-brand-purple/5 px-2 py-1 rounded-full uppercase tracking-widest">{services.length} Options</span>
+      <div className="max-w-7xl mx-auto px-4 -mt-12 relative z-20">
+        {/* Search and Filters */}
+        <div className="bg-white rounded-[2.5rem] shadow-xl border border-gray-100 p-6 md:p-8 mb-12 space-y-6">
+          <div className="relative group">
+            <div className="absolute inset-y-0 left-0 pl-5 flex items-center pointer-events-none text-gray-400 group-focus-within:text-brand-purple transition-colors">
+              <FontAwesomeIcon icon={faSearch} />
+            </div>
+            <input
+              type="text"
+              placeholder={`Search ${platform} services...`}
+              value={searchTerm}
+              onChange={(e) => setSearchTerm(e.target.value)}
+              className="pl-12 pr-6 py-4 bg-gray-50 border border-gray-100 rounded-2xl text-gray-900 placeholder-gray-400 focus:outline-none focus:ring-4 focus:ring-brand-purple/5 focus:border-brand-purple transition-all w-full font-bold text-sm"
+            />
           </div>
-          
-          <div className="space-y-3">
-            {services.length > 0 ? (
-              services.map((service: any) => (
-                <motion.div
-                  key={service.id}
-                  whileHover={{ scale: 1.005 }}
-                  whileTap={{ scale: 0.995 }}
-                  onClick={() => {
-                    setSelectedService(service);
-                    setOrderError('');
-                    setOrderSuccess(false);
-                  }}
-                  className={`p-4 md:p-5 rounded-2xl border transition-all flex items-center justify-between group cursor-pointer ${
-                    selectedService?.id === service.id 
-                    ? 'border-brand-purple bg-brand-purple/5 shadow-sm' 
-                    : 'border-gray-200 bg-gray-50 hover:border-brand-purple/20 shadow-sm'
-                  }`}
-                >
-                  <div className="flex items-center space-x-4">
-                    <div className={`w-10 h-10 rounded-xl flex items-center justify-center transition-all border ${
-                      selectedService?.id === service.id 
-                      ? 'bg-brand-purple text-white border-brand-purple shadow-sm' 
-                      : 'bg-white text-gray-300 border-gray-200 group-hover:bg-brand-purple/10 group-hover:text-brand-purple group-hover:border-brand-purple/20'
-                    }`}>
-                      <FontAwesomeIcon icon={faCheckCircle} className="text-xs" />
-                    </div>
-                    <div>
-                      <h3 className="text-sm font-black text-brand-light group-hover:text-brand-purple transition-colors tracking-tight">{service.name}</h3>
-                      <p className="text-[10px] text-gray-400 font-medium line-clamp-1">{service.description || 'High quality service'}</p>
-                    </div>
-                  </div>
-                  <div className="text-right">
-                    <div className="text-sm font-black text-brand-purple">UGX {service.price?.toLocaleString()}</div>
-                    <div className="text-[8px] text-gray-400 font-black uppercase tracking-widest">Per 1k</div>
-                  </div>
-                </motion.div>
-              ))
-            ) : (
-              <div className="bg-gray-50 p-12 rounded-3xl border border-gray-200 text-center space-y-3 shadow-sm">
-                <div className="w-12 h-12 bg-white rounded-full flex items-center justify-center text-gray-200 mx-auto border border-gray-100">
-                  <FontAwesomeIcon icon={faInfoCircle} />
-                </div>
-                <p className="text-gray-400 font-bold uppercase tracking-widest text-[10px]">No services available for this platform yet.</p>
-              </div>
-            )}
+
+          <div className="flex flex-wrap gap-2">
+            {filters.map((f) => (
+              <button
+                key={f}
+                onClick={() => setActiveFilter(f)}
+                className={`px-5 py-2.5 rounded-xl text-[10px] font-black uppercase tracking-widest transition-all ${
+                  activeFilter === f 
+                  ? 'bg-brand-purple text-white shadow-md shadow-brand-purple/20' 
+                  : 'bg-gray-50 text-gray-400 hover:bg-gray-100'
+                }`}
+              >
+                {f}
+              </button>
+            ))}
           </div>
         </div>
 
-        {/* Order Form */}
-        <div className="lg:col-span-5 relative">
-          <div className="sticky top-24">
-            <AnimatePresence mode="wait">
-              {!selectedService ? (
-                <motion.div
-                  key="placeholder"
-                  initial={{ opacity: 0, scale: 0.98 }}
-                  animate={{ opacity: 1, scale: 1 }}
-                  exit={{ opacity: 0, scale: 0.98 }}
-                  className="bg-gray-50 p-10 rounded-3xl border-2 border-dashed border-gray-200 flex flex-col items-center justify-center text-center space-y-6 h-full min-h-[350px] shadow-sm"
-                >
-                  <div className="w-16 h-16 bg-white rounded-full flex items-center justify-center text-gray-200 text-3xl border border-gray-100">
-                    <FontAwesomeIcon icon={faInfoCircle} />
-                  </div>
-                  <div className="space-y-2">
-                    <h3 className="text-xl font-black text-brand-light tracking-tighter">Select a Service</h3>
-                    <p className="text-gray-400 font-medium max-w-[200px] mx-auto text-xs leading-relaxed">Pick a service from the left to configure your boost order.</p>
-                  </div>
-                </motion.div>
-              ) : (
-                <motion.div
-                  key="form"
-                  initial={{ opacity: 0, y: 10 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  exit={{ opacity: 0, y: -10 }}
-                  className="bg-white p-6 md:p-8 rounded-3xl shadow-md border border-gray-200 space-y-6"
-                >
-                  <div className="flex items-center space-x-4 pb-6 border-b border-gray-100">
-                    <div className="w-12 h-12 bg-gradient-to-r from-blue-600 to-purple-600 rounded-xl flex items-center justify-center text-white text-xl shadow-sm">
-                      <FontAwesomeIcon icon={faShoppingCart} />
-                    </div>
-                    <div>
-                      <h2 className="text-xl font-black text-brand-light tracking-tighter text-gray-900">Configure Order</h2>
-                      <p className="text-[9px] text-brand-purple font-black uppercase tracking-widest mt-0.5">{selectedService.name}</p>
-                    </div>
-                  </div>
-
-                  {orderError && (
-                    <div className="p-4 bg-rose-50 border border-rose-100 rounded-2xl text-rose-500 text-[10px] font-bold text-center space-y-3">
-                      <div>{orderError}</div>
-                      {hasInsufficientBalance && (
-                        <button 
-                          onClick={() => navigate('/wallet')}
-                          className="w-full py-2 bg-rose-500 text-white rounded-lg text-[9px] uppercase tracking-widest hover:bg-rose-600 transition-colors"
-                        >
-                          Top Up Now
-                        </button>
-                      )}
-                    </div>
-                  )}
-
-                  {orderSuccess && (
-                    <div className="p-4 bg-emerald-50 border border-emerald-100 rounded-2xl text-emerald-500 text-[10px] font-bold text-center flex items-center justify-center space-x-2">
-                      <FontAwesomeIcon icon={faCheckCircle} />
-                      <span>Order placed successfully! Redirecting...</span>
-                    </div>
-                  )}
-
-                  <div className="space-y-6">
-                    <div className="space-y-2">
-                      <label className="text-[9px] font-black text-gray-500 ml-1 uppercase tracking-[0.2em]">Target Link / URL</label>
-                      <input
-                        type="url"
-                        value={link}
-                        onChange={(e) => setLink(e.target.value)}
-                        placeholder="https://platform.com/username"
-                        className="w-full p-4 bg-gray-50 border border-gray-200 rounded-xl text-gray-900 placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-brand-purple/5 focus:border-brand-purple transition-all text-xs font-bold"
-                      />
-                    </div>
-
-                    <div className="space-y-2">
-                      <label className="text-[9px] font-black text-gray-500 ml-1 uppercase tracking-[0.2em]">Order Quantity</label>
-                      <input
-                        type="number"
-                        value={quantity}
-                        onChange={(e) => setQuantity(Number(e.target.value))}
-                        placeholder={`Min: ${selectedService.min || 100}`}
-                        className="w-full p-4 bg-gray-50 border border-gray-200 rounded-xl text-gray-900 placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-brand-purple/5 focus:border-brand-purple transition-all text-xl font-display font-black"
-                      />
-                      <div className="flex justify-between px-1">
-                        <span className="text-[8px] font-black text-gray-400 uppercase tracking-widest">Min: {selectedService.min || 100}</span>
-                        <span className="text-[8px] font-black text-gray-400 uppercase tracking-widest">Max: {selectedService.max > 1000000 ? '1M+' : selectedService.max?.toLocaleString()}</span>
-                      </div>
-                    </div>
-
-                    <div className="p-5 bg-gray-50 rounded-2xl border border-gray-200 flex justify-between items-center shadow-inner">
-                      <div>
-                        <div className="text-[8px] font-black text-gray-400 uppercase tracking-widest mb-1">Total Price</div>
-                        <div className="text-2xl font-display font-black text-brand-purple tracking-tighter">UGX {totalPrice.toLocaleString()}</div>
-                      </div>
-                      <div className="text-right">
-                        <div className="text-[8px] font-black text-gray-400 uppercase tracking-widest mb-1">Rate</div>
-                        <div className="text-[10px] font-black text-gray-900">UGX {selectedService.price}/1k</div>
-                      </div>
-                    </div>
-
-                    <button 
-                      onClick={handlePlaceOrder}
-                      disabled={isOrdering || orderSuccess}
-                      className="w-full py-4 bg-gradient-to-r from-blue-600 to-purple-600 text-white font-black uppercase tracking-widest rounded-xl shadow-sm hover:shadow-md hover:scale-[1.01] active:scale-[0.99] transition-all text-[10px] flex items-center justify-center space-x-2 group disabled:opacity-50"
-                    >
-                      <span>{isOrdering ? 'Processing...' : 'Place Order Now'}</span>
-                      {!isOrdering && <FontAwesomeIcon icon={faRocket} className="text-[8px] group-hover:translate-x-0.5 transition-transform" />}
-                    </button>
-                    
-                    <p className="text-center text-[8px] text-gray-400 font-black uppercase tracking-[0.2em]">
-                      Secure checkout powered by EasyBoost
-                    </p>
-                  </div>
-                </motion.div>
-              )}
-            </AnimatePresence>
+        {/* Services Grid */}
+        <div className="space-y-8">
+          <div className="flex items-center justify-between px-2">
+            <h2 className="text-[10px] font-black text-gray-400 uppercase tracking-[0.2em]">Available Services</h2>
+            <span className="text-[9px] font-black text-brand-purple bg-brand-purple/5 px-2 py-1 rounded-full uppercase tracking-widest">{filteredServices.length} Options</span>
           </div>
+
+          {isLoading ? (
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
+              {[1, 2, 3, 4, 5, 6, 7, 8].map((j) => <ServiceSkeleton key={j} />)}
+            </div>
+          ) : (
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
+              {filteredServices.length > 0 ? (
+                filteredServices.map((service, idx) => (
+                  <motion.div
+                    key={service.apiServiceId}
+                    initial={{ opacity: 0, scale: 0.95 }}
+                    whileInView={{ opacity: 1, scale: 1 }}
+                    viewport={{ once: true }}
+                    transition={{ delay: idx * 0.02 }}
+                    className="bg-white rounded-2xl p-4 border border-gray-100 shadow-sm hover:shadow-xl transition-all group flex flex-col h-full"
+                  >
+                    <div className="flex-grow space-y-3">
+                      <div className="flex items-center space-x-3">
+                        <div className={`w-10 h-10 rounded-xl flex-shrink-0 flex items-center justify-center text-sm shadow-sm ${colorClass}`}>
+                          <FontAwesomeIcon icon={icon} />
+                        </div>
+                        <h4 className="text-[11px] font-black text-gray-900 leading-tight group-hover:text-brand-purple transition-colors">
+                          {shortenName(service.name)}
+                        </h4>
+                      </div>
+                      
+                      <div className="grid grid-cols-2 gap-2 pt-2">
+                        <div className="bg-gray-50 p-2 rounded-lg border border-gray-100">
+                          <span className="block text-[7px] font-black text-gray-400 uppercase tracking-widest">Price / 1k</span>
+                          <div className="text-[10px] font-black text-brand-purple">UGX {Math.round(service.price || 0).toLocaleString()}</div>
+                        </div>
+                        <div className="bg-gray-50 p-2 rounded-lg border border-gray-100 text-right">
+                          <span className="block text-[7px] font-black text-gray-400 uppercase tracking-widest">Min / Max</span>
+                          <div className="text-[9px] font-bold text-gray-900">
+                            {service.min?.toLocaleString()} / {service.max > 1000000 ? '1M+' : service.max?.toLocaleString()}
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+
+                    <button
+                      onClick={() => handleBoost(service)}
+                      className="mt-4 w-full py-3 bg-gradient-to-r from-blue-600 to-purple-600 text-white text-[9px] font-black uppercase tracking-widest rounded-xl shadow-md hover:shadow-blue-600/20 hover:scale-[1.02] active:scale-[0.98] transition-all flex items-center justify-center space-x-2"
+                    >
+                      <FontAwesomeIcon icon={faRocket} className="text-[8px]" />
+                      <span>Boost Now</span>
+                    </button>
+                  </motion.div>
+                ))
+              ) : (
+                <div className="col-span-full py-24 text-center space-y-4">
+                  <div className="w-16 h-16 bg-gray-50 rounded-full flex items-center justify-center text-gray-300 text-2xl mx-auto">
+                    <FontAwesomeIcon icon={faList} />
+                  </div>
+                  <div className="text-gray-400 font-black uppercase tracking-widest text-[10px]">
+                    No services found for this filter
+                  </div>
+                </div>
+              )}
+            </div>
+          )}
         </div>
       </div>
     </div>

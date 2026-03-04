@@ -76,22 +76,30 @@ export default function LandingPage() {
       </section>
 
       {/* Platforms Section */}
-      <section className="py-12 bg-white relative z-30">
-        <div className="max-w-7xl mx-auto px-6">
-          <div className="flex flex-wrap items-center justify-center gap-8 md:gap-12">
+      <section className="py-20 bg-gray-50/50 relative z-30">
+        <div className="max-w-7xl mx-auto px-6 text-center space-y-12">
+          <div className="space-y-2">
+            <h2 className="text-[10px] font-black text-brand-purple uppercase tracking-[0.3em]">Supported Platforms</h2>
+            <p className="text-2xl md:text-4xl font-display font-black text-brand-light tracking-tighter">We Boost Everything</p>
+          </div>
+          
+          <div className="flex flex-wrap items-center justify-center gap-6 md:gap-10">
             {platformsList.map((platform, idx) => (
               <motion.div
                 key={idx}
-                initial={{ opacity: 0, scale: 0.8 }}
-                whileInView={{ opacity: 1, scale: 1 }}
+                initial={{ opacity: 0, y: 20 }}
+                whileInView={{ opacity: 1, y: 0 }}
                 viewport={{ once: true }}
-                transition={{ delay: idx * 0.1 }}
+                transition={{ delay: idx * 0.05 }}
               >
                 <Link
                   to={`/platform?platform=${platform.name}`}
-                  className={`text-3xl md:text-5xl ${platform.color} opacity-40 hover:opacity-100 transition-all hover:scale-110 inline-block`}
+                  className="group flex flex-col items-center space-y-3"
                 >
-                  <FontAwesomeIcon icon={platform.icon} />
+                  <div className={`w-16 h-16 md:w-20 md:h-20 bg-white rounded-3xl shadow-lg border border-gray-100 flex items-center justify-center text-3xl md:text-4xl ${platform.color} transition-all duration-300 group-hover:scale-110 group-hover:shadow-xl group-hover:-translate-y-2`}>
+                    <FontAwesomeIcon icon={platform.icon} />
+                  </div>
+                  <span className="text-[10px] font-black text-gray-400 uppercase tracking-widest group-hover:text-brand-purple transition-colors">{platform.name}</span>
                 </Link>
               </motion.div>
             ))}
