@@ -68,9 +68,10 @@ export default function PlatformPage() {
         setIsLoading(false);
       });
     }
-  }, [platform]);
+  }, [platform, location.state]);
 
   const totalPrice = selectedService ? Math.round((selectedService.price * quantity) / 1000) : 0;
+  const hasInsufficientBalance = userData && userData.balance < totalPrice;
 
   const handlePlaceOrder = async () => {
     if (!user || !userData) {
@@ -89,7 +90,9 @@ export default function PlatformPage() {
       setOrderError(`Minimum quantity is ${selectedService.min || 100}`);
       return;
     }
-    if (userData.balance < totalPrice) {
+    
+    // If insufficient balance, we don't block the button but we show error on final step
+    if (hasInsufficientBalance) {
       setOrderError('Insufficient balance. Please top up your wallet.');
       return;
     }
@@ -167,85 +170,85 @@ export default function PlatformPage() {
     }
   };
 
-  if (isLoading) return <div className="pt-32 text-center text-white font-black uppercase tracking-widest">Loading Platform...</div>;
-  if (!category && !isLoading) return <div className="pt-32 text-center text-white font-black uppercase tracking-widest">Platform not found</div>;
+  if (isLoading) return <div className="pt-32 text-center text-brand-light font-black uppercase tracking-widest">Loading Platform...</div>;
+  if (!category && !isLoading) return <div className="pt-32 text-center text-brand-light font-black uppercase tracking-widest">Platform not found</div>;
 
   const icon = platformIcons[platform?.toLowerCase() || ''] || faRocket;
   const colorClass = platformColors[platform?.toLowerCase() || ''] || 'bg-brand-purple text-white';
 
   return (
-    <div className="pt-24 pb-32 px-4 sm:px-6 lg:px-8 max-w-7xl mx-auto space-y-12">
-      <div className="flex flex-col md:flex-row md:items-center justify-between gap-8">
-        <div className="flex items-center space-x-6">
-          <div className={`w-20 h-20 ${colorClass} rounded-[2rem] flex items-center justify-center text-4xl shadow-2xl shadow-black/20 transform hover:rotate-6 transition-transform border border-white/10`}>
+    <div className="pt-12 pb-32 px-4 sm:px-6 lg:px-8 max-w-7xl mx-auto space-y-8">
+      <div className="flex flex-col md:flex-row md:items-center justify-between gap-6">
+        <div className="flex items-center space-x-4">
+          <div className={`w-14 h-14 ${colorClass} rounded-2xl flex items-center justify-center text-2xl shadow-sm border border-white/10`}>
             <FontAwesomeIcon icon={icon} />
           </div>
           <div>
-            <h1 className="text-4xl md:text-5xl font-display font-black text-white tracking-tighter">{category?.name || platform} Services</h1>
-            <p className="text-gray-500 font-medium text-lg">Select a service to boost your presence</p>
+            <h1 className="text-3xl font-display font-black text-brand-light tracking-tighter">{category?.name || platform} Services</h1>
+            <p className="text-gray-400 font-medium text-sm">Boost your presence instantly</p>
           </div>
         </div>
         
         <button 
-          onClick={() => navigate('/dashboard')}
-          className="flex items-center px-6 py-4 rounded-2xl bg-white/5 border border-white/10 text-[10px] font-black text-gray-400 uppercase tracking-widest hover:text-white hover:border-brand-purple transition-all shadow-xl group self-start md:self-auto"
+          onClick={() => navigate('/services')}
+          className="flex items-center px-4 py-2 rounded-xl bg-white border border-gray-100 text-[10px] font-black text-gray-400 uppercase tracking-widest hover:text-brand-purple hover:border-brand-purple transition-all shadow-sm group self-start md:self-auto"
         >
           <FontAwesomeIcon icon={faArrowLeft} className="mr-2 group-hover:-translate-x-1 transition-transform" />
-          Back to Dashboard
+          Back to Services
         </button>
       </div>
 
-      <div className="grid grid-cols-1 lg:grid-cols-12 gap-12">
+      <div className="grid grid-cols-1 lg:grid-cols-12 gap-8">
         {/* Services List */}
-        <div className="lg:col-span-7 space-y-6">
-          <div className="flex items-center justify-between px-4">
-            <h2 className="text-xs font-black text-gray-500 uppercase tracking-[0.2em]">Available Services</h2>
-            <span className="text-[10px] font-black text-brand-purple bg-brand-purple/10 px-3 py-1 rounded-full uppercase tracking-widest">{services.length} Options</span>
+        <div className="lg:col-span-7 space-y-4">
+          <div className="flex items-center justify-between px-2">
+            <h2 className="text-[10px] font-black text-gray-400 uppercase tracking-[0.2em]">Available Services</h2>
+            <span className="text-[9px] font-black text-brand-purple bg-brand-purple/5 px-2 py-1 rounded-full uppercase tracking-widest">{services.length} Options</span>
           </div>
           
-          <div className="space-y-4">
+          <div className="space-y-3">
             {services.length > 0 ? (
               services.map((service: any) => (
                 <motion.div
                   key={service.id}
-                  whileHover={{ scale: 1.01 }}
-                  whileTap={{ scale: 0.99 }}
+                  whileHover={{ scale: 1.005 }}
+                  whileTap={{ scale: 0.995 }}
                   onClick={() => {
                     setSelectedService(service);
                     setOrderError('');
                     setOrderSuccess(false);
                   }}
-                  className={`p-6 md:p-8 rounded-[2.5rem] border-2 cursor-pointer transition-all flex items-center justify-between group ${
+                  className={`p-4 md:p-5 rounded-2xl border transition-all flex items-center justify-between group cursor-pointer ${
                     selectedService?.id === service.id 
-                    ? 'border-brand-purple bg-brand-purple/5 shadow-2xl shadow-brand-purple/10' 
-                    : 'border-white/5 bg-brand-card hover:border-brand-purple/20 hover:shadow-xl'
+                    ? 'border-brand-purple bg-brand-purple/5 shadow-sm' 
+                    : 'border-gray-100 bg-white hover:border-brand-purple/20 shadow-sm'
                   }`}
                 >
-                  <div className="flex items-center space-x-6">
-                    <div className={`w-14 h-14 rounded-2xl flex items-center justify-center transition-all border ${
+                  <div className="flex items-center space-x-4">
+                    <div className={`w-10 h-10 rounded-xl flex items-center justify-center transition-all border ${
                       selectedService?.id === service.id 
-                      ? 'bg-brand-purple text-white border-brand-purple shadow-lg' 
-                      : 'bg-white/5 text-gray-700 border-white/5 group-hover:bg-brand-purple/10 group-hover:text-brand-purple group-hover:border-brand-purple/20'
+                      ? 'bg-brand-purple text-white border-brand-purple shadow-sm' 
+                      : 'bg-gray-50 text-gray-300 border-gray-100 group-hover:bg-brand-purple/10 group-hover:text-brand-purple group-hover:border-brand-purple/20'
                     }`}>
-                      <FontAwesomeIcon icon={faCheckCircle} className={selectedService?.id === service.id ? 'opacity-100' : 'opacity-40'} />
+                      <FontAwesomeIcon icon={faCheckCircle} className="text-xs" />
                     </div>
                     <div>
-                      <h3 className="text-xl font-black text-white group-hover:text-brand-purple transition-colors tracking-tight">{service.name}</h3>
-                      <p className="text-sm text-gray-500 font-medium">{service.description || 'High quality service'}</p>
+                      <h3 className="text-sm font-black text-brand-light group-hover:text-brand-purple transition-colors tracking-tight">{service.name}</h3>
+                      <p className="text-[10px] text-gray-400 font-medium line-clamp-1">{service.description || 'High quality service'}</p>
                     </div>
                   </div>
                   <div className="text-right">
-                    <div className="text-xl font-black text-brand-purple">UGX {service.price?.toLocaleString()}</div>
-                    <div className="text-[9px] text-gray-600 font-black uppercase tracking-widest">Per 1,000</div>
+                    <div className="text-sm font-black text-brand-purple">UGX {service.price?.toLocaleString()}</div>
+                    <div className="text-[8px] text-gray-400 font-black uppercase tracking-widest">Per 1k</div>
                   </div>
                 </motion.div>
               ))
             ) : (
-              <div className="bg-brand-card p-12 rounded-[2.5rem] border border-white/5 text-center space-y-4">
-                <div className="w-16 h-16 bg-white/5 rounded-full flex items-center justify-center text-gray-700 mx-auto">
-                  <FontAwesomeIcon icon={faInfoCircle} className="text-2xl" />
+              <div className="bg-white p-12 rounded-3xl border border-gray-100 text-center space-y-3 shadow-sm">
+                <div className="w-12 h-12 bg-gray-50 rounded-full flex items-center justify-center text-gray-300 mx-auto">
+                  <FontAwesomeIcon icon={faInfoCircle} />
                 </div>
-                <p className="text-gray-500 font-bold uppercase tracking-widest text-xs">No services available for this platform yet.</p>
+                <p className="text-gray-400 font-bold uppercase tracking-widest text-[10px]">No services available for this platform yet.</p>
               </div>
             )}
           </div>
@@ -258,103 +261,106 @@ export default function PlatformPage() {
               {!selectedService ? (
                 <motion.div
                   key="placeholder"
-                  initial={{ opacity: 0, scale: 0.95 }}
+                  initial={{ opacity: 0, scale: 0.98 }}
                   animate={{ opacity: 1, scale: 1 }}
-                  exit={{ opacity: 0, scale: 0.95 }}
-                  className="bg-brand-card p-12 rounded-[3.5rem] border-2 border-dashed border-white/5 flex flex-col items-center justify-center text-center space-y-8 h-full min-h-[450px] shadow-2xl"
+                  exit={{ opacity: 0, scale: 0.98 }}
+                  className="bg-white p-10 rounded-3xl border-2 border-dashed border-gray-100 flex flex-col items-center justify-center text-center space-y-6 h-full min-h-[350px] shadow-sm"
                 >
-                  <div className="w-24 h-24 bg-white/5 rounded-full flex items-center justify-center text-brand-purple/20 text-5xl shadow-inner">
+                  <div className="w-16 h-16 bg-gray-50 rounded-full flex items-center justify-center text-gray-200 text-3xl">
                     <FontAwesomeIcon icon={faInfoCircle} />
                   </div>
-                  <div className="space-y-3">
-                    <h3 className="text-2xl font-black text-white tracking-tighter">Select a Service</h3>
-                    <p className="text-gray-500 font-medium max-w-[240px] mx-auto text-sm leading-relaxed">Pick a service from the left to configure your boost order and see pricing.</p>
+                  <div className="space-y-2">
+                    <h3 className="text-xl font-black text-brand-light tracking-tighter">Select a Service</h3>
+                    <p className="text-gray-400 font-medium max-w-[200px] mx-auto text-xs leading-relaxed">Pick a service from the left to configure your boost order.</p>
                   </div>
                 </motion.div>
               ) : (
                 <motion.div
                   key="form"
-                  initial={{ opacity: 0, x: 20 }}
-                  animate={{ opacity: 1, x: 0 }}
-                  exit={{ opacity: 0, x: -20 }}
-                  className="bg-brand-card p-8 md:p-12 rounded-[3.5rem] shadow-2xl border border-white/5 space-y-10"
+                  initial={{ opacity: 0, y: 10 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  exit={{ opacity: 0, y: -10 }}
+                  className="bg-white p-6 md:p-8 rounded-3xl shadow-sm border border-gray-100 space-y-6"
                 >
-                  <div className="flex items-center space-x-5 pb-8 border-b border-white/5">
-                    <div className="w-16 h-16 gradient-brand rounded-2xl flex items-center justify-center text-white text-2xl shadow-xl shadow-brand-blue/20 border border-white/10">
+                  <div className="flex items-center space-x-4 pb-6 border-b border-gray-50">
+                    <div className="w-12 h-12 gradient-brand rounded-xl flex items-center justify-center text-white text-xl shadow-sm">
                       <FontAwesomeIcon icon={faShoppingCart} />
                     </div>
                     <div>
-                      <h2 className="text-2xl font-black text-white tracking-tighter">Configure Order</h2>
-                      <p className="text-xs text-brand-purple font-black uppercase tracking-widest mt-1">{selectedService.name}</p>
+                      <h2 className="text-xl font-black text-brand-light tracking-tighter">Configure Order</h2>
+                      <p className="text-[9px] text-brand-purple font-black uppercase tracking-widest mt-0.5">{selectedService.name}</p>
                     </div>
                   </div>
 
                   {orderError && (
-                    <div className="p-4 bg-rose-500/10 border border-rose-500/20 rounded-2xl text-rose-500 text-xs font-bold text-center">
-                      {orderError}
+                    <div className="p-4 bg-rose-50 border border-rose-100 rounded-2xl text-rose-500 text-[10px] font-bold text-center space-y-3">
+                      <div>{orderError}</div>
+                      {hasInsufficientBalance && (
+                        <button 
+                          onClick={() => navigate('/wallet')}
+                          className="w-full py-2 bg-rose-500 text-white rounded-lg text-[9px] uppercase tracking-widest hover:bg-rose-600 transition-colors"
+                        >
+                          Top Up Now
+                        </button>
+                      )}
                     </div>
                   )}
 
                   {orderSuccess && (
-                    <div className="p-4 bg-emerald-500/10 border border-emerald-500/20 rounded-2xl text-emerald-500 text-xs font-bold text-center flex items-center justify-center space-x-2">
+                    <div className="p-4 bg-emerald-50 border border-emerald-100 rounded-2xl text-emerald-500 text-[10px] font-bold text-center flex items-center justify-center space-x-2">
                       <FontAwesomeIcon icon={faCheckCircle} />
                       <span>Order placed successfully! Redirecting...</span>
                     </div>
                   )}
 
-                  <div className="space-y-8">
-                    <div className="space-y-3">
-                      <label className="text-[10px] font-black text-gray-500 ml-1 uppercase tracking-[0.2em]">Target Link / URL</label>
-                      <div className="relative group">
-                        <input
-                          type="url"
-                          value={link}
-                          onChange={(e) => setLink(e.target.value)}
-                          placeholder="https://platform.com/username"
-                          className="w-full p-5 bg-white/5 border border-white/10 rounded-2xl text-white placeholder-gray-700 focus:outline-none focus:ring-4 focus:ring-brand-purple/10 focus:border-brand-purple transition-all text-sm font-bold"
-                        />
+                  <div className="space-y-6">
+                    <div className="space-y-2">
+                      <label className="text-[9px] font-black text-gray-400 ml-1 uppercase tracking-[0.2em]">Target Link / URL</label>
+                      <input
+                        type="url"
+                        value={link}
+                        onChange={(e) => setLink(e.target.value)}
+                        placeholder="https://platform.com/username"
+                        className="w-full p-4 bg-gray-50 border border-gray-100 rounded-xl text-brand-light placeholder-gray-300 focus:outline-none focus:ring-2 focus:ring-brand-purple/5 focus:border-brand-purple transition-all text-xs font-bold"
+                      />
+                    </div>
+
+                    <div className="space-y-2">
+                      <label className="text-[9px] font-black text-gray-400 ml-1 uppercase tracking-[0.2em]">Order Quantity</label>
+                      <input
+                        type="number"
+                        value={quantity}
+                        onChange={(e) => setQuantity(Number(e.target.value))}
+                        placeholder={`Min: ${selectedService.min || 100}`}
+                        className="w-full p-4 bg-gray-50 border border-gray-100 rounded-xl text-brand-light placeholder-gray-300 focus:outline-none focus:ring-2 focus:ring-brand-purple/5 focus:border-brand-purple transition-all text-xl font-display font-black"
+                      />
+                      <div className="flex justify-between px-1">
+                        <span className="text-[8px] font-black text-gray-400 uppercase tracking-widest">Min: {selectedService.min || 100}</span>
+                        <span className="text-[8px] font-black text-gray-400 uppercase tracking-widest">Max: {selectedService.max > 1000000 ? '1M+' : selectedService.max?.toLocaleString()}</span>
                       </div>
                     </div>
 
-                    <div className="space-y-3">
-                      <label className="text-[10px] font-black text-gray-500 ml-1 uppercase tracking-[0.2em]">Order Quantity</label>
-                      <div className="relative group">
-                        <input
-                          type="number"
-                          value={quantity}
-                          onChange={(e) => setQuantity(Number(e.target.value))}
-                          placeholder={`Min: ${selectedService.min || 100}`}
-                          className="w-full p-5 bg-white/5 border border-white/10 rounded-2xl text-white placeholder-gray-700 focus:outline-none focus:ring-4 focus:ring-brand-purple/10 focus:border-brand-purple transition-all text-2xl font-display font-black"
-                        />
+                    <div className="p-5 bg-gray-50 rounded-2xl border border-gray-100 flex justify-between items-center shadow-inner">
+                      <div>
+                        <div className="text-[8px] font-black text-gray-400 uppercase tracking-widest mb-1">Total Price</div>
+                        <div className="text-2xl font-display font-black text-brand-purple tracking-tighter">UGX {totalPrice.toLocaleString()}</div>
                       </div>
-                      <div className="flex justify-between px-2">
-                        <span className="text-[9px] font-black text-gray-600 uppercase tracking-widest">Min: {selectedService.min || 100}</span>
-                        <span className="text-[9px] font-black text-gray-600 uppercase tracking-widest">Max: {selectedService.max || '1M'}</span>
-                      </div>
-                    </div>
-
-                    <div className="p-8 bg-white/5 rounded-[2.5rem] border border-white/5 flex justify-between items-center shadow-inner relative overflow-hidden group">
-                      <div className="absolute top-0 right-0 w-32 h-32 bg-brand-purple/5 rounded-full -translate-x-1/2 -translate-y-1/2 blur-2xl" />
-                      <div className="relative z-10">
-                        <div className="text-[9px] font-black text-gray-500 uppercase tracking-widest mb-2">Total Amount</div>
-                        <div className="text-3xl font-display font-black text-brand-purple tracking-tighter">UGX {totalPrice.toLocaleString()}</div>
-                      </div>
-                      <div className="text-right relative z-10">
-                        <div className="text-[9px] font-black text-gray-500 uppercase tracking-widest mb-2">Rate</div>
-                        <div className="text-sm font-black text-white">UGX {selectedService.price}/1k</div>
+                      <div className="text-right">
+                        <div className="text-[8px] font-black text-gray-400 uppercase tracking-widest mb-1">Rate</div>
+                        <div className="text-[10px] font-black text-brand-light">UGX {selectedService.price}/1k</div>
                       </div>
                     </div>
 
                     <button 
                       onClick={handlePlaceOrder}
                       disabled={isOrdering || orderSuccess}
-                      className="w-full py-5 gradient-brand text-white font-black uppercase tracking-widest rounded-2xl shadow-2xl shadow-brand-blue/30 hover:scale-[1.02] active:scale-[0.98] transition-all text-sm flex items-center justify-center space-x-3 group disabled:opacity-50"
+                      className="w-full py-4 gradient-brand text-white font-black uppercase tracking-widest rounded-xl shadow-sm hover:shadow-md hover:scale-[1.01] active:scale-[0.99] transition-all text-[10px] flex items-center justify-center space-x-2 group disabled:opacity-50"
                     >
                       <span>{isOrdering ? 'Processing...' : 'Place Order Now'}</span>
-                      {!isOrdering && <FontAwesomeIcon icon={faShoppingCart} className="text-xs group-hover:translate-x-1 transition-transform" />}
+                      {!isOrdering && <FontAwesomeIcon icon={faRocket} className="text-[8px] group-hover:translate-x-0.5 transition-transform" />}
                     </button>
                     
-                    <p className="text-center text-[9px] text-gray-600 font-black uppercase tracking-[0.2em]">
+                    <p className="text-center text-[8px] text-gray-400 font-black uppercase tracking-[0.2em]">
                       Secure checkout powered by EasyBoost
                     </p>
                   </div>

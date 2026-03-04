@@ -1,18 +1,23 @@
 import { Link, useNavigate } from 'react-router-dom';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
-import { faRocket, faBars, faTimes, faUserCircle } from '@fortawesome/free-solid-svg-icons';
-import { useState } from 'react';
+import { faRocket, faBars, faTimes, faUserCircle, faWallet, faHistory, faChartLine, faSignOutAlt } from '@fortawesome/free-solid-svg-icons';
+import { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'motion/react';
 import { auth } from '../lib/firebase';
 import { signOut } from 'firebase/auth';
+import { useAuth } from '../hooks/useAuth';
 
-interface NavbarProps {
-  isLoggedIn: boolean;
-}
-
-export default function Navbar({ isLoggedIn }: NavbarProps) {
+export default function Navbar() {
+  const { user, userData } = useAuth();
   const [isOpen, setIsOpen] = useState(false);
+  const [isScrolled, setIsScrolled] = useState(false);
   const navigate = useNavigate();
+
+  useEffect(() => {
+    const handleScroll = () => setIsScrolled(window.scrollY > 20);
+    window.addEventListener('scroll', handleScroll);
+    return () => window.removeEventListener('scroll', handleScroll);
+  }, []);
 
   const handleLogout = async () => {
     try {
@@ -24,60 +29,77 @@ export default function Navbar({ isLoggedIn }: NavbarProps) {
   };
 
   const navLinks = [
-    { name: 'Home', path: isLoggedIn ? '/dashboard' : '/' },
-    { name: 'Services', path: '/services' },
-    { name: 'Orders', path: '/orders', protected: true },
-    { name: 'Wallet', path: '/wallet', protected: true },
+    { name: 'Services', path: '/services', icon: faRocket },
+    { name: 'Dashboard', path: '/dashboard', icon: faChartLine },
+    { name: 'Orders', path: '/orders', icon: faHistory },
+    { name: 'Wallet', path: '/wallet', icon: faWallet },
   ];
 
-  const filteredLinks = navLinks.filter(link => !link.protected || isLoggedIn);
-
   return (
-    <nav className="fixed top-0 left-0 right-0 z-50 bg-brand-dark/80 backdrop-blur-xl border-b border-white/5">
+    <nav className={`fixed top-0 left-0 right-0 z-50 transition-all duration-300 ${
+      isScrolled ? 'bg-white/80 backdrop-blur-lg shadow-sm py-2' : 'bg-transparent py-4'
+    }`}>
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-        <div className="flex justify-between h-16 items-center">
+        <div className="flex justify-between items-center h-12">
           {/* Logo */}
           <Link to="/" className="flex items-center space-x-3 group">
-            <div className="w-9 h-9 gradient-brand rounded-xl flex items-center justify-center shadow-lg shadow-brand-blue/20 group-hover:scale-110 transition-transform">
-              <FontAwesomeIcon icon={faRocket} className="text-white text-base" />
+            <div className="w-8 h-8 gradient-brand rounded-lg flex items-center justify-center shadow-sm group-hover:scale-110 transition-transform">
+              <FontAwesomeIcon icon={faRocket} className="text-white text-sm" />
             </div>
-            <span className="text-xl font-display font-black text-white tracking-tighter">
+            <span className={`text-lg font-display font-black tracking-tighter transition-colors ${
+              isScrolled ? 'text-brand-light' : 'text-white'
+            }`}>
               Easy<span className="text-brand-purple">Boost</span>
             </span>
           </Link>
 
           {/* Desktop Navigation */}
-          <div className="hidden md:flex items-center space-x-8">
-            {filteredLinks.map((link) => (
+          <div className="hidden md:flex items-center space-x-1">
+            {user && navLinks.map((link) => (
               <Link
                 key={link.name}
                 to={link.path}
-                className="text-gray-400 hover:text-white font-bold text-xs uppercase tracking-widest transition-colors"
+                className={`px-3 py-1.5 rounded-lg text-[9px] font-black uppercase tracking-widest transition-all flex items-center space-x-2 ${
+                  isScrolled 
+                    ? 'text-gray-500 hover:text-brand-purple hover:bg-brand-purple/5' 
+                    : 'text-white/70 hover:text-white hover:bg-white/10'
+                }`}
               >
-                {link.name}
+                <FontAwesomeIcon icon={link.icon} className="text-[7px]" />
+                <span>{link.name}</span>
               </Link>
             ))}
             
-            {isLoggedIn ? (
-              <div className="flex items-center space-x-4 pl-4 border-l border-white/10">
-                <Link to="/profile" className="w-10 h-10 rounded-xl bg-white/5 border border-white/10 flex items-center justify-center text-gray-400 hover:text-white hover:border-brand-purple transition-all">
-                  <FontAwesomeIcon icon={faUserCircle} className="text-xl" />
+            {user ? (
+              <div className="flex items-center space-x-4 ml-4 pl-4 border-l border-gray-200/20">
+                <div className="text-right hidden lg:block">
+                  <div className={`text-[7px] font-black uppercase tracking-widest ${isScrolled ? 'text-gray-400' : 'text-white/50'}`}>Balance</div>
+                  <div className={`text-[10px] font-black ${isScrolled ? 'text-brand-purple' : 'text-white'}`}>UGX {userData?.balance?.toLocaleString() || 0}</div>
+                </div>
+                <Link to="/profile" className={`w-8 h-8 rounded-lg flex items-center justify-center transition-all ${
+                  isScrolled ? 'bg-gray-50 text-gray-400 hover:text-brand-purple' : 'bg-white/10 text-white/70 hover:text-white'
+                }`}>
+                  <FontAwesomeIcon icon={faUserCircle} className="text-lg" />
                 </Link>
                 <button
                   onClick={handleLogout}
-                  className="px-5 py-2.5 rounded-xl bg-white/5 text-white font-bold text-xs uppercase tracking-widest hover:bg-white/10 transition-all border border-white/10"
+                  className={`w-8 h-8 rounded-lg flex items-center justify-center transition-all ${
+                    isScrolled 
+                      ? 'bg-gray-50 text-gray-400 hover:text-rose-500 hover:bg-rose-50' 
+                      : 'bg-white/10 text-white/70 hover:text-white hover:bg-white/20'
+                  }`}
                 >
-                  Logout
+                  <FontAwesomeIcon icon={faSignOutAlt} className="text-sm" />
                 </button>
               </div>
             ) : (
-              <div className="flex items-center space-x-4">
-                <Link to="/login" className="text-gray-400 font-bold text-xs uppercase tracking-widest hover:text-white transition-colors">
+              <div className="flex items-center space-x-3">
+                <Link to="/login" className={`text-[9px] font-black uppercase tracking-widest transition-colors ${isScrolled ? 'text-gray-500 hover:text-brand-purple' : 'text-white/70 hover:text-white'}`}>
                   Login
                 </Link>
                 <Link
                   to="/signup"
-                  className="px-6 py-2.5 gradient-brand text-white font-bold text-xs uppercase tracking-widest rounded-xl shadow-lg shadow-brand-blue/20 hover:scale-105 transition-transform"
+                  className="px-5 py-2 gradient-brand text-white font-black text-[9px] uppercase tracking-widest rounded-lg shadow-sm hover:shadow-md hover:scale-105 transition-all"
                 >
                   Sign Up
                 </Link>
@@ -86,12 +108,20 @@ export default function Navbar({ isLoggedIn }: NavbarProps) {
           </div>
 
           {/* Mobile Menu Button */}
-          <div className="md:hidden flex items-center">
+          <div className="md:hidden flex items-center space-x-4">
+            {user && (
+              <div className="text-right">
+                <div className={`text-[7px] font-black uppercase tracking-widest ${isScrolled ? 'text-gray-400' : 'text-white/50'}`}>Balance</div>
+                <div className={`text-[10px] font-black ${isScrolled ? 'text-brand-purple' : 'text-white'}`}>UGX {userData?.balance?.toLocaleString() || 0}</div>
+              </div>
+            )}
             <button
               onClick={() => setIsOpen(!isOpen)}
-              className="text-gray-400 p-2 focus:outline-none"
+              className={`w-8 h-8 rounded-lg flex items-center justify-center transition-all ${
+                isScrolled ? 'bg-gray-50 text-brand-light' : 'bg-white/10 text-white'
+              }`}
             >
-              <FontAwesomeIcon icon={isOpen ? faTimes : faBars} className="text-xl" />
+              <FontAwesomeIcon icon={isOpen ? faTimes : faBars} className="text-base" />
             </button>
           </div>
         </div>
@@ -104,36 +134,45 @@ export default function Navbar({ isLoggedIn }: NavbarProps) {
             initial={{ opacity: 0, height: 0 }}
             animate={{ opacity: 1, height: 'auto' }}
             exit={{ opacity: 0, height: 0 }}
-            className="md:hidden bg-brand-dark border-b border-white/5 overflow-hidden"
+            className="md:hidden bg-white border-b border-gray-100 overflow-hidden"
           >
             <div className="px-4 pt-2 pb-6 space-y-1">
-              {filteredLinks.map((link) => (
+              {user && navLinks.map((link) => (
                 <Link
                   key={link.name}
                   to={link.path}
                   onClick={() => setIsOpen(false)}
-                  className="block px-4 py-3 rounded-xl text-xs font-black uppercase tracking-widest text-gray-400 hover:bg-white/5 hover:text-white transition-colors"
+                  className="flex items-center space-x-3 px-4 py-3 rounded-xl text-[10px] font-black uppercase tracking-widest text-gray-500 hover:bg-gray-50 hover:text-brand-purple transition-colors"
                 >
-                  {link.name}
+                  <FontAwesomeIcon icon={link.icon} className="text-[8px]" />
+                  <span>{link.name}</span>
                 </Link>
               ))}
-              {!isLoggedIn && (
+              {!user ? (
                 <div className="pt-4 grid grid-cols-2 gap-3">
                   <Link
                     to="/login"
                     onClick={() => setIsOpen(false)}
-                    className="flex justify-center items-center px-4 py-3 rounded-xl border border-white/10 text-gray-400 font-black uppercase tracking-widest text-[10px]"
+                    className="flex justify-center items-center px-4 py-3 rounded-xl border border-gray-100 text-gray-500 font-black uppercase tracking-widest text-[9px]"
                   >
                     Login
                   </Link>
                   <Link
                     to="/signup"
                     onClick={() => setIsOpen(false)}
-                    className="flex justify-center items-center px-4 py-3 rounded-xl gradient-brand text-white font-black uppercase tracking-widest text-[10px] shadow-lg shadow-brand-blue/20"
+                    className="flex justify-center items-center px-4 py-3 rounded-xl gradient-brand text-white font-black uppercase tracking-widest text-[9px] shadow-sm"
                   >
                     Sign Up
                   </Link>
                 </div>
+              ) : (
+                <button
+                  onClick={handleLogout}
+                  className="w-full flex items-center space-x-3 px-4 py-3 rounded-xl text-[10px] font-black uppercase tracking-widest text-rose-500 hover:bg-rose-50 transition-colors"
+                >
+                  <FontAwesomeIcon icon={faSignOutAlt} className="text-[8px]" />
+                  <span>Logout</span>
+                </button>
               )}
             </div>
           </motion.div>

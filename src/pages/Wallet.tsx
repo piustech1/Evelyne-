@@ -76,103 +76,102 @@ export default function Wallet() {
   };
 
   return (
-    <div className="pt-24 pb-32 px-4 sm:px-6 lg:px-8 max-w-7xl mx-auto space-y-12">
-      <div className="grid grid-cols-1 lg:grid-cols-12 gap-12">
+    <div className="pt-12 pb-32 px-4 sm:px-6 lg:px-8 max-w-7xl mx-auto space-y-8">
+      <div className="grid grid-cols-1 lg:grid-cols-12 gap-8">
         {/* Balance Card & Add Funds */}
-        <div className="lg:col-span-4 space-y-10">
+        <div className="lg:col-span-4 space-y-8">
           <motion.div
             initial={{ opacity: 0, scale: 0.95 }}
             animate={{ opacity: 1, scale: 1 }}
-            className="gradient-brand p-10 rounded-[3.5rem] text-white shadow-2xl shadow-brand-blue/30 relative overflow-hidden border border-white/10"
+            className="gradient-brand p-8 rounded-3xl text-white shadow-lg relative overflow-hidden"
           >
             <div className="absolute top-0 right-0 w-48 h-48 bg-white/10 rounded-full -translate-x-1/2 -translate-y-1/2 blur-3xl" />
-            <div className="absolute bottom-0 left-0 w-32 h-32 bg-black/5 rounded-full translate-x-1/2 translate-y-1/2 blur-2xl" />
             
             <div className="relative z-10">
-              <div className="text-[10px] font-black uppercase tracking-[0.2em] text-white/60 mb-4">Available Balance</div>
-              <div className="text-5xl font-display font-black mb-12 tracking-tighter">UGX {userData?.balance?.toLocaleString() || 0}</div>
+              <div className="text-[9px] font-black uppercase tracking-[0.2em] text-white/60 mb-2">Available Balance</div>
+              <div className="text-3xl font-display font-black mb-8 tracking-tighter">UGX {userData?.balance?.toLocaleString() || 0}</div>
               
-              <div className="grid grid-cols-2 gap-8 pt-8 border-t border-white/10">
+              <div className="grid grid-cols-2 gap-4 pt-6 border-t border-white/10">
                 <div className="flex flex-col">
-                  <span className="text-[9px] font-black uppercase tracking-widest text-white/50 mb-2">Total Spent</span>
-                  <span className="text-xl font-black tracking-tight">UGX 0</span>
+                  <span className="text-[8px] font-black uppercase tracking-widest text-white/50 mb-1">Total Spent</span>
+                  <span className="text-base font-black tracking-tight">UGX 0</span>
                 </div>
                 <div className="flex flex-col">
-                  <span className="text-[9px] font-black uppercase tracking-widest text-white/50 mb-2">Total Orders</span>
-                  <span className="text-xl font-black tracking-tight">0</span>
+                  <span className="text-[8px] font-black uppercase tracking-widest text-white/50 mb-1">Total Orders</span>
+                  <span className="text-base font-black tracking-tight">0</span>
                 </div>
               </div>
             </div>
           </motion.div>
 
-          <div className="bg-brand-card p-8 md:p-12 rounded-[3.5rem] shadow-2xl border border-white/5">
-            <h2 className="text-2xl font-black text-white mb-10 flex items-center tracking-tighter">
-              <div className="w-12 h-12 rounded-2xl bg-brand-blue/10 flex items-center justify-center mr-4 border border-brand-blue/10">
-                <FontAwesomeIcon icon={faPlus} className="text-brand-blue text-sm" />
+          <div className="bg-white p-6 md:p-8 rounded-3xl shadow-sm border border-gray-100">
+            <h2 className="text-lg font-black text-brand-light mb-8 flex items-center tracking-tighter">
+              <div className="w-10 h-10 rounded-xl bg-brand-blue/5 flex items-center justify-center mr-3">
+                <FontAwesomeIcon icon={faPlus} className="text-brand-blue text-xs" />
               </div>
               Add Funds
             </h2>
 
             {message.text && (
-              <div className={`mb-8 p-4 rounded-2xl text-xs font-bold text-center border ${
-                message.type === 'success' ? 'bg-emerald-500/10 border-emerald-500/20 text-emerald-500' : 'bg-rose-500/10 border-rose-500/20 text-rose-500'
+              <div className={`mb-6 p-3 rounded-xl text-[10px] font-bold text-center border ${
+                message.type === 'success' ? 'bg-emerald-50 border-emerald-100 text-emerald-600' : 'bg-rose-50 border-rose-100 text-rose-600'
               }`}>
                 {message.text}
               </div>
             )}
 
-            <form className="space-y-8" onSubmit={handleDeposit}>
-              <div className="space-y-4">
-                <label className="text-[10px] font-black text-gray-500 ml-1 uppercase tracking-widest">Payment Method</label>
-                <div className="grid grid-cols-2 gap-4">
+            <form className="space-y-6" onSubmit={handleDeposit}>
+              <div className="space-y-3">
+                <label className="text-[9px] font-black text-gray-400 ml-1 uppercase tracking-widest">Payment Method</label>
+                <div className="grid grid-cols-2 gap-3">
                   <button 
                     type="button" 
                     onClick={() => setPaymentMethod('mtn')}
-                    className={`flex flex-col items-center justify-center p-6 rounded-2xl border-2 transition-all shadow-xl ${
+                    className={`flex flex-col items-center justify-center p-4 rounded-xl border-2 transition-all ${
                       paymentMethod === 'mtn' 
                       ? 'border-brand-purple bg-brand-purple/5 text-brand-purple' 
-                      : 'border-white/5 bg-white/5 text-gray-600 hover:border-brand-purple/20'
+                      : 'border-gray-50 bg-gray-50 text-gray-400 hover:border-brand-purple/20'
                     }`}
                   >
-                    <div className="w-12 h-12 bg-[#FFCC00] rounded-full flex items-center justify-center mb-3 shadow-lg border-2 border-white/10">
-                      <FontAwesomeIcon icon={faMobileAlt} className="text-black text-base" />
+                    <div className="w-10 h-10 bg-[#FFCC00] rounded-full flex items-center justify-center mb-2 shadow-sm">
+                      <FontAwesomeIcon icon={faMobileAlt} className="text-black text-sm" />
                     </div>
-                    <span className="text-[9px] font-black uppercase tracking-widest">MTN MoMo</span>
+                    <span className="text-[8px] font-black uppercase tracking-widest">MTN MoMo</span>
                   </button>
                   <button 
                     type="button" 
                     onClick={() => setPaymentMethod('airtel')}
-                    className={`flex flex-col items-center justify-center p-6 rounded-2xl border-2 transition-all shadow-xl ${
+                    className={`flex flex-col items-center justify-center p-4 rounded-xl border-2 transition-all ${
                       paymentMethod === 'airtel' 
                       ? 'border-brand-purple bg-brand-purple/5 text-brand-purple' 
-                      : 'border-white/5 bg-white/5 text-gray-600 hover:border-brand-purple/20'
+                      : 'border-gray-50 bg-gray-50 text-gray-400 hover:border-brand-purple/20'
                     }`}
                   >
-                    <div className="w-12 h-12 bg-[#FF0000] rounded-full flex items-center justify-center mb-3 shadow-lg border-2 border-white/10">
-                      <FontAwesomeIcon icon={faMobileAlt} className="text-white text-base" />
+                    <div className="w-10 h-10 bg-[#FF0000] rounded-full flex items-center justify-center mb-2 shadow-sm">
+                      <FontAwesomeIcon icon={faMobileAlt} className="text-white text-sm" />
                     </div>
-                    <span className="text-[9px] font-black uppercase tracking-widest">Airtel Money</span>
+                    <span className="text-[8px] font-black uppercase tracking-widest">Airtel Money</span>
                   </button>
                 </div>
               </div>
 
               <div className="space-y-4">
-                <div className="space-y-2">
-                  <label className="text-[10px] font-black text-gray-500 ml-1 uppercase tracking-widest">Phone Number</label>
+                <div className="space-y-1.5">
+                  <label className="text-[9px] font-black text-gray-400 ml-1 uppercase tracking-widest">Phone Number</label>
                   <input
                     type="tel"
                     required
                     value={phoneNumber}
                     onChange={(e) => setPhoneNumber(e.target.value)}
                     placeholder="07XX XXX XXX"
-                    className="w-full p-5 bg-white/5 border border-white/10 rounded-2xl text-white placeholder-gray-700 focus:outline-none focus:ring-4 focus:ring-brand-purple/10 focus:border-brand-purple transition-all font-bold text-sm"
+                    className="w-full p-4 bg-gray-50 border border-gray-100 rounded-xl text-brand-light placeholder-gray-300 focus:outline-none focus:ring-2 focus:ring-brand-purple/5 focus:border-brand-purple transition-all font-bold text-xs"
                   />
                 </div>
 
-                <div className="space-y-2">
-                  <label className="text-[10px] font-black text-gray-500 ml-1 uppercase tracking-widest">Amount (UGX)</label>
+                <div className="space-y-1.5">
+                  <label className="text-[9px] font-black text-gray-400 ml-1 uppercase tracking-widest">Amount (UGX)</label>
                   <div className="relative group">
-                    <div className="absolute inset-y-0 left-0 pl-5 flex items-center pointer-events-none text-brand-purple font-black text-xs">
+                    <div className="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none text-brand-purple font-black text-[10px]">
                       UGX
                     </div>
                     <input
@@ -181,16 +180,16 @@ export default function Wallet() {
                       value={amount}
                       onChange={(e) => setAmount(e.target.value)}
                       placeholder="5,000"
-                      className="w-full pl-16 pr-4 py-5 bg-white/5 border border-white/10 rounded-2xl text-white placeholder-gray-700 focus:outline-none focus:ring-4 focus:ring-brand-purple/10 focus:border-brand-purple transition-all font-display font-black text-2xl"
+                      className="w-full pl-12 pr-4 py-4 bg-gray-50 border border-gray-100 rounded-xl text-brand-light placeholder-gray-300 focus:outline-none focus:ring-2 focus:ring-brand-purple/5 focus:border-brand-purple transition-all font-display font-black text-xl"
                     />
                   </div>
-                  <p className="text-[9px] text-gray-600 font-black uppercase tracking-widest ml-1">Minimum deposit: UGX 5,000</p>
+                  <p className="text-[8px] text-gray-400 font-black uppercase tracking-widest ml-1">Min: UGX 5,000</p>
                 </div>
               </div>
 
               <button 
                 disabled={isLoading}
-                className="w-full py-5 gradient-brand text-white font-black uppercase tracking-widest rounded-2xl shadow-2xl shadow-brand-blue/30 hover:scale-[1.02] active:scale-[0.98] transition-all text-sm disabled:opacity-50 disabled:cursor-not-allowed"
+                className="w-full py-4 gradient-brand text-white font-black uppercase tracking-widest rounded-xl shadow-sm hover:scale-[1.02] active:scale-[0.98] transition-all text-[10px] disabled:opacity-50 disabled:cursor-not-allowed"
               >
                 {isLoading ? 'Processing...' : 'Deposit Funds'}
               </button>
@@ -200,19 +199,17 @@ export default function Wallet() {
 
         {/* Transaction History */}
         <div className="lg:col-span-8">
-          <div className="bg-brand-card p-8 md:p-16 rounded-[3.5rem] shadow-2xl border border-white/5 h-full relative overflow-hidden">
-            <div className="absolute top-0 right-0 w-64 h-64 bg-brand-blue/5 rounded-full translate-x-1/2 -translate-y-1/2 blur-3xl" />
-            
-            <div className="flex items-center justify-between mb-12 relative z-10">
-              <h2 className="text-3xl font-display font-black text-white flex items-center tracking-tighter">
-                <div className="w-12 h-12 rounded-2xl bg-brand-purple/10 flex items-center justify-center mr-4 border border-brand-purple/10">
-                  <FontAwesomeIcon icon={faHistory} className="text-brand-purple text-sm" />
+          <div className="bg-white p-6 md:p-10 rounded-3xl shadow-sm border border-gray-100 h-full relative overflow-hidden">
+            <div className="flex items-center justify-between mb-8 relative z-10">
+              <h2 className="text-xl font-display font-black text-brand-light flex items-center tracking-tighter">
+                <div className="w-10 h-10 rounded-xl bg-brand-purple/5 flex items-center justify-center mr-3">
+                  <FontAwesomeIcon icon={faHistory} className="text-brand-purple text-xs" />
                 </div>
                 Transaction History
               </h2>
             </div>
             
-            <div className="space-y-5 relative z-10">
+            <div className="space-y-3 relative z-10">
               {transactions.length > 0 ? (
                 transactions.map((txn, idx) => (
                   <motion.div
@@ -220,42 +217,42 @@ export default function Wallet() {
                     initial={{ opacity: 0, y: 10 }}
                     animate={{ opacity: 1, y: 0 }}
                     transition={{ delay: idx * 0.05 }}
-                    className="flex items-center justify-between p-6 rounded-[2.5rem] bg-white/5 border border-white/5 hover:border-brand-purple/20 hover:bg-white/10 transition-all group"
+                    className="flex items-center justify-between p-4 rounded-2xl bg-gray-50 border border-gray-100 hover:border-brand-purple/20 transition-all group"
                   >
-                    <div className="flex items-center space-x-6">
-                      <div className={`w-14 h-14 rounded-2xl flex items-center justify-center text-white text-lg shadow-xl transition-transform group-hover:scale-110 border border-white/10 ${
+                    <div className="flex items-center space-x-4">
+                      <div className={`w-10 h-10 rounded-xl flex items-center justify-center text-white text-sm shadow-sm transition-transform group-hover:scale-110 ${
                         txn.status === 'Approved' ? 'bg-emerald-500' : 
                         txn.status === 'Pending' ? 'bg-amber-500' : 'bg-rose-500'
                       }`}>
                         <FontAwesomeIcon icon={txn.type === 'Deposit' ? faArrowDown : faArrowUp} />
                       </div>
                       <div>
-                        <div className="text-lg font-black text-white group-hover:text-brand-purple transition-colors tracking-tight">{txn.type} via {txn.method}</div>
-                        <div className="text-[10px] text-gray-500 font-bold uppercase tracking-widest mt-1">{new Date(txn.createdAt).toLocaleDateString()} • {txn.id.slice(-8)}</div>
+                        <div className="text-sm font-black text-brand-light group-hover:text-brand-purple transition-colors tracking-tight">{txn.type} via {txn.method}</div>
+                        <div className="text-[9px] text-gray-400 font-bold uppercase tracking-widest mt-0.5">{new Date(txn.createdAt).toLocaleDateString()} • {txn.id.slice(-8)}</div>
                       </div>
                     </div>
                     <div className="text-right">
-                      <div className={`text-2xl font-display font-black ${
-                        txn.status === 'Approved' ? 'text-emerald-500' : 'text-white'
+                      <div className={`text-lg font-display font-black ${
+                        txn.status === 'Approved' ? 'text-emerald-500' : 'text-brand-light'
                       }`}>UGX {txn.amount?.toLocaleString()}</div>
-                      <div className={`text-[10px] font-black uppercase tracking-widest flex items-center justify-end gap-1 mt-1 ${
+                      <div className={`text-[9px] font-black uppercase tracking-widest flex items-center justify-end gap-1 mt-0.5 ${
                         txn.status === 'Approved' ? 'text-emerald-500' : 
                         txn.status === 'Pending' ? 'text-amber-500' : 'text-rose-500'
                       }`}>
-                        <FontAwesomeIcon icon={txn.status === 'Approved' ? faCheckCircle : faInfoCircle} />
+                        <FontAwesomeIcon icon={txn.status === 'Approved' ? faCheckCircle : faInfoCircle} className="text-[8px]" />
                         {txn.status}
                       </div>
                     </div>
                   </motion.div>
                 ))
               ) : (
-                <div className="flex flex-col items-center justify-center py-32 text-center space-y-6">
-                  <div className="w-24 h-24 bg-white/5 rounded-full flex items-center justify-center text-gray-700 text-4xl shadow-inner">
+                <div className="flex flex-col items-center justify-center py-20 text-center space-y-4">
+                  <div className="w-16 h-16 bg-gray-50 rounded-full flex items-center justify-center text-gray-200 text-2xl">
                     <FontAwesomeIcon icon={faWallet} />
                   </div>
-                  <div className="space-y-2">
-                    <h3 className="text-2xl font-black text-white tracking-tighter">No transactions yet</h3>
-                    <p className="text-gray-500 text-sm font-medium max-w-xs mx-auto leading-relaxed">Your transaction history will appear here once you start using your wallet.</p>
+                  <div className="space-y-1">
+                    <h3 className="text-lg font-black text-brand-light tracking-tighter">No transactions yet</h3>
+                    <p className="text-gray-400 text-[10px] font-medium max-w-xs mx-auto leading-relaxed">Your transaction history will appear here once you start using your wallet.</p>
                   </div>
                 </div>
               )}

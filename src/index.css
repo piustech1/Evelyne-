@@ -7,9 +7,9 @@
   
   --color-brand-blue: #4F46E5;
   --color-brand-purple: #7C3AED;
-  --color-brand-dark: #0F172A;
-  --color-brand-card: #1E293B;
-  --color-brand-light: #F1F5F9;
+  --color-brand-dark: #F8FAFC;
+  --color-brand-card: #FFFFFF;
+  --color-brand-light: #1E293B;
   --color-brand-accent: #818CF8;
 }
 
@@ -24,17 +24,17 @@
 }
 
 .gradient-brand {
-  background: linear-gradient(135deg, var(--color-brand-blue) 0%, var(--color-brand-purple) 100%);
+  background: linear-gradient(135deg, #6366f1 0%, #a855f7 100%);
 }
 
 .text-gradient {
-  background: linear-gradient(135deg, var(--color-brand-blue) 0%, var(--color-brand-purple) 100%);
+  background: linear-gradient(135deg, #6366f1 0%, #a855f7 100%);
   -webkit-background-clip: text;
   -webkit-text-fill-color: transparent;
 }
 
-.card-dark {
-  @apply bg-brand-card border border-white/5 rounded-3xl shadow-xl;
+.card-light {
+  @apply bg-brand-card border border-gray-100 rounded-2xl shadow-sm;
 }
 
 .custom-scrollbar::-webkit-scrollbar {
@@ -46,10 +46,10 @@
 }
 
 .custom-scrollbar::-webkit-scrollbar-thumb {
-  background: rgba(255, 255, 255, 0.1);
+  background: rgba(0, 0, 0, 0.05);
   border-radius: 10px;
 }
 
 .custom-scrollbar::-webkit-scrollbar-thumb:hover {
-  background: rgba(255, 255, 255, 0.2);
+  background: rgba(0, 0, 0, 0.1);
 }

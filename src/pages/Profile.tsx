@@ -81,69 +81,68 @@ export default function Profile() {
   ];
 
   return (
-    <div className="pt-24 pb-32 px-4 sm:px-6 lg:px-8 max-w-7xl mx-auto space-y-10">
+    <div className="pt-12 pb-32 px-4 sm:px-6 lg:px-8 max-w-7xl mx-auto space-y-8">
       {/* Profile Hero Card */}
       <motion.div
         initial={{ opacity: 0, y: 20 }}
         animate={{ opacity: 1, y: 0 }}
-        className="relative h-[200px] md:h-[240px] gradient-brand rounded-[3.5rem] p-8 md:p-12 text-white overflow-hidden shadow-2xl shadow-brand-blue/20 flex flex-col justify-center border border-white/10"
+        className="relative h-[160px] md:h-[180px] gradient-brand rounded-3xl p-6 md:p-10 text-white overflow-hidden shadow-lg flex flex-col justify-center"
       >
         <div className="absolute top-0 right-0 w-64 h-64 bg-white/10 rounded-full -translate-x-1/4 -translate-y-1/4 blur-3xl" />
-        <div className="absolute bottom-0 left-0 w-48 h-48 bg-black/10 rounded-full translate-x-1/4 translate-y-1/4 blur-3xl" />
         
-        <div className="relative z-10 flex items-center space-x-6 md:space-x-12">
+        <div className="relative z-10 flex items-center space-x-4 md:space-x-8">
           <div className="relative">
-            <div className="w-20 h-20 md:w-32 md:h-32 bg-white/10 backdrop-blur-xl rounded-[2.5rem] border border-white/20 flex items-center justify-center text-3xl md:text-5xl shadow-inner">
+            <div className="w-16 h-16 md:w-24 md:h-24 bg-white/10 backdrop-blur-xl rounded-2xl border border-white/20 flex items-center justify-center text-2xl md:text-4xl shadow-inner">
               <FontAwesomeIcon icon={faUser} />
             </div>
-            <div className="absolute -bottom-2 -right-2 w-8 h-8 bg-emerald-500 rounded-xl border-4 border-brand-blue flex items-center justify-center text-white text-[10px] shadow-lg">
+            <div className="absolute -bottom-1 -right-1 w-6 h-6 bg-emerald-500 rounded-lg border-2 border-brand-blue flex items-center justify-center text-white text-[8px] shadow-lg">
               <FontAwesomeIcon icon={faCheckCircle} />
             </div>
           </div>
           
           <div className="flex-grow">
-            <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-6">
+            <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
               <div>
-                <h1 className="text-3xl md:text-5xl font-display font-black tracking-tighter capitalize mb-2">
+                <h1 className="text-2xl md:text-4xl font-display font-black tracking-tighter capitalize mb-1">
                   {userData?.name || 'User'}
                 </h1>
-                <div className="flex flex-wrap items-center gap-4 text-xs md:text-sm font-black opacity-70 uppercase tracking-widest">
+                <div className="flex flex-wrap items-center gap-3 text-[10px] font-black opacity-70 uppercase tracking-widest">
                   <span className="flex items-center">
-                    <FontAwesomeIcon icon={faEnvelope} className="mr-2" />
+                    <FontAwesomeIcon icon={faEnvelope} className="mr-1.5" />
                     {user?.email}
                   </span>
                   <span className="hidden md:inline opacity-30">|</span>
                   <span>ID: #{user?.uid.slice(-6).toUpperCase()}</span>
-                  <span className="px-3 py-1 bg-white/20 rounded-full text-[9px] font-black">VIP MEMBER</span>
+                  <span className="px-2 py-0.5 bg-white/20 rounded-full text-[8px] font-black">VIP</span>
                 </div>
               </div>
               
               <div className="hidden md:block text-right">
-                <div className="text-[10px] font-black uppercase tracking-[0.2em] opacity-60 mb-2">Available Balance</div>
-                <div className="text-4xl font-display font-black tracking-tighter">UGX {userData?.balance?.toLocaleString() || 0}</div>
+                <div className="text-[8px] font-black uppercase tracking-[0.2em] opacity-60 mb-1">Balance</div>
+                <div className="text-2xl font-display font-black tracking-tighter">UGX {userData?.balance?.toLocaleString() || 0}</div>
               </div>
             </div>
           </div>
         </div>
       </motion.div>
 
-      <div className="grid grid-cols-1 lg:grid-cols-12 gap-10">
+      <div className="grid grid-cols-1 lg:grid-cols-12 gap-8">
         {/* Quick Actions & Stats */}
-        <div className="lg:col-span-8 space-y-10">
+        <div className="lg:col-span-8 space-y-8">
           {/* Quick Actions Grid */}
           <section>
-            <h3 className="text-[10px] font-black text-gray-500 uppercase tracking-[0.2em] mb-6 ml-2">Quick Actions</h3>
-            <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
+            <h3 className="text-[9px] font-black text-gray-400 uppercase tracking-[0.2em] mb-4 ml-1">Quick Actions</h3>
+            <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
               {quickActions.map((action, idx) => (
                 <Link
                   key={idx}
                   to={action.path}
-                  className="bg-brand-card p-6 rounded-[2.5rem] border border-white/5 shadow-xl hover:border-brand-purple/30 hover:-translate-y-1 transition-all group text-center"
+                  className="bg-white p-5 rounded-2xl border border-gray-100 shadow-sm hover:border-brand-purple/30 hover:-translate-y-1 transition-all group text-center"
                 >
-                  <div className={`w-12 h-12 ${action.color} rounded-2xl flex items-center justify-center text-white mx-auto mb-4 shadow-lg group-hover:scale-110 transition-transform border border-white/10`}>
-                    <FontAwesomeIcon icon={action.icon} />
+                  <div className={`w-10 h-10 ${action.color} rounded-xl flex items-center justify-center text-white mx-auto mb-3 shadow-sm group-hover:scale-110 transition-transform`}>
+                    <FontAwesomeIcon icon={action.icon} className="text-xs" />
                   </div>
-                  <span className="text-[10px] font-black text-white uppercase tracking-widest">{action.title}</span>
+                  <span className="text-[9px] font-black text-brand-light uppercase tracking-widest">{action.title}</span>
                 </Link>
               ))}
             </div>
@@ -151,17 +150,17 @@ export default function Profile() {
 
           {/* Stats Section */}
           <section>
-            <h3 className="text-[10px] font-black text-gray-500 uppercase tracking-[0.2em] mb-6 ml-2">Account Statistics</h3>
-            <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+            <h3 className="text-[9px] font-black text-gray-400 uppercase tracking-[0.2em] mb-4 ml-1">Account Statistics</h3>
+            <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
               {stats.map((stat, idx) => (
-                <div key={idx} className="bg-brand-card p-6 rounded-[2.5rem] border border-white/5 shadow-xl">
-                  <div className="flex items-center justify-between mb-4">
-                    <div className="w-8 h-8 bg-white/5 rounded-xl flex items-center justify-center text-gray-500 text-xs border border-white/5">
+                <div key={idx} className="bg-white p-5 rounded-2xl border border-gray-100 shadow-sm">
+                  <div className="flex items-center justify-between mb-3">
+                    <div className="w-7 h-7 bg-gray-50 rounded-lg flex items-center justify-center text-gray-400 text-[10px]">
                       <FontAwesomeIcon icon={stat.icon} />
                     </div>
                   </div>
-                  <div className="text-lg font-black text-white mb-1 tracking-tight">{stat.value}</div>
-                  <div className="text-[9px] font-black text-gray-600 uppercase tracking-widest">{stat.label}</div>
+                  <div className="text-base font-black text-brand-light mb-0.5 tracking-tight">{stat.value}</div>
+                  <div className="text-[8px] font-black text-gray-400 uppercase tracking-widest">{stat.label}</div>
                 </div>
               ))}
             </div>
@@ -171,37 +170,37 @@ export default function Profile() {
           <motion.div
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
-            className="bg-brand-card p-8 md:p-12 rounded-[3.5rem] shadow-2xl border border-white/5"
+            className="bg-white p-6 md:p-10 rounded-3xl shadow-sm border border-gray-100"
           >
-            <h3 className="text-2xl font-display font-black text-white tracking-tighter mb-10">Edit Profile</h3>
+            <h3 className="text-xl font-display font-black text-brand-light tracking-tighter mb-8">Edit Profile</h3>
             
             {message.text && (
-              <div className={`mb-8 p-4 rounded-2xl text-xs font-bold text-center border ${
-                message.type === 'success' ? 'bg-emerald-500/10 border-emerald-500/20 text-emerald-500' : 'bg-rose-500/10 border-rose-500/20 text-rose-500'
+              <div className={`mb-6 p-3 rounded-xl text-[10px] font-bold text-center border ${
+                message.type === 'success' ? 'bg-emerald-50 border-emerald-100 text-emerald-600' : 'bg-rose-50 border-rose-100 text-rose-600'
               }`}>
                 {message.text}
               </div>
             )}
 
-            <form className="space-y-10" onSubmit={handleUpdateProfile}>
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
-                <div className="space-y-3">
-                  <label className="text-[10px] font-black text-gray-500 uppercase tracking-widest ml-1">Full Name</label>
+            <form className="space-y-8" onSubmit={handleUpdateProfile}>
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                <div className="space-y-2">
+                  <label className="text-[9px] font-black text-gray-400 uppercase tracking-widest ml-1">Full Name</label>
                   <input
                     type="text"
                     value={name}
                     onChange={(e) => setName(e.target.value)}
                     placeholder="Your Name"
-                    className="block w-full px-6 py-4 bg-white/5 border border-white/10 rounded-2xl text-white focus:outline-none focus:ring-4 focus:ring-brand-purple/10 focus:border-brand-purple transition-all font-bold text-sm"
+                    className="block w-full px-4 py-3 bg-gray-50 border border-gray-100 rounded-xl text-brand-light focus:outline-none focus:ring-2 focus:ring-brand-purple/5 focus:border-brand-purple transition-all font-bold text-xs"
                   />
                 </div>
-                <div className="space-y-3">
-                  <label className="text-[10px] font-black text-gray-500 uppercase tracking-widest ml-1">Email Address</label>
+                <div className="space-y-2">
+                  <label className="text-[9px] font-black text-gray-400 uppercase tracking-widest ml-1">Email Address</label>
                   <input
                     type="email"
                     disabled
                     value={user?.email || ''}
-                    className="block w-full px-6 py-4 bg-white/5 border border-white/10 rounded-2xl text-gray-500 cursor-not-allowed font-bold text-sm"
+                    className="block w-full px-4 py-3 bg-gray-50 border border-gray-100 rounded-xl text-gray-400 cursor-not-allowed font-bold text-xs"
                   />
                 </div>
               </div>
@@ -209,7 +208,7 @@ export default function Profile() {
                 <button 
                   type="submit" 
                   disabled={isLoading}
-                  className="px-10 py-5 gradient-brand text-white font-black uppercase tracking-widest text-xs rounded-2xl shadow-2xl shadow-brand-blue/30 hover:scale-[1.02] active:scale-[0.98] transition-all disabled:opacity-50"
+                  className="px-8 py-4 gradient-brand text-white font-black uppercase tracking-widest text-[10px] rounded-xl shadow-sm hover:scale-[1.02] active:scale-[0.98] transition-all disabled:opacity-50"
                 >
                   {isLoading ? 'Updating...' : 'Update Profile'}
                 </button>
@@ -219,44 +218,44 @@ export default function Profile() {
         </div>
 
         {/* Sidebar: Security & Logout */}
-        <div className="lg:col-span-4 space-y-10">
-          <div className="bg-brand-dark p-10 rounded-[3.5rem] text-white space-y-10 shadow-2xl border border-white/5 relative overflow-hidden">
+        <div className="lg:col-span-4 space-y-8">
+          <div className="bg-brand-light p-8 rounded-3xl text-white space-y-8 shadow-lg relative overflow-hidden">
             <div className="absolute top-0 right-0 w-32 h-32 bg-white/5 rounded-full -translate-x-1/2 -translate-y-1/2 blur-2xl" />
             
             <div>
-              <h3 className="text-2xl font-display font-black tracking-tighter mb-2">Security</h3>
-              <p className="text-gray-500 text-[10px] font-black uppercase tracking-widest">Manage your protection</p>
+              <h3 className="text-xl font-display font-black tracking-tighter mb-1">Security</h3>
+              <p className="text-white/50 text-[8px] font-black uppercase tracking-widest">Manage protection</p>
             </div>
 
-            <div className="space-y-4">
-              <button className="w-full p-6 rounded-[2rem] bg-white/5 hover:bg-white/10 flex items-center justify-between transition-all group border border-white/5">
-                <div className="flex items-center space-x-4">
-                  <div className="w-10 h-10 rounded-xl bg-brand-purple/20 flex items-center justify-center text-brand-purple border border-brand-purple/10">
-                    <FontAwesomeIcon icon={faShieldAlt} />
+            <div className="space-y-3">
+              <button className="w-full p-4 rounded-2xl bg-white/5 hover:bg-white/10 flex items-center justify-between transition-all group border border-white/5">
+                <div className="flex items-center space-x-3">
+                  <div className="w-8 h-8 rounded-lg bg-brand-purple/20 flex items-center justify-center text-brand-purple border border-brand-purple/10">
+                    <FontAwesomeIcon icon={faShieldAlt} className="text-xs" />
                   </div>
-                  <span className="text-sm font-bold">Two-Factor Auth</span>
+                  <span className="text-xs font-bold">Two-Factor Auth</span>
                 </div>
-                <div className="w-10 h-5 bg-gray-800 rounded-full relative">
-                  <div className="absolute left-1 top-1 w-3 h-3 bg-white/20 rounded-full" />
+                <div className="w-8 h-4 bg-black/20 rounded-full relative">
+                  <div className="absolute left-0.5 top-0.5 w-3 h-3 bg-white/20 rounded-full" />
                 </div>
               </button>
-              <button className="w-full p-6 rounded-[2rem] bg-white/5 hover:bg-white/10 flex items-center justify-between transition-all group border border-white/5">
-                <div className="flex items-center space-x-4">
-                  <div className="w-10 h-10 rounded-xl bg-brand-blue/20 flex items-center justify-center text-brand-blue border border-brand-blue/10">
-                    <FontAwesomeIcon icon={faBell} />
+              <button className="w-full p-4 rounded-2xl bg-white/5 hover:bg-white/10 flex items-center justify-between transition-all group border border-white/5">
+                <div className="flex items-center space-x-3">
+                  <div className="w-8 h-8 rounded-lg bg-brand-blue/20 flex items-center justify-center text-brand-blue border border-brand-blue/10">
+                    <FontAwesomeIcon icon={faBell} className="text-xs" />
                   </div>
-                  <span className="text-sm font-bold">Notifications</span>
+                  <span className="text-xs font-bold">Notifications</span>
                 </div>
-                <div className="w-10 h-5 bg-brand-purple rounded-full relative">
-                  <div className="absolute right-1 top-1 w-3 h-3 bg-white rounded-full" />
+                <div className="w-8 h-4 bg-brand-purple rounded-full relative">
+                  <div className="absolute right-0.5 top-0.5 w-3 h-3 bg-white rounded-full" />
                 </div>
               </button>
             </div>
 
-            <div className="pt-6">
+            <div className="pt-4">
               <button
                 onClick={handleLogout}
-                className="w-full py-5 rounded-2xl bg-rose-500/10 text-rose-500 font-black uppercase tracking-widest text-xs hover:bg-rose-500 hover:text-white transition-all flex items-center justify-center space-x-3 group border border-rose-500/20"
+                className="w-full py-4 rounded-xl bg-rose-500/10 text-rose-500 font-black uppercase tracking-widest text-[10px] hover:bg-rose-500 hover:text-white transition-all flex items-center justify-center space-x-2 group border border-rose-500/20"
               >
                 <FontAwesomeIcon icon={faSignOutAlt} className="group-hover:-translate-x-1 transition-transform" />
                 <span>Logout Account</span>
@@ -265,14 +264,14 @@ export default function Profile() {
           </div>
 
           {/* Support Card */}
-          <div className="bg-brand-card p-10 rounded-[3.5rem] border border-white/5 shadow-2xl text-center relative overflow-hidden">
+          <div className="bg-white p-8 rounded-3xl border border-gray-100 shadow-sm text-center relative overflow-hidden">
             <div className="absolute top-0 right-0 w-32 h-32 bg-brand-blue/5 rounded-full translate-x-1/2 -translate-y-1/2 blur-2xl" />
-            <div className="w-16 h-16 bg-brand-blue/10 rounded-2xl flex items-center justify-center text-brand-blue text-2xl mx-auto mb-6 border border-brand-blue/10">
+            <div className="w-12 h-12 bg-brand-blue/5 rounded-xl flex items-center justify-center text-brand-blue text-xl mx-auto mb-4 border border-brand-blue/10">
               <FontAwesomeIcon icon={faRocket} />
             </div>
-            <h4 className="text-2xl font-display font-black text-white tracking-tighter mb-3">Need Help?</h4>
-            <p className="text-gray-500 text-xs font-medium mb-8 leading-relaxed">Our expert support team is available 24/7 to assist you with any questions.</p>
-            <button className="w-full py-4 bg-white/5 text-white font-black uppercase tracking-widest text-[10px] rounded-2xl hover:gradient-brand transition-all border border-white/10">
+            <h4 className="text-xl font-display font-black text-brand-light tracking-tighter mb-2">Need Help?</h4>
+            <p className="text-gray-400 text-[10px] font-medium mb-6 leading-relaxed">Our support team is available 24/7 to assist you.</p>
+            <button className="w-full py-3 bg-gray-50 text-brand-light font-black uppercase tracking-widest text-[9px] rounded-xl hover:gradient-brand hover:text-white transition-all border border-gray-100">
               Contact Support
             </button>
           </div>
