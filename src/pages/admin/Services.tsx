@@ -52,16 +52,16 @@ export default function AdminServices() {
     <div className="space-y-12">
       <div className="flex flex-col md:flex-row md:items-center justify-between gap-6">
         <div>
-          <h1 className="text-4xl md:text-5xl font-display font-black text-white tracking-tighter mb-2">Services</h1>
-          <p className="text-gray-500 font-black text-[10px] uppercase tracking-[0.2em]">Manage your SMM services and pricing</p>
+          <h1 className="text-4xl md:text-5xl font-display font-black text-gray-900 tracking-tighter mb-2">Services</h1>
+          <p className="text-gray-400 font-black text-[10px] uppercase tracking-[0.2em]">Manage your SMM services and pricing</p>
         </div>
       </div>
 
-      <div className="bg-brand-card p-8 md:p-12 rounded-[3.5rem] shadow-2xl border border-white/5">
+      <div className="bg-white p-8 md:p-12 rounded-[3.5rem] shadow-xl border border-gray-100">
         <div className="flex flex-col md:flex-row md:items-center justify-between mb-12 gap-8">
           <div className="flex items-center space-x-4 w-full md:max-w-xl">
             <div className="relative group flex-grow">
-              <div className="absolute inset-y-0 left-0 pl-6 flex items-center pointer-events-none text-gray-600 group-focus-within:text-brand-purple transition-colors">
+              <div className="absolute inset-y-0 left-0 pl-6 flex items-center pointer-events-none text-gray-400 group-focus-within:text-brand-purple transition-colors">
                 <FontAwesomeIcon icon={faSearch} />
               </div>
               <input
@@ -69,7 +69,7 @@ export default function AdminServices() {
                 placeholder="Search services..."
                 value={searchTerm}
                 onChange={(e) => setSearchTerm(e.target.value)}
-                className="pl-14 pr-6 py-4 bg-white/5 border border-white/10 rounded-2xl text-white placeholder-gray-700 focus:outline-none focus:ring-4 focus:ring-brand-purple/10 focus:border-brand-purple focus:bg-white/10 transition-all w-full font-bold text-sm"
+                className="pl-14 pr-6 py-4 bg-gray-50 border border-gray-100 rounded-2xl text-gray-900 placeholder-gray-400 focus:outline-none focus:ring-4 focus:ring-brand-purple/5 focus:border-brand-purple transition-all w-full font-bold text-sm"
               />
             </div>
           </div>
@@ -78,7 +78,7 @@ export default function AdminServices() {
         <div className="overflow-x-auto">
           <table className="w-full text-left border-collapse">
             <thead>
-              <tr className="text-[10px] font-black text-gray-600 uppercase tracking-[0.2em] border-b border-white/5">
+              <tr className="text-[10px] font-black text-gray-400 uppercase tracking-[0.2em] border-b border-gray-50">
                 <th className="pb-6 px-4">API ID</th>
                 <th className="pb-6 px-4">Service Name</th>
                 <th className="pb-6 px-4 hidden sm:table-cell">Category</th>
@@ -87,19 +87,19 @@ export default function AdminServices() {
                 <th className="pb-6 px-4">Status</th>
               </tr>
             </thead>
-            <tbody className="divide-y divide-white/5">
+            <tbody className="divide-y divide-gray-50">
               {filteredServices.map((service, idx) => (
                 <motion.tr
                   key={service.apiServiceId}
                   initial={{ opacity: 0, x: -10 }}
                   animate={{ opacity: 1, x: 0 }}
                   transition={{ delay: idx * 0.05 }}
-                  className="group hover:bg-white/5 transition-colors"
+                  className="group hover:bg-gray-50 transition-colors"
                 >
-                  <td className="py-6 px-4 text-xs font-black text-white">#{service.apiServiceId}</td>
-                  <td className="py-6 px-4 text-xs font-bold text-gray-400 truncate max-w-[300px]">{service.name}</td>
-                  <td className="py-6 px-4 text-xs font-bold text-gray-600 hidden sm:table-cell">{service.category}</td>
-                  <td className="py-6 px-4 text-xs font-bold text-gray-500">UGX {service.rate?.toLocaleString()}</td>
+                  <td className="py-6 px-4 text-xs font-black text-gray-900">#{service.apiServiceId}</td>
+                  <td className="py-6 px-4 text-xs font-bold text-gray-500 truncate max-w-[300px]">{service.name}</td>
+                  <td className="py-6 px-4 text-xs font-bold text-gray-400 hidden sm:table-cell">{service.category}</td>
+                  <td className="py-6 px-4 text-xs font-bold text-gray-400">UGX {service.rate?.toLocaleString()}</td>
                   <td className="py-6 px-4 text-xs font-black text-brand-purple">UGX {service.price?.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</td>
                   <td className="py-6 px-4">
                     <button 
@@ -118,10 +118,10 @@ export default function AdminServices() {
           </table>
           {filteredServices.length === 0 && !isLoading && (
             <div className="py-32 text-center space-y-4">
-              <div className="w-20 h-20 bg-white/5 rounded-full flex items-center justify-center text-gray-700 text-3xl mx-auto">
+              <div className="w-20 h-20 bg-gray-50 rounded-full flex items-center justify-center text-gray-300 text-3xl mx-auto">
                 <FontAwesomeIcon icon={faList} />
               </div>
-              <div className="text-gray-600 font-black uppercase tracking-widest text-xs">No services found</div>
+              <div className="text-gray-400 font-black uppercase tracking-widest text-xs">No services found</div>
             </div>
           )}
         </div>

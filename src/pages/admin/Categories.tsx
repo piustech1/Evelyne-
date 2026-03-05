@@ -41,7 +41,7 @@ export default function AdminCategories() {
       }
       setIsModalOpen(false);
       setEditingCategory(null);
-      setFormData({ name: '', status: 'Active', sort: 0 });
+      setFormData({ name: '', status: 'Active', sort: 0, keywords: '' });
     } catch (err) {
       console.error('Failed to save category', err);
     }
@@ -61,27 +61,27 @@ export default function AdminCategories() {
     <div className="space-y-12">
       <div className="flex flex-col md:flex-row md:items-center justify-between gap-6">
         <div>
-          <h1 className="text-4xl md:text-5xl font-display font-black text-white tracking-tighter mb-2">Categories</h1>
-          <p className="text-gray-500 font-black text-[10px] uppercase tracking-[0.2em]">Organize your services into logical groups</p>
+          <h1 className="text-4xl md:text-5xl font-display font-black text-gray-900 tracking-tighter mb-2">Categories</h1>
+          <p className="text-gray-400 font-black text-[10px] uppercase tracking-[0.2em]">Organize your services into logical groups</p>
         </div>
         <button 
           onClick={() => {
             setEditingCategory(null);
-            setFormData({ name: '', status: 'Active', sort: categories.length });
+            setFormData({ name: '', status: 'Active', sort: categories.length, keywords: '' });
             setIsModalOpen(true);
           }}
-          className="px-8 py-4 gradient-brand text-white font-black uppercase tracking-widest text-[10px] rounded-2xl shadow-2xl shadow-brand-blue/20 hover:scale-105 transition-all active:scale-95 flex items-center justify-center space-x-3"
+          className="px-8 py-4 bg-gradient-to-r from-blue-600 to-purple-600 text-white font-black uppercase tracking-widest text-[10px] rounded-2xl shadow-xl shadow-blue-600/20 hover:scale-105 transition-all active:scale-95 flex items-center justify-center space-x-3"
         >
           <FontAwesomeIcon icon={faPlus} />
           <span>Add Category</span>
         </button>
       </div>
 
-      <div className="bg-brand-card p-8 md:p-12 rounded-[3.5rem] shadow-2xl border border-white/5">
+      <div className="bg-white p-8 md:p-12 rounded-[3.5rem] shadow-sm border border-gray-100">
         <div className="overflow-x-auto">
           <table className="w-full text-left border-collapse">
             <thead>
-              <tr className="text-[10px] font-black text-gray-600 uppercase tracking-[0.2em] border-b border-white/5">
+              <tr className="text-[10px] font-black text-gray-400 uppercase tracking-[0.2em] border-b border-gray-50">
                 <th className="pb-6 px-4">Sort</th>
                 <th className="pb-6 px-4">ID</th>
                 <th className="pb-6 px-4">Category Name</th>
@@ -89,20 +89,20 @@ export default function AdminCategories() {
                 <th className="pb-6 px-4 text-right">Actions</th>
               </tr>
             </thead>
-            <tbody className="divide-y divide-white/5">
+            <tbody className="divide-y divide-gray-50">
               {categories.map((cat, idx) => (
                 <motion.tr
                   key={cat.id}
                   initial={{ opacity: 0, x: -10 }}
                   animate={{ opacity: 1, x: 0 }}
                   transition={{ delay: idx * 0.05 }}
-                  className="group hover:bg-white/5 transition-colors"
+                  className="group hover:bg-gray-50 transition-colors"
                 >
-                  <td className="py-6 px-4 text-gray-700 cursor-move">
+                  <td className="py-6 px-4 text-gray-300 cursor-move">
                     <FontAwesomeIcon icon={faGripVertical} />
                   </td>
-                  <td className="py-6 px-4 text-xs font-black text-white">#{cat.id.slice(-4).toUpperCase()}</td>
-                  <td className="py-6 px-4 text-xs font-bold text-gray-400">{cat.name}</td>
+                  <td className="py-6 px-4 text-xs font-black text-gray-900">#{cat.id.slice(-4).toUpperCase()}</td>
+                  <td className="py-6 px-4 text-xs font-bold text-gray-500">{cat.name}</td>
                   <td className="py-6 px-4">
                     <span className={`inline-flex items-center px-4 py-1.5 rounded-full text-[9px] font-black uppercase tracking-widest border ${
                       cat.status === 'Active' ? 'bg-emerald-500/10 text-emerald-500 border-emerald-500/20' : 'bg-rose-500/10 text-rose-500 border-rose-500/20'
@@ -118,13 +118,13 @@ export default function AdminCategories() {
                           setFormData({ name: cat.name, status: cat.status, sort: cat.sort, keywords: cat.keywords || '' });
                           setIsModalOpen(true);
                         }}
-                        className="w-10 h-10 rounded-xl bg-white/5 text-gray-500 hover:text-brand-blue hover:bg-brand-blue/10 transition-all flex items-center justify-center border border-white/5"
+                        className="w-10 h-10 rounded-xl bg-gray-50 text-gray-400 hover:text-brand-purple hover:bg-brand-purple/10 transition-all flex items-center justify-center border border-gray-100"
                       >
                         <FontAwesomeIcon icon={faEdit} className="text-xs" />
                       </button>
                       <button 
                         onClick={() => handleDelete(cat.id)}
-                        className="w-10 h-10 rounded-xl bg-white/5 text-gray-500 hover:text-rose-500 hover:bg-rose-500/10 transition-all flex items-center justify-center border border-white/5"
+                        className="w-10 h-10 rounded-xl bg-gray-50 text-gray-400 hover:text-rose-500 hover:bg-rose-500/10 transition-all flex items-center justify-center border border-gray-100"
                       >
                         <FontAwesomeIcon icon={faTrashAlt} className="text-xs" />
                       </button>
@@ -136,10 +136,10 @@ export default function AdminCategories() {
           </table>
           {categories.length === 0 && !isLoading && (
             <div className="py-32 text-center space-y-4">
-              <div className="w-20 h-20 bg-white/5 rounded-full flex items-center justify-center text-gray-700 text-3xl mx-auto">
+              <div className="w-20 h-20 bg-gray-50 rounded-full flex items-center justify-center text-gray-300 text-3xl mx-auto">
                 <FontAwesomeIcon icon={faTags} />
               </div>
-              <div className="text-gray-600 font-black uppercase tracking-widest text-xs">No categories found</div>
+              <div className="text-gray-400 font-black uppercase tracking-widest text-xs">No categories found</div>
             </div>
           )}
         </div>
@@ -148,13 +148,13 @@ export default function AdminCategories() {
       {/* Add/Edit Modal */}
       {isModalOpen && (
         <div className="fixed inset-0 z-[100] flex items-center justify-center p-4">
-          <div className="absolute inset-0 bg-black/80 backdrop-blur-md" onClick={() => setIsModalOpen(false)} />
+          <div className="absolute inset-0 bg-black/40 backdrop-blur-sm" onClick={() => setIsModalOpen(false)} />
           <motion.div 
             initial={{ opacity: 0, scale: 0.95 }}
             animate={{ opacity: 1, scale: 1 }}
-            className="bg-brand-card w-full max-w-md rounded-[3rem] p-8 md:p-12 shadow-2xl border border-white/10 relative z-10"
+            className="bg-white w-full max-w-md rounded-[3rem] p-8 md:p-12 shadow-2xl border border-gray-100 relative z-10"
           >
-            <h2 className="text-3xl font-display font-black text-white tracking-tighter mb-10">
+            <h2 className="text-3xl font-display font-black text-gray-900 tracking-tighter mb-10">
               {editingCategory ? 'Edit Category' : 'Add Category'}
             </h2>
             <form onSubmit={handleSubmit} className="space-y-8">
@@ -165,7 +165,7 @@ export default function AdminCategories() {
                   required
                   value={formData.name}
                   onChange={(e) => setFormData({ ...formData, name: e.target.value })}
-                  className="w-full p-5 bg-white/5 border border-white/10 rounded-2xl text-white focus:outline-none focus:ring-4 focus:ring-brand-purple/10 focus:border-brand-purple transition-all font-bold"
+                  className="w-full p-5 bg-gray-50 border border-gray-100 rounded-2xl text-gray-900 focus:outline-none focus:ring-4 focus:ring-brand-purple/5 focus:border-brand-purple transition-all font-bold placeholder-gray-400"
                   placeholder="e.g. Instagram"
                 />
               </div>
@@ -176,10 +176,10 @@ export default function AdminCategories() {
                   type="text"
                   value={formData.keywords}
                   onChange={(e) => setFormData({ ...formData, keywords: e.target.value })}
-                  className="w-full p-5 bg-white/5 border border-white/10 rounded-2xl text-white focus:outline-none focus:ring-4 focus:ring-brand-purple/10 focus:border-brand-purple transition-all font-bold"
+                  className="w-full p-5 bg-gray-50 border border-gray-100 rounded-2xl text-gray-900 focus:outline-none focus:ring-4 focus:ring-brand-purple/5 focus:border-brand-purple transition-all font-bold placeholder-gray-400"
                   placeholder="e.g. Instagram, IG, Insta"
                 />
-                <p className="text-[9px] text-gray-600 font-black uppercase tracking-widest ml-1">Used to auto-match services from API</p>
+                <p className="text-[9px] text-gray-400 font-black uppercase tracking-widest ml-1">Used to auto-match services from API</p>
               </div>
 
               <div className="grid grid-cols-2 gap-8">
@@ -188,10 +188,10 @@ export default function AdminCategories() {
                   <select
                     value={formData.status}
                     onChange={(e) => setFormData({ ...formData, status: e.target.value })}
-                    className="w-full p-5 bg-white/5 border border-white/10 rounded-2xl text-white focus:outline-none focus:ring-4 focus:ring-brand-purple/10 focus:border-brand-purple transition-all font-bold appearance-none"
+                    className="w-full p-5 bg-gray-50 border border-gray-100 rounded-2xl text-gray-900 focus:outline-none focus:ring-4 focus:ring-brand-purple/5 focus:border-brand-purple transition-all font-bold appearance-none"
                   >
-                    <option value="Active" className="bg-brand-dark">Active</option>
-                    <option value="Disabled" className="bg-brand-dark">Disabled</option>
+                    <option value="Active">Active</option>
+                    <option value="Disabled">Disabled</option>
                   </select>
                 </div>
                 <div className="space-y-3">
@@ -200,7 +200,7 @@ export default function AdminCategories() {
                     type="number"
                     value={formData.sort}
                     onChange={(e) => setFormData({ ...formData, sort: Number(e.target.value) })}
-                    className="w-full p-5 bg-white/5 border border-white/10 rounded-2xl text-white focus:outline-none focus:ring-4 focus:ring-brand-purple/10 focus:border-brand-purple transition-all font-bold"
+                    className="w-full p-5 bg-gray-50 border border-gray-100 rounded-2xl text-gray-900 focus:outline-none focus:ring-4 focus:ring-brand-purple/5 focus:border-brand-purple transition-all font-bold"
                   />
                 </div>
               </div>
@@ -209,13 +209,13 @@ export default function AdminCategories() {
                 <button 
                   type="button"
                   onClick={() => setIsModalOpen(false)}
-                  className="flex-1 py-5 bg-white/5 text-white font-black uppercase tracking-widest text-[10px] rounded-2xl border border-white/10 hover:bg-white/10 transition-all"
+                  className="flex-1 py-5 bg-gray-50 text-gray-400 font-black uppercase tracking-widest text-[10px] rounded-2xl border border-gray-100 hover:bg-gray-100 transition-all"
                 >
                   Cancel
                 </button>
                 <button 
                   type="submit"
-                  className="flex-2 py-5 gradient-brand text-white font-black uppercase tracking-widest text-[10px] rounded-2xl shadow-2xl shadow-brand-blue/30 hover:scale-[1.02] active:scale-[0.98] transition-all"
+                  className="flex-2 py-5 bg-gradient-to-r from-blue-600 to-purple-600 text-white font-black uppercase tracking-widest text-[10px] rounded-2xl shadow-xl shadow-blue-600/20 hover:scale-[1.02] active:scale-[0.98] transition-all"
                 >
                   {editingCategory ? 'Update' : 'Create'}
                 </button>

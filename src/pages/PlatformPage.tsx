@@ -1,8 +1,15 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
-import { faInstagram, faTiktok, faYoutube, faFacebook, faTelegram, faTwitter, faSpotify, faSnapchat, faLinkedin, faWhatsapp } from '@fortawesome/free-brands-svg-icons';
-import { faArrowLeft, faShoppingCart, faCheckCircle, faInfoCircle, faRocket, faGlobe, faSearch, faFilter, faList } from '@fortawesome/free-solid-svg-icons';
+import { 
+  faInstagram, faTiktok, faYoutube, faFacebook, faTelegram, faTwitter, 
+  faSpotify, faSnapchat, faLinkedin, faWhatsapp, faTwitch, faSoundcloud,
+  faVimeo, faDeezer, faGooglePlay, faKickstarter
+} from '@fortawesome/free-brands-svg-icons';
+import { 
+  faArrowLeft, faShoppingCart, faCheckCircle, faInfoCircle, faRocket, 
+  faGlobe, faSearch, faFilter, faList, faChartLine, faSearchDollar
+} from '@fortawesome/free-solid-svg-icons';
 import { motion, AnimatePresence } from 'motion/react';
 import { useAuth } from '../hooks/useAuth';
 import { fetchServices, Service } from '../lib/servicesStore';
@@ -18,6 +25,14 @@ const platformIcons: Record<string, any> = {
   snapchat: faSnapchat,
   linkedin: faLinkedin,
   whatsapp: faWhatsapp,
+  twitch: faTwitch,
+  soundcloud: faSoundcloud,
+  vimeo: faVimeo,
+  deezer: faDeezer,
+  'google play': faGooglePlay,
+  kick: faKickstarter,
+  'website traffic': faChartLine,
+  coinmarketcap: faSearchDollar,
   others: faGlobe
 };
 
@@ -27,11 +42,19 @@ const platformColors: Record<string, string> = {
   instagram: 'text-white bg-gradient-to-tr from-[#f9ce34] via-[#ee2a7b] to-[#6228d7]',
   youtube: 'text-white bg-[#FF0000]',
   telegram: 'text-white bg-[#0088cc]',
-  twitter: 'text-white bg-[#1DA1F2]',
+  twitter: 'text-white bg-black',
   spotify: 'text-white bg-[#1DB954]',
   snapchat: 'text-black bg-[#FFFC00]',
   linkedin: 'text-white bg-[#0077B5]',
   whatsapp: 'text-white bg-[#25D366]',
+  twitch: 'text-white bg-[#9146FF]',
+  soundcloud: 'text-white bg-[#FF5500]',
+  vimeo: 'text-white bg-[#1AB7EA]',
+  deezer: 'text-white bg-black',
+  'google play': 'text-white bg-gradient-to-r from-[#4285F4] via-[#34A853] to-[#FBBC05]',
+  kick: 'text-black bg-[#53FC18]',
+  'website traffic': 'text-white bg-emerald-600',
+  coinmarketcap: 'text-white bg-[#171924]',
   others: 'text-white bg-gray-500',
 };
 
@@ -55,25 +78,30 @@ export default function PlatformPage() {
   const navigate = useNavigate();
   
   const [services, setServices] = useState<Service[]>([]);
+  const [allPlatforms, setAllPlatforms] = useState<string[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [activeFilter, setActiveFilter] = useState('All');
   const [searchTerm, setSearchTerm] = useState('');
+  const sliderRef = useRef<HTMLDivElement>(null);
 
   const filters = ['All', 'Followers', 'Likes', 'Views', 'Comments', 'Shares', 'Other'];
 
   useEffect(() => {
-    const loadServices = async () => {
+    const loadData = async () => {
       try {
         const allServices = await fetchServices();
         const filtered = allServices.filter(s => s.category.toLowerCase() === platform.toLowerCase());
         setServices(filtered);
+        
+        const platforms = Array.from(new Set(allServices.map(s => s.category))).sort();
+        setAllPlatforms(platforms);
       } catch (err) {
         console.error(err);
       } finally {
         setIsLoading(false);
       }
     };
-    loadServices();
+    loadData();
   }, [platform]);
 
   const filteredServices = services.filter(s => {
@@ -87,7 +115,7 @@ export default function PlatformPage() {
   });
 
   const handleBoost = (service: Service) => {
-    navigate(`/order?service=${service.apiServiceId}`);
+    navigate(`/order?service=${service.apiServiceId || service.service}`);
   };
 
   const shortenName = (name: string) => {
@@ -95,12 +123,12 @@ export default function PlatformPage() {
     return name;
   };
 
-  const icon = platformIcons[platform.toLowerCase()] || faRocket;
+  const icon = platformIcons[platform.toLowerCase()] || faGlobe;
   const colorClass = platformColors[platform.toLowerCase()] || 'bg-brand-purple text-white';
 
   return (
-    <div className="min-h-screen bg-white pb-32">
-      {/* Curved Header */}
+    <div className="min-h-screen bg-[#f5f5f5] pb-32">
+      {/* Curved Header - No Back Arrow */}
       <div className="gradient-brand pt-12 pb-24 px-6 text-white text-center rounded-b-[3rem] shadow-lg relative overflow-hidden">
         <div className="absolute top-0 right-0 w-64 h-64 bg-white/10 rounded-full -translate-x-1/2 -translate-y-1/2 blur-3xl" />
         <motion.div
@@ -108,25 +136,48 @@ export default function PlatformPage() {
           animate={{ opacity: 1, y: 0 }}
           className="max-w-4xl mx-auto relative z-10 space-y-4"
         >
-          <div className="flex items-center justify-center space-x-4">
-            <button 
-              onClick={() => navigate('/dashboard')}
-              className="w-10 h-10 rounded-xl bg-white/10 backdrop-blur-md border border-white/20 flex items-center justify-center hover:bg-white/20 transition-all"
-            >
-              <FontAwesomeIcon icon={faArrowLeft} />
-            </button>
-            <div className={`w-12 h-12 ${colorClass} rounded-xl flex items-center justify-center text-xl shadow-lg border-2 border-white/20`}>
+          <div className="flex flex-col items-center justify-center space-y-4">
+            <div className={`w-16 h-16 ${colorClass} rounded-2xl flex items-center justify-center text-3xl shadow-xl border-4 border-white/20`}>
               <FontAwesomeIcon icon={icon} />
             </div>
-            <h1 className="text-2xl md:text-4xl font-display font-black tracking-tighter">{platform} Services</h1>
+            <div>
+              <h1 className="text-3xl md:text-5xl font-display font-black tracking-tighter">{platform}</h1>
+              <div className="mt-2 inline-flex items-center px-3 py-1 bg-white/10 backdrop-blur-md rounded-full text-[10px] font-black uppercase tracking-widest border border-white/10">
+                {services.length} Services Available
+              </div>
+            </div>
           </div>
-          <p className="text-white/80 max-w-md mx-auto font-medium text-xs uppercase tracking-widest">
-            Boost your {platform} presence with our premium tools.
-          </p>
         </motion.div>
       </div>
 
       <div className="max-w-7xl mx-auto px-4 -mt-12 relative z-20">
+        {/* Platform Slider */}
+        <div className="mb-8 overflow-hidden">
+          <div 
+            ref={sliderRef}
+            className="flex overflow-x-auto no-scrollbar gap-4 pb-4 px-2"
+          >
+            {allPlatforms.map((p) => (
+              <button
+                key={p}
+                onClick={() => navigate(`/platform?platform=${p}`)}
+                className={`flex-shrink-0 flex items-center space-x-3 px-6 py-3 rounded-2xl border transition-all ${
+                  p.toLowerCase() === platform.toLowerCase()
+                  ? 'bg-white border-brand-purple shadow-lg scale-105'
+                  : 'bg-white/80 border-gray-100 hover:bg-white'
+                }`}
+              >
+                <div className={`w-8 h-8 rounded-lg flex items-center justify-center text-sm ${platformColors[p.toLowerCase()] || 'bg-gray-200'}`}>
+                  <FontAwesomeIcon icon={platformIcons[p.toLowerCase()] || faGlobe} />
+                </div>
+                <span className={`text-[10px] font-black uppercase tracking-widest ${p.toLowerCase() === platform.toLowerCase() ? 'text-brand-purple' : 'text-gray-400'}`}>
+                  {p}
+                </span>
+              </button>
+            ))}
+          </div>
+        </div>
+
         {/* Search and Filters */}
         <div className="bg-white rounded-[2.5rem] shadow-xl border border-gray-100 p-6 md:p-8 mb-12 space-y-6">
           <div className="relative group">
@@ -142,15 +193,15 @@ export default function PlatformPage() {
             />
           </div>
 
-          <div className="flex flex-wrap gap-2">
+          <div className="flex overflow-x-auto no-scrollbar gap-3 pb-2 justify-start md:justify-center">
             {filters.map((f) => (
               <button
                 key={f}
                 onClick={() => setActiveFilter(f)}
-                className={`px-5 py-2.5 rounded-xl text-[10px] font-black uppercase tracking-widest transition-all ${
+                className={`flex-shrink-0 px-6 py-3 rounded-xl text-[10px] font-black uppercase tracking-widest transition-all border ${
                   activeFilter === f 
-                  ? 'bg-brand-purple text-white shadow-md shadow-brand-purple/20' 
-                  : 'bg-gray-50 text-gray-400 hover:bg-gray-100'
+                  ? 'bg-gradient-to-r from-blue-600 to-purple-600 text-white border-transparent shadow-lg shadow-blue-600/20' 
+                  : 'bg-gray-50 text-gray-400 border-gray-100 hover:bg-gray-100'
                 }`}
               >
                 {f}

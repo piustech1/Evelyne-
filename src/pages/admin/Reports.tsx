@@ -91,11 +91,11 @@ export default function AdminReports() {
     <div className="space-y-12">
       <div className="flex flex-col md:flex-row md:items-center justify-between gap-6">
         <div>
-          <h1 className="text-4xl md:text-5xl font-display font-black text-white tracking-tighter mb-2">Reports</h1>
-          <p className="text-gray-500 font-black text-[10px] uppercase tracking-[0.2em]">In-depth analytics and performance metrics</p>
+          <h1 className="text-4xl md:text-5xl font-display font-black text-gray-900 tracking-tighter mb-2">Reports</h1>
+          <p className="text-gray-400 font-black text-[10px] uppercase tracking-[0.2em]">In-depth analytics and performance metrics</p>
         </div>
         <div className="flex items-center space-x-4">
-          <div className="px-6 py-3 bg-brand-card rounded-2xl border border-white/5 shadow-xl text-[10px] font-black text-gray-500 uppercase tracking-widest flex items-center gap-3">
+          <div className="px-6 py-3 bg-white rounded-2xl border border-gray-100 shadow-sm text-[10px] font-black text-gray-400 uppercase tracking-widest flex items-center gap-3">
             <FontAwesomeIcon icon={faCalendarAlt} className="text-brand-purple" />
             <span>Last 7 Days</span>
           </div>
@@ -106,12 +106,12 @@ export default function AdminReports() {
         <motion.div 
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
-          className="bg-brand-card p-8 md:p-12 rounded-[3.5rem] shadow-2xl border border-white/5"
+          className="bg-white p-8 md:p-12 rounded-[3.5rem] shadow-sm border border-gray-100"
         >
           <div className="flex items-center justify-between mb-12">
             <div>
-              <h3 className="text-2xl font-display font-black text-white tracking-tighter mb-1">Revenue Analysis</h3>
-              <p className="text-[10px] font-black text-gray-600 uppercase tracking-widest">Daily earnings from deposits</p>
+              <h3 className="text-2xl font-display font-black text-gray-900 tracking-tighter mb-1">Revenue Analysis</h3>
+              <p className="text-[10px] font-black text-gray-400 uppercase tracking-widest">Daily earnings from deposits</p>
             </div>
             <div className="flex items-center space-x-2 text-[10px] font-black text-emerald-500 uppercase tracking-widest bg-emerald-500/10 px-4 py-2 rounded-full border border-emerald-500/20">
               <FontAwesomeIcon icon={faArrowUp} />
@@ -123,26 +123,26 @@ export default function AdminReports() {
               <AreaChart data={revenueData}>
                 <defs>
                   <linearGradient id="colorRevenue" x1="0" y1="0" x2="0" y2="1">
-                    <stop offset="5%" stopColor="#4F46E5" stopOpacity={0.3}/>
+                    <stop offset="5%" stopColor="#4F46E5" stopOpacity={0.1}/>
                     <stop offset="95%" stopColor="#4F46E5" stopOpacity={0}/>
                   </linearGradient>
                 </defs>
-                <CartesianGrid strokeDasharray="3 3" stroke="#ffffff05" vertical={false} />
+                <CartesianGrid strokeDasharray="3 3" stroke="#f0f0f0" vertical={false} />
                 <XAxis 
                   dataKey="name" 
                   axisLine={false} 
                   tickLine={false} 
-                  tick={{ fill: '#4b5563', fontSize: 10, fontWeight: 900 }} 
+                  tick={{ fill: '#9ca3af', fontSize: 10, fontWeight: 900 }} 
                   dy={10}
                 />
                 <YAxis 
                   axisLine={false} 
                   tickLine={false} 
-                  tick={{ fill: '#4b5563', fontSize: 10, fontWeight: 900 }} 
+                  tick={{ fill: '#9ca3af', fontSize: 10, fontWeight: 900 }} 
                 />
                 <Tooltip 
-                  contentStyle={{ backgroundColor: '#1e293b', border: 'none', borderRadius: '1rem', color: '#fff' }}
-                  itemStyle={{ color: '#818cf8', fontWeight: 900, fontSize: '12px' }}
+                  contentStyle={{ backgroundColor: '#fff', border: '1px solid #f3f4f6', borderRadius: '1rem', boxShadow: '0 10px 15px -3px rgb(0 0 0 / 0.1)' }}
+                  itemStyle={{ color: '#4F46E5', fontWeight: 900, fontSize: '12px' }}
                 />
                 <Area type="monotone" dataKey="revenue" stroke="#4F46E5" strokeWidth={4} fillOpacity={1} fill="url(#colorRevenue)" />
               </AreaChart>
@@ -154,14 +154,14 @@ export default function AdminReports() {
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ delay: 0.1 }}
-          className="bg-brand-card p-8 md:p-12 rounded-[3.5rem] shadow-2xl border border-white/5"
+          className="bg-white p-8 md:p-12 rounded-[3.5rem] shadow-sm border border-gray-100"
         >
           <div className="flex items-center justify-between mb-12">
             <div>
-              <h3 className="text-2xl font-display font-black text-white tracking-tighter mb-1">Order Volume</h3>
-              <p className="text-[10px] font-black text-gray-600 uppercase tracking-widest">Daily order placements</p>
+              <h3 className="text-2xl font-display font-black text-gray-900 tracking-tighter mb-1">Order Volume</h3>
+              <p className="text-[10px] font-black text-gray-400 uppercase tracking-widest">Daily order placements</p>
             </div>
-            <div className="flex items-center space-x-2 text-[10px] font-black text-brand-blue uppercase tracking-widest bg-brand-blue/10 px-4 py-2 rounded-full border border-brand-blue/20">
+            <div className="flex items-center space-x-2 text-[10px] font-black text-blue-500 uppercase tracking-widest bg-blue-500/10 px-4 py-2 rounded-full border border-blue-500/20">
               <FontAwesomeIcon icon={faChartBar} />
               <span>Activity</span>
             </div>
@@ -169,27 +169,27 @@ export default function AdminReports() {
           <div className="h-80 w-full">
             <ResponsiveContainer width="100%" height="100%">
               <BarChart data={orderVolumeData}>
-                <CartesianGrid strokeDasharray="3 3" stroke="#ffffff05" vertical={false} />
+                <CartesianGrid strokeDasharray="3 3" stroke="#f0f0f0" vertical={false} />
                 <XAxis 
                   dataKey="name" 
                   axisLine={false} 
                   tickLine={false} 
-                  tick={{ fill: '#4b5563', fontSize: 10, fontWeight: 900 }} 
+                  tick={{ fill: '#9ca3af', fontSize: 10, fontWeight: 900 }} 
                   dy={10}
                 />
                 <YAxis 
                   axisLine={false} 
                   tickLine={false} 
-                  tick={{ fill: '#4b5563', fontSize: 10, fontWeight: 900 }} 
+                  tick={{ fill: '#9ca3af', fontSize: 10, fontWeight: 900 }} 
                 />
                 <Tooltip 
-                  cursor={{ fill: '#ffffff05' }}
-                  contentStyle={{ backgroundColor: '#1e293b', border: 'none', borderRadius: '1rem', color: '#fff' }}
-                  itemStyle={{ color: '#38bdf8', fontWeight: 900, fontSize: '12px' }}
+                  cursor={{ fill: '#f9fafb' }}
+                  contentStyle={{ backgroundColor: '#fff', border: '1px solid #f3f4f6', borderRadius: '1rem', boxShadow: '0 10px 15px -3px rgb(0 0 0 / 0.1)' }}
+                  itemStyle={{ color: '#3b82f6', fontWeight: 900, fontSize: '12px' }}
                 />
                 <Bar dataKey="orders" radius={[10, 10, 0, 0]}>
                   {orderVolumeData.map((entry, index) => (
-                    <Cell key={`cell-${index}`} fill={index === orderVolumeData.length - 1 ? '#38bdf8' : '#38bdf844'} />
+                    <Cell key={`cell-${index}`} fill={index === orderVolumeData.length - 1 ? '#3b82f6' : '#3b82f644'} />
                   ))}
                 </Bar>
               </BarChart>

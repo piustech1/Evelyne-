@@ -20,22 +20,47 @@ export interface Service {
 
 export const PLATFORMS = [
   'TikTok',
-  'Facebook',
   'Instagram',
+  'Facebook',
   'YouTube',
   'Telegram',
   'Twitter',
+  'Spotify',
+  'SoundCloud',
+  'Twitch',
+  'LinkedIn',
+  'Snapchat',
+  'Kick',
+  'Vimeo',
+  'Deezer',
+  'Google Play',
+  'Website Traffic',
+  'CoinMarketCap',
   'Others'
 ];
 
-export const detectPlatform = (name: string): string => {
-  const n = name.toLowerCase();
+export const detectPlatform = (name: string, category: string = ''): string => {
+  const n = (name + ' ' + category).toLowerCase();
+  
   if (n.includes('tiktok')) return 'TikTok';
-  if (n.includes('instagram')) return 'Instagram';
+  if (n.includes('instagram') || n.includes(' ig ')) return 'Instagram';
   if (n.includes('facebook')) return 'Facebook';
-  if (n.includes('youtube')) return 'YouTube';
+  if (n.includes('youtube') || n.includes(' yt ')) return 'YouTube';
   if (n.includes('telegram')) return 'Telegram';
   if (n.includes('twitter') || n.includes(' x ') || n.includes(' x-') || n.includes(' x ')) return 'Twitter';
+  if (n.includes('spotify')) return 'Spotify';
+  if (n.includes('soundcloud')) return 'SoundCloud';
+  if (n.includes('twitch')) return 'Twitch';
+  if (n.includes('linkedin')) return 'LinkedIn';
+  if (n.includes('clubhouse')) return 'Clubhouse';
+  if (n.includes('google play') || n.includes('play store') || n.includes('android app')) return 'Google Play';
+  if (n.includes('deezer')) return 'Deezer';
+  if (n.includes('vimeo')) return 'Vimeo';
+  if (n.includes('traffic') || n.includes('website') || n.includes('site visit') || n.includes('seo') || n.includes('organic traffic')) return 'Website Traffic';
+  if (n.includes('kick')) return 'Kick';
+  if (n.includes('snapchat') || n.includes(' snap ')) return 'Snapchat';
+  if (n.includes('coinmarketcap') || n.includes('crypto') || n.includes('coin market')) return 'CoinMarketCap';
+  
   return 'Others';
 };
 
@@ -88,7 +113,7 @@ export const fetchServices = async (force = false): Promise<Service[]> => {
       const ugxRate = usdRate * 3800;
       const finalPrice = ugxRate + (ugxRate * profit / 100);
       
-      const platform = detectPlatform(s.name) === 'Others' ? detectPlatform(s.category) : detectPlatform(s.name);
+      const platform = detectPlatform(s.name, s.category);
       
       const service: Service = {
         service: s.service,

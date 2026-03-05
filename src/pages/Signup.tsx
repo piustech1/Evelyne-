@@ -71,73 +71,75 @@ export default function Signup() {
   };
 
   return (
-    <div className="min-h-screen flex bg-brand-dark">
+    <div className="min-h-screen flex bg-[#f5f5f5]">
       {/* Left Side: Form */}
-      <div className="flex-1 flex items-center justify-center px-6 py-12 lg:px-12">
+      <div className="flex-1 flex items-center justify-center px-4 py-12 lg:px-12">
         <motion.div
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
-          className="max-w-md w-full p-8 md:p-12 bg-brand-card rounded-[2.5rem] border border-white/5 shadow-2xl shadow-black/50"
+          className="max-w-xl w-full p-6 md:p-8 bg-white rounded-lg border border-gray-200 shadow-xl"
         >
-          <div className="text-center mb-10">
-            <Link to="/" className="inline-flex items-center space-x-3 mb-8 group">
-              <div className="w-10 h-10 gradient-brand rounded-xl flex items-center justify-center shadow-lg shadow-brand-blue/20 group-hover:scale-110 transition-transform">
+          <div className="text-center mb-6">
+            <Link to="/" className="inline-flex items-center space-x-3 mb-4 group">
+              <div className="w-10 h-10 bg-gradient-to-r from-blue-600 to-purple-600 rounded-lg flex items-center justify-center shadow-lg shadow-blue-600/20 group-hover:scale-110 transition-transform">
                 <FontAwesomeIcon icon={faRocket} className="text-white text-lg" />
               </div>
-              <span className="text-xl font-display font-black text-white tracking-tighter">EasyBoost</span>
+              <span className="text-xl font-display font-black text-gray-900 tracking-tighter">EasyBoost</span>
             </Link>
             
-            <h2 className="text-4xl font-display font-black text-white tracking-tighter mb-2">Join Us</h2>
-            <p className="text-gray-500 font-bold text-[10px] uppercase tracking-[0.2em]">Create your free account</p>
+            <h2 className="text-2xl font-display font-black text-gray-900 tracking-tighter mb-1">Join Us</h2>
+            <p className="text-gray-400 font-bold text-[10px] uppercase tracking-[0.2em]">Create your free account</p>
           </div>
 
           {error && (
-            <div className="mb-6 p-4 bg-rose-500/10 border border-rose-500/20 rounded-2xl text-rose-500 text-xs font-bold text-center">
+            <div className="mb-4 p-3 bg-rose-50 border border-rose-100 rounded-lg text-rose-500 text-[10px] font-bold text-center">
               {error}
             </div>
           )}
 
-          <form className="space-y-5" onSubmit={handleSubmit}>
-            <div className="space-y-4">
-              <div className="space-y-2">
-                <label className="text-[10px] font-black text-gray-500 uppercase tracking-widest ml-1">Full Name</label>
-                <div className="relative group">
-                  <div className="absolute inset-y-0 left-0 pl-5 flex items-center pointer-events-none text-gray-500 group-focus-within:text-brand-purple transition-colors">
-                    <FontAwesomeIcon icon={faUser} />
+          <form className="space-y-4" onSubmit={handleSubmit}>
+            <div className="space-y-3">
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div className="space-y-1.5">
+                  <label className="text-[10px] font-black text-gray-500 uppercase tracking-widest ml-1">Full Name</label>
+                  <div className="relative group">
+                    <div className="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none text-gray-400 group-focus-within:text-blue-600 transition-colors">
+                      <FontAwesomeIcon icon={faUser} />
+                    </div>
+                    <input
+                      type="text"
+                      required
+                      value={name}
+                      onChange={(e) => setName(e.target.value)}
+                      className="block w-full pl-11 pr-4 py-3 bg-[#f5f5f5] border border-[#ddd] rounded-lg text-[#111] placeholder-gray-400 focus:outline-none focus:ring-4 focus:ring-blue-600/5 focus:border-blue-600 transition-all font-bold text-sm"
+                      placeholder="John Doe"
+                    />
                   </div>
-                  <input
-                    type="text"
-                    required
-                    value={name}
-                    onChange={(e) => setName(e.target.value)}
-                    className="block w-full pl-12 pr-4 py-4 bg-white/5 border border-white/10 rounded-2xl text-white placeholder-gray-600 focus:outline-none focus:ring-4 focus:ring-brand-purple/10 focus:border-brand-purple transition-all font-bold text-sm"
-                    placeholder="John Doe"
-                  />
                 </div>
-              </div>
 
-              <div className="space-y-2">
-                <label className="text-[10px] font-black text-gray-500 uppercase tracking-widest ml-1">Email Address</label>
-                <div className="relative group">
-                  <div className="absolute inset-y-0 left-0 pl-5 flex items-center pointer-events-none text-gray-500 group-focus-within:text-brand-purple transition-colors">
-                    <FontAwesomeIcon icon={faEnvelope} />
+                <div className="space-y-1.5">
+                  <label className="text-[10px] font-black text-gray-500 uppercase tracking-widest ml-1">Email Address</label>
+                  <div className="relative group">
+                    <div className="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none text-gray-400 group-focus-within:text-blue-600 transition-colors">
+                      <FontAwesomeIcon icon={faEnvelope} />
+                    </div>
+                    <input
+                      type="email"
+                      required
+                      value={email}
+                      onChange={(e) => setEmail(e.target.value)}
+                      className="block w-full pl-11 pr-4 py-3 bg-[#f5f5f5] border border-[#ddd] rounded-lg text-[#111] placeholder-gray-400 focus:outline-none focus:ring-4 focus:ring-blue-600/5 focus:border-blue-600 transition-all font-bold text-sm"
+                      placeholder="name@example.com"
+                    />
                   </div>
-                  <input
-                    type="email"
-                    required
-                    value={email}
-                    onChange={(e) => setEmail(e.target.value)}
-                    className="block w-full pl-12 pr-4 py-4 bg-white/5 border border-white/10 rounded-2xl text-white placeholder-gray-600 focus:outline-none focus:ring-4 focus:ring-brand-purple/10 focus:border-brand-purple transition-all font-bold text-sm"
-                    placeholder="name@example.com"
-                  />
                 </div>
               </div>
               
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                <div className="space-y-2">
+                <div className="space-y-1.5">
                   <label className="text-[10px] font-black text-gray-500 uppercase tracking-widest ml-1">Password</label>
                   <div className="relative group">
-                    <div className="absolute inset-y-0 left-0 pl-5 flex items-center pointer-events-none text-gray-500 group-focus-within:text-brand-purple transition-colors">
+                    <div className="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none text-gray-400 group-focus-within:text-blue-600 transition-colors">
                       <FontAwesomeIcon icon={faLock} />
                     </div>
                     <input
@@ -145,15 +147,15 @@ export default function Signup() {
                       required
                       value={password}
                       onChange={(e) => setPassword(e.target.value)}
-                      className="block w-full pl-12 pr-4 py-4 bg-white/5 border border-white/10 rounded-2xl text-white placeholder-gray-600 focus:outline-none focus:ring-4 focus:ring-brand-purple/10 focus:border-brand-purple transition-all font-bold text-sm"
+                      className="block w-full pl-11 pr-4 py-3 bg-[#f5f5f5] border border-[#ddd] rounded-lg text-[#111] placeholder-gray-400 focus:outline-none focus:ring-4 focus:ring-blue-600/5 focus:border-blue-600 transition-all font-bold text-sm"
                       placeholder="••••••••"
                     />
                   </div>
                 </div>
-                <div className="space-y-2">
+                <div className="space-y-1.5">
                   <label className="text-[10px] font-black text-gray-500 uppercase tracking-widest ml-1">Confirm</label>
                   <div className="relative group">
-                    <div className="absolute inset-y-0 left-0 pl-5 flex items-center pointer-events-none text-gray-500 group-focus-within:text-brand-purple transition-colors">
+                    <div className="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none text-gray-400 group-focus-within:text-blue-600 transition-colors">
                       <FontAwesomeIcon icon={faLock} />
                     </div>
                     <input
@@ -161,7 +163,7 @@ export default function Signup() {
                       required
                       value={confirmPassword}
                       onChange={(e) => setConfirmPassword(e.target.value)}
-                      className="block w-full pl-12 pr-4 py-4 bg-white/5 border border-white/10 rounded-2xl text-white placeholder-gray-600 focus:outline-none focus:ring-4 focus:ring-brand-purple/10 focus:border-brand-purple transition-all font-bold text-sm"
+                      className="block w-full pl-11 pr-4 py-3 bg-[#f5f5f5] border border-[#ddd] rounded-lg text-[#111] placeholder-gray-400 focus:outline-none focus:ring-4 focus:ring-blue-600/5 focus:border-blue-600 transition-all font-bold text-sm"
                       placeholder="••••••••"
                     />
                   </div>
@@ -175,13 +177,13 @@ export default function Signup() {
                   id="terms"
                   type="checkbox"
                   required
-                  className="h-4 w-4 bg-white/5 border-white/10 text-brand-purple focus:ring-brand-purple rounded cursor-pointer"
+                  className="h-4 w-4 bg-gray-50 border-gray-200 text-blue-600 focus:ring-blue-600 rounded cursor-pointer"
                 />
               </div>
               <div className="ml-3 text-[10px]">
                 <label htmlFor="terms" className="text-gray-500 font-bold uppercase tracking-widest">
                   I agree to the{' '}
-                  <a href="#" className="text-brand-purple hover:text-brand-accent transition-colors">
+                  <a href="#" className="text-blue-600 hover:text-purple-600 transition-colors">
                     Terms & Conditions
                   </a>
                 </label>
@@ -191,18 +193,18 @@ export default function Signup() {
             <button
               type="submit"
               disabled={isLoading}
-              className="group relative w-full flex justify-center items-center py-4 px-4 border border-transparent text-xs font-black uppercase tracking-widest rounded-2xl text-white gradient-brand shadow-xl shadow-brand-blue/20 hover:scale-[1.02] active:scale-[0.98] transition-all disabled:opacity-50"
+              className="group relative w-full flex justify-center items-center py-3.5 px-4 border border-transparent text-xs font-black uppercase tracking-widest rounded-lg text-white bg-gradient-to-r from-blue-600 to-purple-600 shadow-lg shadow-blue-600/20 hover:scale-[1.02] active:scale-[0.98] transition-all disabled:opacity-50"
             >
               {isLoading ? 'Creating Account...' : 'Sign Up'}
               {!isLoading && <FontAwesomeIcon icon={faArrowRight} className="ml-2 group-hover:translate-x-1 transition-transform" />}
             </button>
 
-            <div className="relative py-2">
+            <div className="relative py-1">
               <div className="absolute inset-0 flex items-center">
-                <div className="w-full border-t border-white/5"></div>
+                <div className="w-full border-t border-gray-100"></div>
               </div>
-              <div className="relative flex justify-center text-[10px] uppercase font-black tracking-widest">
-                <span className="px-4 bg-brand-card text-gray-600">Or join with</span>
+              <div className="relative flex justify-center text-[9px] uppercase font-black tracking-widest">
+                <span className="px-4 bg-white text-gray-400">Or join with</span>
               </div>
             </div>
 
@@ -210,17 +212,17 @@ export default function Signup() {
               type="button"
               onClick={handleGoogleSignup}
               disabled={isLoading}
-              className="w-full flex justify-center items-center py-4 px-4 border border-white/10 rounded-2xl text-white font-black uppercase tracking-widest text-[10px] hover:bg-white/5 transition-all shadow-sm disabled:opacity-50"
+              className="w-full flex justify-center items-center py-3.5 px-4 border border-gray-200 rounded-lg text-gray-600 font-black uppercase tracking-widest text-[10px] hover:bg-gray-50 transition-all shadow-sm disabled:opacity-50"
             >
-              <FontAwesomeIcon icon={faGoogle} className="mr-3 text-base text-brand-purple" />
+              <FontAwesomeIcon icon={faGoogle} className="mr-3 text-base text-blue-600" />
               Google Account
             </button>
           </form>
 
-          <div className="text-center pt-8">
+          <div className="text-center pt-6">
             <p className="text-gray-500 text-xs font-medium">
               Already have an account?{' '}
-              <Link to="/login" className="font-bold text-brand-purple hover:text-brand-accent transition-colors underline underline-offset-4">
+              <Link to="/login" className="font-bold text-blue-600 hover:text-purple-600 transition-colors underline underline-offset-4">
                 Sign In
               </Link>
             </p>

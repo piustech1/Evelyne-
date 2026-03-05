@@ -52,16 +52,16 @@ export default function AdminSidebar({ isOpen, setIsOpen }: AdminSidebarProps) {
   };
 
   return (
-    <div className={`w-64 bg-brand-dark text-white h-screen fixed left-0 top-0 flex flex-col shadow-[10px_0_30px_rgba(0,0,0,0.5)] z-[60] transition-transform duration-500 ease-in-out transform lg:translate-x-0 border-r border-white/5 ${isOpen ? 'translate-x-0' : '-translate-x-full'}`}>
+    <div className={`w-64 bg-white text-gray-900 h-screen fixed left-0 top-0 flex flex-col shadow-xl z-[60] transition-transform duration-500 ease-in-out transform lg:translate-x-0 border-r border-gray-100 ${isOpen ? 'translate-x-0' : '-translate-x-full'}`}>
       <div className="p-10 flex items-center justify-between">
         <div className="flex items-center space-x-4">
           <div className="w-12 h-12 gradient-brand rounded-2xl flex items-center justify-center shadow-2xl shadow-brand-blue/30">
             <FontAwesomeIcon icon={faRocket} className="text-white text-xl" />
           </div>
-          <span className="text-2xl font-display font-black tracking-tighter">EasyAdmin</span>
+          <span className="text-2xl font-display font-black tracking-tighter text-gray-900">EasyAdmin</span>
         </div>
         <button 
-          className="lg:hidden w-10 h-10 rounded-xl bg-white/5 flex items-center justify-center text-white/40 hover:text-white transition-all"
+          className="lg:hidden w-10 h-10 rounded-xl bg-gray-50 flex items-center justify-center text-gray-400 hover:text-gray-600 transition-all"
           onClick={() => setIsOpen(false)}
         >
           <FontAwesomeIcon icon={faXmark} />
@@ -69,7 +69,7 @@ export default function AdminSidebar({ isOpen, setIsOpen }: AdminSidebarProps) {
       </div>
 
       <nav className="flex-grow px-6 space-y-2 overflow-y-auto custom-scrollbar pb-10">
-        <div className="text-[10px] font-black text-gray-600 uppercase tracking-[0.2em] mb-4 ml-4">Main Menu</div>
+        <div className="text-[10px] font-black text-gray-400 uppercase tracking-[0.2em] mb-4 ml-4">Main Menu</div>
         {menuItems.map((item) => {
           const isActive = location.pathname === item.path;
           return (
@@ -79,13 +79,13 @@ export default function AdminSidebar({ isOpen, setIsOpen }: AdminSidebarProps) {
               onClick={() => setIsOpen(false)}
               className={`flex items-center space-x-4 px-5 py-4 rounded-2xl text-xs font-black uppercase tracking-widest transition-all group relative overflow-hidden ${
                 isActive 
-                ? 'bg-brand-purple text-white shadow-2xl shadow-brand-purple/20' 
-                : 'text-gray-500 hover:bg-white/5 hover:text-white'
+                ? 'bg-gradient-to-r from-blue-600 to-purple-600 text-white shadow-lg shadow-blue-600/20' 
+                : 'text-gray-500 hover:bg-gray-50 hover:text-gray-900'
               }`}
             >
               <FontAwesomeIcon 
                 icon={item.icon} 
-                className={`w-5 h-5 transition-transform group-hover:scale-110 ${isActive ? 'text-white' : 'text-gray-600 group-hover:text-white'}`} 
+                className={`w-5 h-5 transition-transform group-hover:scale-110 ${isActive ? 'text-white' : 'text-gray-400 group-hover:text-gray-900'}`} 
               />
               <span>{item.name}</span>
               {isActive && (
@@ -96,10 +96,10 @@ export default function AdminSidebar({ isOpen, setIsOpen }: AdminSidebarProps) {
         })}
       </nav>
 
-      <div className="p-6 border-t border-white/5">
+      <div className="p-6 border-t border-gray-100">
         <button 
           onClick={handleLogout}
-          className="w-full flex items-center space-x-4 px-5 py-5 rounded-2xl text-xs font-black uppercase tracking-widest text-rose-500 hover:bg-rose-500/10 transition-all group border border-rose-500/10"
+          className="w-full flex items-center space-x-4 px-5 py-5 rounded-2xl text-xs font-black uppercase tracking-widest text-rose-500 hover:bg-rose-50 transition-all group border border-rose-100"
         >
           <FontAwesomeIcon icon={faSignOutAlt} className="w-5 h-5 group-hover:-translate-x-1 transition-transform" />
           <span>Logout</span>

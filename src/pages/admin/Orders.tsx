@@ -106,22 +106,22 @@ export default function AdminOrders() {
     <div className="space-y-8 md:space-y-12">
       <div className="flex flex-col md:flex-row md:items-center justify-between gap-6">
         <div>
-          <h1 className="text-4xl md:text-5xl font-display font-black text-white tracking-tighter mb-2">Orders</h1>
-          <p className="text-gray-500 font-black text-[10px] uppercase tracking-[0.2em]">Manage and track all customer orders</p>
+          <h1 className="text-4xl md:text-5xl font-display font-black text-gray-900 tracking-tighter mb-2">Orders</h1>
+          <p className="text-gray-400 font-black text-[10px] uppercase tracking-[0.2em]">Manage and track all customer orders</p>
         </div>
         <div className="flex items-center">
-          <div className="flex items-center space-x-3 text-[10px] font-black text-emerald-500 uppercase tracking-widest bg-emerald-500/10 px-6 py-3 rounded-2xl border border-emerald-500/20 shadow-xl">
+          <div className="flex items-center space-x-3 text-[10px] font-black text-emerald-500 uppercase tracking-widest bg-emerald-500/10 px-6 py-3 rounded-2xl border border-emerald-500/20 shadow-sm">
             <span className="w-2 h-2 bg-emerald-500 rounded-full animate-pulse shadow-[0_0_10px_rgba(16,185,129,0.5)]" />
             <span>Live Updates Active</span>
           </div>
         </div>
       </div>
 
-      <div className="bg-brand-card p-8 md:p-12 rounded-[3.5rem] shadow-2xl border border-white/5">
+      <div className="bg-white p-8 md:p-12 rounded-[3.5rem] shadow-sm border border-gray-100">
         <div className="flex flex-col md:flex-row md:items-center justify-between mb-12 gap-8">
           <div className="flex items-center space-x-4 w-full md:max-w-xl">
             <div className="relative group flex-grow">
-              <div className="absolute inset-y-0 left-0 pl-6 flex items-center pointer-events-none text-gray-600 group-focus-within:text-brand-purple transition-colors">
+              <div className="absolute inset-y-0 left-0 pl-6 flex items-center pointer-events-none text-gray-400 group-focus-within:text-brand-purple transition-colors">
                 <FontAwesomeIcon icon={faSearch} />
               </div>
               <input
@@ -129,10 +129,10 @@ export default function AdminOrders() {
                 placeholder="Search orders..."
                 value={searchTerm}
                 onChange={(e) => setSearchTerm(e.target.value)}
-                className="pl-14 pr-6 py-4 bg-white/5 border border-white/10 rounded-2xl text-white placeholder-gray-700 focus:outline-none focus:ring-4 focus:ring-brand-purple/10 focus:border-brand-purple focus:bg-white/10 transition-all w-full font-bold text-sm"
+                className="pl-14 pr-6 py-4 bg-gray-50 border border-gray-100 rounded-2xl text-gray-900 placeholder-gray-400 focus:outline-none focus:ring-4 focus:ring-brand-purple/5 focus:border-brand-purple transition-all w-full font-bold text-sm"
               />
             </div>
-            <button className="w-14 h-14 bg-white/5 border border-white/10 rounded-2xl text-gray-500 hover:text-brand-purple hover:border-brand-purple transition-all group flex items-center justify-center">
+            <button className="w-14 h-14 bg-gray-50 border border-gray-100 rounded-2xl text-gray-400 hover:text-brand-purple hover:border-brand-purple transition-all group flex items-center justify-center">
               <FontAwesomeIcon icon={faFilter} className="group-hover:scale-110 transition-transform" />
             </button>
           </div>
@@ -144,8 +144,8 @@ export default function AdminOrders() {
                 onClick={() => setStatusFilter(status)}
                 className={`px-6 py-3.5 rounded-2xl text-[10px] font-black uppercase tracking-widest transition-all whitespace-nowrap border ${
                   statusFilter === status 
-                  ? 'bg-brand-purple text-white border-brand-purple shadow-2xl shadow-brand-purple/20' 
-                  : 'bg-white/5 text-gray-500 border-white/5 hover:bg-white/10 hover:text-white'
+                  ? 'bg-gradient-to-r from-blue-600 to-purple-600 text-white border-transparent shadow-xl shadow-blue-600/20' 
+                  : 'bg-gray-50 text-gray-400 border-gray-100 hover:bg-gray-100 hover:text-gray-600'
                 }`}
               >
                 {status}
@@ -157,7 +157,7 @@ export default function AdminOrders() {
         <div className="overflow-x-auto">
           <table className="w-full text-left border-collapse">
             <thead>
-              <tr className="text-[10px] font-black text-gray-600 uppercase tracking-[0.2em] border-b border-white/5">
+              <tr className="text-[10px] font-black text-gray-400 uppercase tracking-[0.2em] border-b border-gray-50">
                 <th className="pb-6 px-4">ID</th>
                 <th className="pb-6 px-4">User</th>
                 <th className="pb-6 px-4">Service</th>
@@ -168,21 +168,21 @@ export default function AdminOrders() {
                 <th className="pb-6 px-4 text-right">Actions</th>
               </tr>
             </thead>
-            <tbody className="divide-y divide-white/5">
+            <tbody className="divide-y divide-gray-50">
               {filteredOrders.map((order, idx) => (
                 <motion.tr
                   key={order.id}
                   initial={{ opacity: 0, x: -10 }}
                   animate={{ opacity: 1, x: 0 }}
                   transition={{ delay: idx * 0.05 }}
-                  className="group hover:bg-white/5 transition-colors"
+                  className="group hover:bg-gray-50 transition-colors"
                 >
-                  <td className="py-6 px-4 text-xs font-black text-white group-hover:text-brand-purple transition-colors">#{order.id.slice(-6).toUpperCase()}</td>
+                  <td className="py-6 px-4 text-xs font-black text-gray-900 group-hover:text-brand-purple transition-colors">#{order.id.slice(-6).toUpperCase()}</td>
                   <td className="py-6 px-4 text-xs font-bold text-gray-500">{order.userEmail}</td>
                   <td className="py-6 px-4 text-xs font-bold text-gray-400 truncate max-w-[150px]">{order.service}</td>
                   <td className="py-6 px-4 text-xs text-brand-blue font-bold truncate max-w-[150px] hover:underline transition-all underline-offset-4 cursor-pointer hidden lg:table-cell">{order.link}</td>
-                  <td className="py-6 px-4 text-xs font-black text-white text-center">{order.quantity?.toLocaleString()}</td>
-                  <td className="py-6 px-4 text-xs font-black text-white">UGX {order.price?.toLocaleString()}</td>
+                  <td className="py-6 px-4 text-xs font-black text-gray-900 text-center">{order.quantity?.toLocaleString()}</td>
+                  <td className="py-6 px-4 text-xs font-black text-gray-900">UGX {order.price?.toLocaleString()}</td>
                   <td className="py-6 px-4">
                     <span className={`inline-flex items-center px-4 py-1.5 rounded-full text-[9px] font-black uppercase tracking-widest border ${statusStyles[order.status] || statusStyles['Pending']}`}>
                       {order.status}
@@ -221,19 +221,19 @@ export default function AdminOrders() {
           </table>
           {filteredOrders.length === 0 && !isLoading && (
             <div className="py-20 text-center">
-              <div className="text-gray-600 font-black uppercase tracking-widest text-xs">No orders found matching your criteria</div>
+              <div className="text-gray-400 font-black uppercase tracking-widest text-xs">No orders found matching your criteria</div>
             </div>
           )}
         </div>
 
-        <div className="mt-12 flex flex-col sm:flex-row items-center justify-between gap-8 pt-10 border-t border-white/5">
-          <div className="text-[10px] font-black text-gray-600 uppercase tracking-widest">
-            Showing <span className="text-white">{filteredOrders.length}</span> of <span className="text-white">{orders.length}</span> total orders
+        <div className="mt-12 flex flex-col sm:flex-row items-center justify-between gap-8 pt-10 border-t border-gray-50">
+          <div className="text-[10px] font-black text-gray-400 uppercase tracking-widest">
+            Showing <span className="text-gray-900">{filteredOrders.length}</span> of <span className="text-gray-900">{orders.length}</span> total orders
           </div>
           <div className="flex items-center space-x-2">
-            <button className="px-6 py-3.5 rounded-2xl bg-white/5 text-gray-500 font-black uppercase tracking-widest text-[10px] hover:bg-white/10 transition-all border border-white/5">Prev</button>
-            <button className="w-12 h-12 rounded-2xl bg-brand-purple text-white font-black text-[10px] shadow-2xl shadow-brand-purple/20">1</button>
-            <button className="px-6 py-3.5 rounded-2xl bg-white/5 text-gray-500 font-black uppercase tracking-widest text-[10px] hover:bg-white/10 transition-all border border-white/5">Next</button>
+            <button className="px-6 py-3.5 rounded-2xl bg-gray-50 text-gray-400 font-black uppercase tracking-widest text-[10px] hover:bg-gray-100 transition-all border border-gray-100">Prev</button>
+            <button className="w-12 h-12 rounded-2xl bg-brand-purple text-white font-black text-[10px] shadow-xl shadow-brand-purple/20">1</button>
+            <button className="px-6 py-3.5 rounded-2xl bg-gray-50 text-gray-400 font-black uppercase tracking-widest text-[10px] hover:bg-gray-100 transition-all border border-gray-100">Next</button>
           </div>
         </div>
       </div>

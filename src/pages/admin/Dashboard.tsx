@@ -94,14 +94,14 @@ export default function AdminDashboard() {
     <div className="space-y-8 md:space-y-12">
       <div className="flex flex-col md:flex-row md:items-center justify-between gap-6">
         <div>
-          <h1 className="text-4xl md:text-5xl font-display font-black text-white tracking-tighter mb-2">Dashboard</h1>
-          <p className="text-gray-500 font-black text-[10px] uppercase tracking-[0.2em]">Overview of your SMM platform</p>
+          <h1 className="text-4xl md:text-5xl font-display font-black text-gray-900 tracking-tighter mb-2">Dashboard</h1>
+          <p className="text-gray-400 font-black text-[10px] uppercase tracking-[0.2em]">Overview of your SMM platform</p>
         </div>
         <div className="flex items-center space-x-4">
-          <div className="hidden sm:block px-6 py-3 bg-brand-card rounded-2xl border border-white/5 shadow-xl text-[10px] font-black text-gray-500 uppercase tracking-widest">
-            Last updated: <span className="text-white">Just now</span>
+          <div className="hidden sm:block px-6 py-3 bg-white rounded-2xl border border-gray-100 shadow-sm text-[10px] font-black text-gray-400 uppercase tracking-widest">
+            Last updated: <span className="text-gray-900">Just now</span>
           </div>
-          <button className="flex-grow md:flex-grow-0 px-8 py-4 gradient-brand text-white font-black uppercase tracking-widest text-[10px] rounded-2xl shadow-2xl shadow-brand-blue/20 hover:scale-105 transition-all active:scale-95 flex items-center gap-2">
+          <button className="flex-grow md:flex-grow-0 px-8 py-4 bg-gradient-to-r from-blue-600 to-purple-600 text-white font-black uppercase tracking-widest text-[10px] rounded-2xl shadow-xl shadow-blue-600/20 hover:scale-105 transition-all active:scale-95 flex items-center gap-2">
             <FontAwesomeIcon icon={faSync} className={isLoading ? 'animate-spin' : ''} />
             <span>Refresh Data</span>
           </button>
@@ -116,10 +116,10 @@ export default function AdminDashboard() {
             initial={{ opacity: 0, scale: 0.95 }}
             animate={{ opacity: 1, scale: 1 }}
             transition={{ delay: idx * 0.05 }}
-            className="bg-brand-card p-8 rounded-[2.5rem] shadow-2xl border border-white/5 hover:border-brand-purple/30 transition-all group"
+            className="bg-white p-8 rounded-[2.5rem] shadow-sm border border-gray-100 hover:border-brand-purple/30 transition-all group"
           >
             <div className="flex items-center justify-between mb-6">
-              <div className={`w-14 h-14 ${stat.bg} ${stat.color} rounded-2xl flex items-center justify-center text-2xl transition-transform group-hover:scale-110 shadow-sm border border-white/5`}>
+              <div className={`w-14 h-14 ${stat.bg} ${stat.color} rounded-2xl flex items-center justify-center text-2xl transition-transform group-hover:scale-110 shadow-sm border border-gray-50`}>
                 <FontAwesomeIcon icon={stat.icon} />
               </div>
               <div className={`flex items-center space-x-1 text-[10px] font-black uppercase tracking-widest ${stat.isUp ? 'text-emerald-500' : 'text-rose-500'}`}>
@@ -128,8 +128,8 @@ export default function AdminDashboard() {
               </div>
             </div>
             <div className="space-y-1">
-              <div className="text-3xl font-display font-black text-white tracking-tighter">{stat.value}</div>
-              <div className="text-[10px] font-black text-gray-500 uppercase tracking-[0.2em]">{stat.title}</div>
+              <div className="text-3xl font-display font-black text-gray-900 tracking-tighter">{stat.value}</div>
+              <div className="text-[10px] font-black text-gray-400 uppercase tracking-[0.2em]">{stat.title}</div>
             </div>
           </motion.div>
         ))}
@@ -137,23 +137,23 @@ export default function AdminDashboard() {
 
       {/* Charts Section */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-10">
-        <div className="bg-brand-card p-8 md:p-12 rounded-[3.5rem] shadow-2xl border border-white/5">
-          <h3 className="text-2xl font-display font-black text-white tracking-tighter mb-10">Revenue & Orders</h3>
+        <div className="bg-white p-8 md:p-12 rounded-[3.5rem] shadow-sm border border-gray-100">
+          <h3 className="text-2xl font-display font-black text-gray-900 tracking-tighter mb-10">Revenue & Orders</h3>
           <div className="h-80 w-full">
             <ResponsiveContainer width="100%" height="100%">
               <AreaChart data={chartData}>
                 <defs>
                   <linearGradient id="colorRev" x1="0" y1="0" x2="0" y2="1">
-                    <stop offset="5%" stopColor="#4F46E5" stopOpacity={0.3}/>
+                    <stop offset="5%" stopColor="#4F46E5" stopOpacity={0.1}/>
                     <stop offset="95%" stopColor="#4F46E5" stopOpacity={0}/>
                   </linearGradient>
                 </defs>
-                <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#ffffff05" />
-                <XAxis dataKey="name" axisLine={false} tickLine={false} tick={{fontSize: 10, fontWeight: 'black', fill: '#4b5563'}} />
-                <YAxis axisLine={false} tickLine={false} tick={{fontSize: 10, fontWeight: 'black', fill: '#4b5563'}} />
+                <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#00000005" />
+                <XAxis dataKey="name" axisLine={false} tickLine={false} tick={{fontSize: 10, fontWeight: 'black', fill: '#9ca3af'}} />
+                <YAxis axisLine={false} tickLine={false} tick={{fontSize: 10, fontWeight: 'black', fill: '#9ca3af'}} />
                 <Tooltip 
-                  contentStyle={{backgroundColor: '#1E293B', borderRadius: '24px', border: '1px solid rgba(255,255,255,0.05)', boxShadow: '0 25px 50px -12px rgb(0 0 0 / 0.5)', fontWeight: 'black', fontSize: '10px', color: '#fff'}}
-                  itemStyle={{color: '#fff'}}
+                  contentStyle={{backgroundColor: '#fff', borderRadius: '24px', border: '1px solid #f3f4f6', boxShadow: '0 10px 15px -3px rgb(0 0 0 / 0.1)', fontWeight: 'black', fontSize: '10px', color: '#111'}}
+                  itemStyle={{color: '#111'}}
                 />
                 <Area type="monotone" dataKey="revenue" stroke="#4F46E5" strokeWidth={4} fillOpacity={1} fill="url(#colorRev)" />
                 <Area type="monotone" dataKey="orders" stroke="#7C3AED" strokeWidth={4} fillOpacity={0} />
@@ -162,17 +162,17 @@ export default function AdminDashboard() {
           </div>
         </div>
 
-        <div className="bg-brand-card p-8 md:p-12 rounded-[3.5rem] shadow-2xl border border-white/5">
-          <h3 className="text-2xl font-display font-black text-white tracking-tighter mb-10">Order Volume</h3>
+        <div className="bg-white p-8 md:p-12 rounded-[3.5rem] shadow-sm border border-gray-100">
+          <h3 className="text-2xl font-display font-black text-gray-900 tracking-tighter mb-10">Order Volume</h3>
           <div className="h-80 w-full">
             <ResponsiveContainer width="100%" height="100%">
               <BarChart data={chartData}>
-                <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#ffffff05" />
-                <XAxis dataKey="name" axisLine={false} tickLine={false} tick={{fontSize: 10, fontWeight: 'black', fill: '#4b5563'}} />
-                <YAxis axisLine={false} tickLine={false} tick={{fontSize: 10, fontWeight: 'black', fill: '#4b5563'}} />
+                <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#00000005" />
+                <XAxis dataKey="name" axisLine={false} tickLine={false} tick={{fontSize: 10, fontWeight: 'black', fill: '#9ca3af'}} />
+                <YAxis axisLine={false} tickLine={false} tick={{fontSize: 10, fontWeight: 'black', fill: '#9ca3af'}} />
                 <Tooltip 
-                  contentStyle={{backgroundColor: '#1E293B', borderRadius: '24px', border: '1px solid rgba(255,255,255,0.05)', boxShadow: '0 25px 50px -12px rgb(0 0 0 / 0.5)', fontWeight: 'black', fontSize: '10px', color: '#fff'}}
-                  itemStyle={{color: '#fff'}}
+                  contentStyle={{backgroundColor: '#fff', borderRadius: '24px', border: '1px solid #f3f4f6', boxShadow: '0 10px 15px -3px rgb(0 0 0 / 0.1)', fontWeight: 'black', fontSize: '10px', color: '#111'}}
+                  itemStyle={{color: '#111'}}
                 />
                 <Bar dataKey="orders" fill="#7C3AED" radius={[12, 12, 0, 0]} />
               </BarChart>
@@ -183,15 +183,15 @@ export default function AdminDashboard() {
 
       <div className="grid grid-cols-1 lg:grid-cols-12 gap-10">
         {/* Recent Orders */}
-        <div className="lg:col-span-8 bg-brand-card p-8 md:p-12 rounded-[3.5rem] shadow-2xl border border-white/5 overflow-hidden">
+        <div className="lg:col-span-8 bg-white p-8 md:p-12 rounded-[3.5rem] shadow-sm border border-gray-100 overflow-hidden">
           <div className="flex items-center justify-between mb-12">
-            <h2 className="text-2xl font-display font-black text-white tracking-tighter">Recent Orders</h2>
+            <h2 className="text-2xl font-display font-black text-gray-900 tracking-tighter">Recent Orders</h2>
             <Link to="/admin/orders" className="text-[10px] font-black text-brand-purple uppercase tracking-[0.2em] hover:text-brand-accent transition-colors">View All Orders</Link>
           </div>
           <div className="overflow-x-auto">
             <table className="w-full text-left">
               <thead>
-                <tr className="text-[10px] font-black text-gray-600 uppercase tracking-[0.2em] border-b border-white/5">
+                <tr className="text-[10px] font-black text-gray-400 uppercase tracking-[0.2em] border-b border-gray-50">
                   <th className="pb-6 px-4">ID</th>
                   <th className="pb-6 px-4">User</th>
                   <th className="pb-6 px-4">Service</th>
@@ -199,13 +199,13 @@ export default function AdminDashboard() {
                   <th className="pb-6 px-4">Status</th>
                 </tr>
               </thead>
-              <tbody className="divide-y divide-white/5">
+              <tbody className="divide-y divide-gray-50">
                 {recentOrders.map((order, idx) => (
-                  <tr key={order.id} className="group hover:bg-white/5 transition-colors">
-                    <td className="py-6 px-4 text-xs font-black text-white">#{order.id.slice(-6).toUpperCase()}</td>
+                  <tr key={order.id} className="group hover:bg-gray-50 transition-colors">
+                    <td className="py-6 px-4 text-xs font-black text-gray-900">#{order.id.slice(-6).toUpperCase()}</td>
                     <td className="py-6 px-4 text-xs font-bold text-gray-500">{order.userName || order.userEmail}</td>
                     <td className="py-6 px-4 text-xs font-bold text-gray-400 truncate max-w-[150px]">{order.service}</td>
-                    <td className="py-6 px-4 text-xs font-black text-white">UGX {order.price?.toLocaleString()}</td>
+                    <td className="py-6 px-4 text-xs font-black text-gray-900">UGX {order.price?.toLocaleString()}</td>
                     <td className="py-6 px-4">
                       <span className={`inline-flex items-center px-4 py-1.5 rounded-full text-[9px] font-black uppercase tracking-widest ${
                         order.status === 'Completed' ? 'bg-emerald-500/10 text-emerald-500' :
@@ -223,7 +223,7 @@ export default function AdminDashboard() {
 
         {/* System Health */}
         <div className="lg:col-span-4 space-y-10">
-          <div className="bg-brand-dark p-10 rounded-[3.5rem] text-white shadow-2xl border border-white/5 relative overflow-hidden">
+          <div className="bg-gray-900 p-10 rounded-[3.5rem] text-white shadow-xl border border-white/5 relative overflow-hidden">
             <div className="absolute top-0 right-0 w-32 h-32 bg-white/5 rounded-full -translate-x-1/2 -translate-y-1/2 blur-2xl" />
             <h3 className="text-2xl font-display font-black tracking-tighter mb-10">System Health</h3>
             <div className="space-y-8">
@@ -257,8 +257,8 @@ export default function AdminDashboard() {
             </div>
           </div>
 
-          <div className="bg-brand-card p-10 rounded-[3.5rem] border border-white/5 shadow-2xl">
-            <h3 className="text-xl font-display font-black text-white tracking-tighter mb-8">Quick Links</h3>
+          <div className="bg-white p-10 rounded-[3.5rem] border border-gray-100 shadow-sm">
+            <h3 className="text-xl font-display font-black text-gray-900 tracking-tighter mb-8">Quick Links</h3>
             <div className="grid grid-cols-2 gap-4">
               {[
                 { name: 'Users', path: '/admin/users' },
@@ -269,7 +269,7 @@ export default function AdminDashboard() {
                 <Link 
                   key={link.name} 
                   to={link.path}
-                  className="p-4 rounded-2xl bg-white/5 hover:bg-brand-purple/10 hover:text-brand-purple transition-all text-[10px] font-black uppercase tracking-widest text-gray-500 text-center border border-white/5"
+                  className="p-4 rounded-2xl bg-gray-50 hover:bg-brand-purple/10 hover:text-brand-purple transition-all text-[10px] font-black uppercase tracking-widest text-gray-400 text-center border border-gray-100"
                 >
                   {link.name}
                 </Link>

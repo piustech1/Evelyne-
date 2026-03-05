@@ -10,8 +10,8 @@ export default function AdminLayout() {
 
   if (loading) {
     return (
-      <div className="min-h-screen bg-brand-dark flex items-center justify-center">
-        <div className="text-white font-black uppercase tracking-widest animate-pulse">Verifying Admin Access...</div>
+      <div className="min-h-screen bg-[#f5f5f5] flex items-center justify-center">
+        <div className="text-gray-900 font-black uppercase tracking-widest animate-pulse">Verifying Admin Access...</div>
       </div>
     );
   }
@@ -24,7 +24,7 @@ export default function AdminLayout() {
   }
 
   return (
-    <div className="min-h-screen bg-brand-dark flex relative overflow-x-hidden">
+    <div className="min-h-screen bg-[#f5f5f5] flex relative overflow-x-hidden">
       {/* Sidebar Overlay for Mobile */}
       {isSidebarOpen && (
         <div 
