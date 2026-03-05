@@ -1,46 +1,54 @@
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { faBolt, faShieldAlt, faTag, faChartLine, faCheckCircle } from '@fortawesome/free-solid-svg-icons';
-import { faInstagram, faTiktok, faYoutube, faFacebook, faTelegram, faTwitter, faWhatsapp, faSpotify } from '@fortawesome/free-brands-svg-icons';
 import { motion } from 'motion/react';
 import { Link } from 'react-router-dom';
+import { platformIcons, platformTextColors } from '../utils/platformData';
 
 const platformsList = [
-  { icon: faTiktok, color: 'text-black', name: 'TikTok' },
-  { icon: faInstagram, color: 'text-pink-600', name: 'Instagram' },
-  { icon: faYoutube, color: 'text-red-600', name: 'YouTube' },
-  { icon: faFacebook, color: 'text-blue-600', name: 'Facebook' },
-  { icon: faTelegram, color: 'text-sky-500', name: 'Telegram' },
-  { icon: faTwitter, color: 'text-blue-400', name: 'Twitter' },
-  { icon: faWhatsapp, color: 'text-emerald-500', name: 'WhatsApp' },
-  { icon: faSpotify, color: 'text-emerald-400', name: 'Spotify' },
+  { id: 'instagram', name: 'Instagram' },
+  { id: 'facebook', name: 'Facebook' },
+  { id: 'tiktok', name: 'TikTok' },
+  { id: 'youtube', name: 'YouTube' },
+  { id: 'twitter', name: 'X (Twitter)' },
+  { id: 'spotify', name: 'Spotify' },
+  { id: 'soundcloud', name: 'SoundCloud' },
+  { id: 'twitch', name: 'Twitch' },
+  { id: 'linkedin', name: 'LinkedIn' },
+  { id: 'snapchat', name: 'Snapchat' },
+  { id: 'kick', name: 'Kick' },
+  { id: 'clubhouse', name: 'Clubhouse' },
+  { id: 'google play', name: 'Google Play' },
+  { id: 'deezer', name: 'Deezer' },
+  { id: 'vimeo', name: 'Vimeo' },
+  { id: 'website traffic', name: 'Website Traffic' },
+  { id: 'coinmarketcap', name: 'CoinMarket' },
 ];
 
 export default function LandingPage() {
   return (
     <div className="overflow-x-hidden bg-white">
       {/* Hero Section */}
-      <section className="relative min-h-screen flex items-center pt-20 pb-32 overflow-hidden">
+      <section className="relative min-h-[85vh] flex items-center pt-12 pb-24 overflow-hidden">
         {/* Background Image with Overlay */}
         <div className="absolute inset-0 z-0">
           <img
-            src="https://images.unsplash.com/photo-1611162617474-5b21e879e113?auto=format&fit=crop&q=80&w=1920"
+            src="https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcR0ZT-7ilfuGZz_lfZpOpilGcueBfIDMPGcElV6kQh8pQ&s=10"
             alt="Social Media Growth"
             className="w-full h-full object-cover"
             referrerPolicy="no-referrer"
           />
-          <div className="absolute inset-0 bg-gradient-to-r from-blue-900 via-blue-900/90 to-transparent" />
-          <div className="absolute inset-0 bg-gradient-to-tr from-blue-600/30 to-purple-600/20 opacity-60" />
+          <div className="absolute inset-0 bg-gradient-to-br from-blue-900/90 via-blue-800/80 to-purple-900/90" />
         </div>
 
         <div className="relative z-10 max-w-7xl mx-auto px-6 w-full">
           <motion.div
-            initial={{ opacity: 0, x: -30 }}
-            animate={{ opacity: 1, x: 0 }}
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.8 }}
-            className="max-w-3xl space-y-8"
+            className="max-w-3xl space-y-6"
           >
-            <div className="inline-flex items-center space-x-2 px-4 py-2 bg-white/10 backdrop-blur-md border border-white/20 rounded-full text-white text-xs font-bold uppercase tracking-widest shadow-inner">
-              <FontAwesomeIcon icon={faBolt} className="animate-pulse" />
+            <div className="inline-flex items-center space-x-2 px-4 py-2 bg-white/10 backdrop-blur-md border border-white/20 rounded-full text-white text-[10px] font-black uppercase tracking-widest shadow-inner">
+              <FontAwesomeIcon icon={faBolt} className="animate-pulse text-brand-accent" />
               <span>The #1 SMM Panel in Uganda</span>
             </div>
             <h1 className="text-5xl md:text-8xl font-display font-black text-white leading-[1.1] tracking-tighter">
@@ -80,26 +88,26 @@ export default function LandingPage() {
         <div className="max-w-7xl mx-auto px-6 text-center space-y-12">
           <div className="space-y-2">
             <h2 className="text-[10px] font-black text-brand-purple uppercase tracking-[0.3em]">Supported Platforms</h2>
-            <p className="text-2xl md:text-4xl font-display font-black text-brand-light tracking-tighter">We Boost Everything</p>
+            <p className="text-2xl md:text-4xl font-display font-black text-brand-dark tracking-tighter">We Boost Everything</p>
           </div>
           
-          <div className="flex flex-wrap items-center justify-center gap-6 md:gap-10">
+          <div className="grid grid-cols-3 sm:grid-cols-4 md:grid-cols-6 lg:grid-cols-9 gap-4 md:gap-8">
             {platformsList.map((platform, idx) => (
               <motion.div
                 key={idx}
-                initial={{ opacity: 0, y: 20 }}
-                whileInView={{ opacity: 1, y: 0 }}
+                initial={{ opacity: 0, scale: 0.8 }}
+                whileInView={{ opacity: 1, scale: 1 }}
                 viewport={{ once: true }}
-                transition={{ delay: idx * 0.05 }}
+                transition={{ delay: idx * 0.03 }}
               >
                 <Link
                   to={`/platform?platform=${platform.name}`}
-                  className="group flex flex-col items-center space-y-3"
+                  className="group flex flex-col items-center space-y-2"
                 >
-                  <div className={`w-16 h-16 md:w-20 md:h-20 bg-white rounded-3xl shadow-lg border border-gray-100 flex items-center justify-center text-3xl md:text-4xl ${platform.color} transition-all duration-300 group-hover:scale-110 group-hover:shadow-xl group-hover:-translate-y-2`}>
-                    <FontAwesomeIcon icon={platform.icon} />
+                  <div className={`w-12 h-12 md:w-16 md:h-16 bg-white rounded-2xl shadow-sm border border-gray-100 flex items-center justify-center text-xl md:text-2xl ${platformTextColors[platform.id] || 'text-gray-500'} transition-all duration-300 group-hover:scale-110 group-hover:shadow-md group-hover:-translate-y-1 active-press`}>
+                    <FontAwesomeIcon icon={platformIcons[platform.id] || faGlobe} />
                   </div>
-                  <span className="text-[10px] font-black text-gray-400 uppercase tracking-widest group-hover:text-brand-purple transition-colors">{platform.name}</span>
+                  <span className="text-[8px] font-black text-gray-400 uppercase tracking-widest group-hover:text-brand-purple transition-colors text-center truncate w-full px-1">{platform.name}</span>
                 </Link>
               </motion.div>
             ))}

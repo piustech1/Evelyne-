@@ -1,24 +1,11 @@
 import { useState, useEffect, useRef } from 'react';
 import { motion } from 'motion/react';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
-import { faRocket, faChevronRight, faShieldAlt, faBolt, faCheckCircle, faSearch, faList, faExclamationTriangle, faGlobe } from '@fortawesome/free-solid-svg-icons';
+import { faRocket, faSearch, faList, faExclamationTriangle, faGlobe } from '@fortawesome/free-solid-svg-icons';
 import { Link, useNavigate } from 'react-router-dom';
 import { fetchServices, Service } from '../lib/servicesStore';
 import { platformIcons, platformColors, platformTextColors } from '../utils/platformData';
-
-const ServiceSkeleton = () => (
-  <div className="bg-gray-50 rounded-2xl p-4 border border-gray-100 shadow-sm animate-pulse space-y-4">
-    <div className="flex items-center space-x-3">
-      <div className="w-10 h-10 bg-gray-200 rounded-xl"></div>
-      <div className="h-4 bg-gray-200 rounded w-2/3"></div>
-    </div>
-    <div className="grid grid-cols-2 gap-3">
-      <div className="h-8 bg-gray-200 rounded-lg"></div>
-      <div className="h-8 bg-gray-200 rounded-lg"></div>
-    </div>
-    <div className="h-10 bg-gray-200 rounded-xl w-full"></div>
-  </div>
-);
+import { ServiceCard, ServiceCardSkeleton } from '../components/ServiceCard';
 
 export default function Services() {
   const navigate = useNavigate();
@@ -83,11 +70,6 @@ export default function Services() {
     navigate(`/order?service=${service.apiServiceId || service.service}`);
   };
 
-  const shortenName = (name: string) => {
-    if (name.length > 45) return name.substring(0, 42) + '...';
-    return name;
-  };
-
   return (
     <div className="min-h-screen bg-white pb-32">
       {/* Curved Header */}
@@ -120,13 +102,13 @@ export default function Services() {
           >
             {isLoading ? (
               [1, 2, 3, 4, 5].map(i => (
-                <div key={i} className="flex-shrink-0 w-40 h-12 bg-white rounded-2xl shadow-md animate-pulse" />
+                <div key={i} className="flex-shrink-0 w-40 h-12 bg-white rounded-2xl shadow-md shimmer" />
               ))
             ) : platforms.map((platform, idx) => (
               <Link
                 key={idx}
                 to={`/platform?platform=${platform.name}`}
-                className="flex-shrink-0 flex items-center space-x-3 px-6 py-3 bg-white rounded-2xl shadow-md border border-gray-50 hover:scale-105 transition-transform"
+                className="flex-shrink-0 flex items-center space-x-3 px-6 py-3 bg-white rounded-2xl shadow-md border border-gray-50 hover:scale-105 transition-transform active-press"
               >
                 <FontAwesomeIcon icon={platform.icon} className={`text-xl ${platform.color}`} />
                 <span className="text-xs font-black text-gray-900 uppercase tracking-widest whitespace-nowrap">{platform.name}</span>
@@ -153,7 +135,7 @@ export default function Services() {
         <div className="space-y-16">
           {isLoading ? (
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
-              {[1, 2, 3, 4, 5, 6, 7, 8].map((j) => <ServiceSkeleton key={j} />)}
+              {[1, 2, 3, 4, 5, 6, 7, 8].map((j) => <ServiceCardSkeleton key={j} />)}
             </div>
           ) : Object.entries(groupedServices).sort().map(([categoryName, categoryServices]: [string, any[]]) => (
             <div key={categoryName} className="space-y-6">
@@ -169,51 +151,14 @@ export default function Services() {
               </div>
 
               <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
-                {categoryServices.map((service, idx) => {
-                  const pKey = service.category.toLowerCase();
-                  return (
-                    <motion.div
-                      key={service.apiServiceId}
-                      initial={{ opacity: 0, scale: 0.95 }}
-                      whileInView={{ opacity: 1, scale: 1 }}
-                      viewport={{ once: true }}
-                      transition={{ delay: idx * 0.02 }}
-                      className="bg-white rounded-2xl p-4 border border-gray-100 shadow-sm hover:shadow-xl transition-all group flex flex-col h-full"
-                    >
-                      <div className="flex-grow space-y-3">
-                        <div className="flex items-center space-x-3">
-                          <div className={`w-10 h-10 rounded-xl flex-shrink-0 flex items-center justify-center text-sm shadow-sm ${platformColors[pKey] || 'bg-brand-purple text-white'}`}>
-                            <FontAwesomeIcon icon={platformIcons[pKey] || faGlobe} />
-                          </div>
-                          <h4 className="text-[11px] font-black text-gray-900 leading-tight group-hover:text-brand-purple transition-colors line-clamp-2 overflow-hidden text-ellipsis">
-                            {service.name}
-                          </h4>
-                        </div>
-                        
-                        <div className="grid grid-cols-2 gap-2 pt-2">
-                          <div className="bg-gray-50 p-2 rounded-lg border border-gray-100">
-                            <span className="block text-[7px] font-black text-gray-400 uppercase tracking-widest">Price / 1k</span>
-                            <div className="text-[10px] font-black text-brand-purple whitespace-nowrap overflow-hidden text-ellipsis">UGX {Math.round(service.price || 0).toLocaleString()}</div>
-                          </div>
-                          <div className="bg-gray-50 p-2 rounded-lg border border-gray-100 text-right">
-                            <span className="block text-[7px] font-black text-gray-400 uppercase tracking-widest">Min / Max</span>
-                            <div className="text-[9px] font-bold text-gray-900 whitespace-nowrap overflow-hidden text-ellipsis">
-                              {service.min?.toLocaleString()} / {service.max > 1000000 ? '1M+' : service.max?.toLocaleString()}
-                            </div>
-                          </div>
-                        </div>
-                      </div>
-
-                      <button
-                        onClick={() => handleBoost(service)}
-                        className="mt-4 w-full py-3 bg-gradient-to-r from-blue-600 to-purple-600 text-white text-[9px] font-black uppercase tracking-widest rounded-xl shadow-md hover:shadow-blue-600/20 hover:scale-[1.02] active:scale-[0.98] transition-all flex items-center justify-center space-x-2 whitespace-nowrap overflow-hidden text-ellipsis"
-                      >
-                        <FontAwesomeIcon icon={faRocket} className="text-[8px]" />
-                        <span>Boost Now</span>
-                      </button>
-                    </motion.div>
-                  );
-                })}
+                {categoryServices.map((service, idx) => (
+                  <ServiceCard 
+                    key={service.apiServiceId} 
+                    service={service} 
+                    onBoost={handleBoost} 
+                    index={idx} 
+                  />
+                ))}
               </div>
             </div>
           ))}

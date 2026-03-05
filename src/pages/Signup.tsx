@@ -234,12 +234,12 @@ export default function Signup() {
       <div className="hidden lg:flex flex-1 relative overflow-hidden">
         <div className="absolute inset-0 z-0">
           <img
-            src="https://images.unsplash.com/photo-1460925895917-afdab827c52f?auto=format&fit=crop&q=80&w=1920"
+            src="https://cdn.fexpink.com/smmgen/images/v3/cheapest-smm-panel.webp"
             alt="Social Media Growth"
             className="w-full h-full object-cover"
             referrerPolicy="no-referrer"
           />
-          <div className="absolute inset-0 bg-gradient-to-tr from-brand-blue/90 to-brand-purple/80 mix-blend-multiply" />
+          <div className="absolute inset-0 bg-gradient-to-tr from-blue-600/90 to-purple-600/80 mix-blend-multiply" />
         </div>
         
         <div className="relative z-10 flex flex-col items-center justify-center w-full p-20 text-white text-center">

@@ -1,5 +1,5 @@
 import { 
-  faInstagram, faTiktok, faYoutube, faFacebook, faTelegram, faTwitter, 
+  faInstagram, faTiktok, faYoutube, faFacebook, faTelegram, faXTwitter, 
   faSpotify, faSnapchat, faLinkedin, faWhatsapp, faTwitch, faSoundcloud,
   faVimeo, faDeezer, faGooglePlay, faKickstarter
 } from '@fortawesome/free-brands-svg-icons';
@@ -11,7 +11,8 @@ export const platformIcons: Record<string, any> = {
   instagram: faInstagram,
   youtube: faYoutube,
   telegram: faTelegram,
-  twitter: faTwitter,
+  twitter: faXTwitter,
+  x: faXTwitter,
   spotify: faSpotify,
   snapchat: faSnapchat,
   linkedin: faLinkedin,
@@ -26,6 +27,7 @@ export const platformIcons: Record<string, any> = {
   kick: faKickstarter,
   'website traffic': faChartLine,
   coinmarketcap: faSearchDollar,
+  coinmarket: faSearchDollar,
   clubhouse: faMobileAlt,
   others: faGlobe
 };

@@ -92,8 +92,12 @@ export default function Profile() {
         
         <div className="relative z-10 flex items-center space-x-4 md:space-x-8">
           <div className="relative">
-            <div className="w-16 h-16 md:w-24 md:h-24 bg-white/10 backdrop-blur-xl rounded-2xl border border-white/20 flex items-center justify-center text-2xl md:text-4xl shadow-inner">
-              <FontAwesomeIcon icon={faUser} />
+            <div className="w-16 h-16 md:w-24 md:h-24 bg-white rounded-2xl border border-white/20 flex items-center justify-center shadow-inner overflow-hidden">
+              <img 
+                src="https://www.svgrepo.com/show/384670/account-avatar-profile-user.svg" 
+                alt="Profile" 
+                className="w-full h-full object-cover"
+              />
             </div>
             <div className="absolute -bottom-1 -right-1 w-6 h-6 bg-emerald-500 rounded-lg border-2 border-brand-blue flex items-center justify-center text-white text-[8px] shadow-lg">
               <FontAwesomeIcon icon={faCheckCircle} />
@@ -271,7 +275,10 @@ export default function Profile() {
             </div>
             <h4 className="text-xl font-display font-black text-gray-900 tracking-tighter mb-2">Need Help?</h4>
             <p className="text-gray-400 text-[10px] font-medium mb-6 leading-relaxed">Our support team is available 24/7 to assist you.</p>
-            <button className="w-full py-3 bg-white text-gray-900 font-black uppercase tracking-widest text-[9px] rounded-xl hover:bg-gradient-to-r hover:from-blue-600 hover:to-purple-600 hover:text-white transition-all border border-gray-200 shadow-sm">
+            <button 
+              onClick={() => window.open('https://wa.me/256709728323?text=Easy%20Boost%20user', '_blank')}
+              className="w-full py-3 bg-white text-gray-900 font-black uppercase tracking-widest text-[9px] rounded-xl hover:bg-gradient-to-r hover:from-blue-600 hover:to-purple-600 hover:text-white transition-all border border-gray-200 shadow-sm"
+            >
               Contact Support
             </button>
           </div>

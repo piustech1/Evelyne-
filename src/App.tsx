@@ -5,6 +5,7 @@
 
 import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
 import { useAuth } from './hooks/useAuth';
+import ScrollToTop from './components/ScrollToTop';
 import LandingPage from './pages/LandingPage';
 import Login from './pages/Login';
 import Signup from './pages/Signup';
@@ -47,6 +48,7 @@ export default function App() {
 
   return (
     <Router>
+      <ScrollToTop />
       <Routes>
         {/* Admin Routes */}
         <Route path="/admin/login" element={<AdminLogin />} />

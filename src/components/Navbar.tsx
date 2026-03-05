@@ -70,8 +70,12 @@ export default function Navbar() {
                   <div className="text-[7px] font-black uppercase tracking-widest text-white/60">Balance</div>
                   <div className="text-[10px] font-black text-white">UGX {userData?.balance?.toLocaleString() || 0}</div>
                 </div>
-                <Link to="/profile" className="w-8 h-8 rounded-lg flex items-center justify-center transition-all bg-white/10 text-white hover:bg-white/20">
-                  <FontAwesomeIcon icon={faUserCircle} className="text-lg" />
+                <Link to="/profile" className="w-8 h-8 rounded-lg overflow-hidden flex items-center justify-center transition-all bg-white/10 text-white hover:bg-white/20">
+                  <img 
+                    src="https://www.svgrepo.com/show/384670/account-avatar-profile-user.svg" 
+                    alt="Profile" 
+                    className="w-full h-full object-cover"
+                  />
                 </Link>
                 <button
                   onClick={handleLogout}

@@ -184,13 +184,7 @@ export default function OrderPage() {
           animate={{ opacity: 1, y: 0 }}
           className="max-w-4xl mx-auto relative z-10 space-y-4"
         >
-          <div className="flex items-center justify-center space-x-4">
-            <button 
-              onClick={() => navigate(-1)}
-              className="w-10 h-10 rounded-xl bg-white/10 backdrop-blur-md border border-white/20 flex items-center justify-center hover:bg-white/20 transition-all"
-            >
-              <FontAwesomeIcon icon={faArrowLeft} />
-            </button>
+          <div className="flex items-center justify-center">
             <h1 className="text-2xl md:text-4xl font-display font-black tracking-tighter">Finalize Order</h1>
           </div>
           <p className="text-white/80 max-w-md mx-auto font-medium text-xs uppercase tracking-widest">
@@ -225,15 +219,15 @@ export default function OrderPage() {
             <div className="grid grid-cols-3 gap-4">
               <div className="bg-gray-50 p-4 rounded-2xl border border-gray-100 text-center">
                 <div className="text-[8px] font-black text-gray-400 uppercase tracking-widest mb-1">Price / 1k</div>
-                <div className="text-sm font-black text-brand-purple whitespace-nowrap overflow-hidden text-ellipsis">UGX {service.price.toLocaleString()}</div>
+                <div className="text-sm font-black text-brand-purple">UGX {service.price.toLocaleString()}</div>
               </div>
               <div className="bg-gray-50 p-4 rounded-2xl border border-gray-100 text-center">
                 <div className="text-[8px] font-black text-gray-400 uppercase tracking-widest mb-1">Minimum</div>
-                <div className="text-sm font-black text-gray-900 whitespace-nowrap overflow-hidden text-ellipsis">{service.min.toLocaleString()}</div>
+                <div className="text-sm font-black text-gray-900">{service.min.toLocaleString()}</div>
               </div>
               <div className="bg-gray-50 p-4 rounded-2xl border border-gray-100 text-center">
                 <div className="text-[8px] font-black text-gray-400 uppercase tracking-widest mb-1">Maximum</div>
-                <div className="text-sm font-black text-gray-900 whitespace-nowrap overflow-hidden text-ellipsis">{service.max > 1000000 ? '1M+' : service.max.toLocaleString()}</div>
+                <div className="text-sm font-black text-gray-900">{service.max > 1000000 ? '1M+' : service.max.toLocaleString()}</div>
               </div>
             </div>
 

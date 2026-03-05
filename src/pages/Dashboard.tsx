@@ -236,7 +236,10 @@ export default function Dashboard() {
                 <h3 className="font-black text-xl tracking-tighter">24/7 Support</h3>
                 <p className="text-[10px] text-white/70 leading-relaxed font-medium">Need help with an order or have a question? Our team is here for you.</p>
               </div>
-              <button className="w-full py-3 bg-white text-blue-600 hover:bg-white/90 rounded-xl text-[10px] font-black uppercase tracking-widest transition-all flex items-center justify-center group shadow-sm">
+              <button 
+                onClick={() => window.open('https://wa.me/256709728323?text=Easy%20Boost%20user', '_blank')}
+                className="w-full py-3 bg-white text-blue-600 hover:bg-white/90 rounded-xl text-[10px] font-black uppercase tracking-widest transition-all flex items-center justify-center group shadow-sm"
+              >
                 Contact Us
                 <FontAwesomeIcon icon={faArrowRight} className="ml-2 group-hover:translate-x-1 transition-transform" />
               </button>
