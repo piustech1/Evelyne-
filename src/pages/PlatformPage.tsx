@@ -2,61 +2,13 @@ import { useState, useEffect, useRef } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { 
-  faInstagram, faTiktok, faYoutube, faFacebook, faTelegram, faTwitter, 
-  faSpotify, faSnapchat, faLinkedin, faWhatsapp, faTwitch, faSoundcloud,
-  faVimeo, faDeezer, faGooglePlay, faKickstarter
-} from '@fortawesome/free-brands-svg-icons';
-import { 
-  faArrowLeft, faShoppingCart, faCheckCircle, faInfoCircle, faRocket, 
+  faShoppingCart, faCheckCircle, faInfoCircle, faRocket, 
   faGlobe, faSearch, faFilter, faList, faChartLine, faSearchDollar
 } from '@fortawesome/free-solid-svg-icons';
 import { motion, AnimatePresence } from 'motion/react';
 import { useAuth } from '../hooks/useAuth';
 import { fetchServices, Service } from '../lib/servicesStore';
-
-const platformIcons: Record<string, any> = {
-  tiktok: faTiktok,
-  facebook: faFacebook,
-  instagram: faInstagram,
-  youtube: faYoutube,
-  telegram: faTelegram,
-  twitter: faTwitter,
-  spotify: faSpotify,
-  snapchat: faSnapchat,
-  linkedin: faLinkedin,
-  whatsapp: faWhatsapp,
-  twitch: faTwitch,
-  soundcloud: faSoundcloud,
-  vimeo: faVimeo,
-  deezer: faDeezer,
-  'google play': faGooglePlay,
-  kick: faKickstarter,
-  'website traffic': faChartLine,
-  coinmarketcap: faSearchDollar,
-  others: faGlobe
-};
-
-const platformColors: Record<string, string> = {
-  tiktok: 'text-white bg-black',
-  facebook: 'text-white bg-[#1877F2]',
-  instagram: 'text-white bg-gradient-to-tr from-[#f9ce34] via-[#ee2a7b] to-[#6228d7]',
-  youtube: 'text-white bg-[#FF0000]',
-  telegram: 'text-white bg-[#0088cc]',
-  twitter: 'text-white bg-black',
-  spotify: 'text-white bg-[#1DB954]',
-  snapchat: 'text-black bg-[#FFFC00]',
-  linkedin: 'text-white bg-[#0077B5]',
-  whatsapp: 'text-white bg-[#25D366]',
-  twitch: 'text-white bg-[#9146FF]',
-  soundcloud: 'text-white bg-[#FF5500]',
-  vimeo: 'text-white bg-[#1AB7EA]',
-  deezer: 'text-white bg-black',
-  'google play': 'text-white bg-gradient-to-r from-[#4285F4] via-[#34A853] to-[#FBBC05]',
-  kick: 'text-black bg-[#53FC18]',
-  'website traffic': 'text-white bg-emerald-600',
-  coinmarketcap: 'text-white bg-[#171924]',
-  others: 'text-white bg-gray-500',
-};
+import { platformIcons, platformColors } from '../utils/platformData';
 
 const ServiceSkeleton = () => (
   <div className="bg-gray-50 rounded-2xl p-4 border border-gray-100 shadow-sm animate-pulse space-y-4">
@@ -193,12 +145,12 @@ export default function PlatformPage() {
             />
           </div>
 
-          <div className="flex overflow-x-auto no-scrollbar gap-3 pb-2 justify-start md:justify-center">
+          <div className="flex overflow-x-auto no-scrollbar gap-3 pb-2 justify-start md:justify-center items-center">
             {filters.map((f) => (
               <button
                 key={f}
                 onClick={() => setActiveFilter(f)}
-                className={`flex-shrink-0 px-6 py-3 rounded-xl text-[10px] font-black uppercase tracking-widest transition-all border ${
+                className={`flex-shrink-0 px-6 py-3 rounded-full text-[10px] font-black uppercase tracking-widest transition-all border whitespace-nowrap ${
                   activeFilter === f 
                   ? 'bg-gradient-to-r from-blue-600 to-purple-600 text-white border-transparent shadow-lg shadow-blue-600/20' 
                   : 'bg-gray-50 text-gray-400 border-gray-100 hover:bg-gray-100'
@@ -238,19 +190,19 @@ export default function PlatformPage() {
                         <div className={`w-10 h-10 rounded-xl flex-shrink-0 flex items-center justify-center text-sm shadow-sm ${colorClass}`}>
                           <FontAwesomeIcon icon={icon} />
                         </div>
-                        <h4 className="text-[11px] font-black text-gray-900 leading-tight group-hover:text-brand-purple transition-colors">
-                          {shortenName(service.name)}
+                        <h4 className="text-[11px] font-black text-gray-900 leading-tight group-hover:text-brand-purple transition-colors line-clamp-2 overflow-hidden text-ellipsis">
+                          {service.name}
                         </h4>
                       </div>
                       
                       <div className="grid grid-cols-2 gap-2 pt-2">
                         <div className="bg-gray-50 p-2 rounded-lg border border-gray-100">
                           <span className="block text-[7px] font-black text-gray-400 uppercase tracking-widest">Price / 1k</span>
-                          <div className="text-[10px] font-black text-brand-purple">UGX {Math.round(service.price || 0).toLocaleString()}</div>
+                          <div className="text-[10px] font-black text-brand-purple whitespace-nowrap overflow-hidden text-ellipsis">UGX {Math.round(service.price || 0).toLocaleString()}</div>
                         </div>
                         <div className="bg-gray-50 p-2 rounded-lg border border-gray-100 text-right">
                           <span className="block text-[7px] font-black text-gray-400 uppercase tracking-widest">Min / Max</span>
-                          <div className="text-[9px] font-bold text-gray-900">
+                          <div className="text-[9px] font-bold text-gray-900 whitespace-nowrap overflow-hidden text-ellipsis">
                             {service.min?.toLocaleString()} / {service.max > 1000000 ? '1M+' : service.max?.toLocaleString()}
                           </div>
                         </div>
@@ -259,7 +211,7 @@ export default function PlatformPage() {
 
                     <button
                       onClick={() => handleBoost(service)}
-                      className="mt-4 w-full py-3 bg-gradient-to-r from-blue-600 to-purple-600 text-white text-[9px] font-black uppercase tracking-widest rounded-xl shadow-md hover:shadow-blue-600/20 hover:scale-[1.02] active:scale-[0.98] transition-all flex items-center justify-center space-x-2"
+                      className="mt-4 w-full py-3 bg-gradient-to-r from-blue-600 to-purple-600 text-white text-[9px] font-black uppercase tracking-widest rounded-xl shadow-md hover:shadow-blue-600/20 hover:scale-[1.02] active:scale-[0.98] transition-all flex items-center justify-center space-x-2 whitespace-nowrap overflow-hidden text-ellipsis"
                     >
                       <FontAwesomeIcon icon={faRocket} className="text-[8px]" />
                       <span>Boost Now</span>

@@ -1,49 +1,10 @@
 import { useState, useEffect, useRef } from 'react';
 import { motion } from 'motion/react';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
-import { faTiktok, faInstagram, faYoutube, faFacebook, faTwitter, faTelegram, faSpotify, faLinkedin, faSnapchat, faWhatsapp } from '@fortawesome/free-brands-svg-icons';
 import { faRocket, faChevronRight, faShieldAlt, faBolt, faCheckCircle, faSearch, faList, faExclamationTriangle, faGlobe } from '@fortawesome/free-solid-svg-icons';
 import { Link, useNavigate } from 'react-router-dom';
 import { fetchServices, Service } from '../lib/servicesStore';
-
-const platformIcons: Record<string, any> = {
-  tiktok: faTiktok,
-  instagram: faInstagram,
-  youtube: faYoutube,
-  facebook: faFacebook,
-  twitter: faTwitter,
-  telegram: faTelegram,
-  spotify: faSpotify,
-  linkedin: faLinkedin,
-  snapchat: faSnapchat,
-  whatsapp: faWhatsapp,
-  other: faGlobe
-};
-
-const platformColors: Record<string, string> = {
-  tiktok: 'bg-black text-white',
-  instagram: 'bg-gradient-to-tr from-[#f9ce34] via-[#ee2a7b] to-[#6228d7] text-white',
-  youtube: 'bg-[#FF0000] text-white',
-  facebook: 'bg-[#1877F2] text-white',
-  twitter: 'bg-[#1DA1F2] text-white',
-  telegram: 'bg-[#0088cc] text-white',
-  spotify: 'bg-[#1DB954] text-white',
-  linkedin: 'bg-[#0077B5] text-white',
-  snapchat: 'bg-[#FFFC00] text-black',
-  whatsapp: 'bg-[#25D366] text-white',
-  other: 'bg-gray-500 text-white'
-};
-
-const platformsList = [
-  { name: 'TikTok', icon: faTiktok, color: 'text-black' },
-  { name: 'Instagram', icon: faInstagram, color: 'text-pink-600' },
-  { name: 'YouTube', icon: faYoutube, color: 'text-red-600' },
-  { name: 'Facebook', icon: faFacebook, color: 'text-blue-600' },
-  { name: 'Telegram', icon: faTelegram, color: 'text-sky-500' },
-  { name: 'Twitter', icon: faTwitter, color: 'text-blue-400' },
-  { name: 'WhatsApp', icon: faWhatsapp, color: 'text-emerald-500' },
-  { name: 'Spotify', icon: faSpotify, color: 'text-emerald-400' },
-];
+import { platformIcons, platformColors, platformTextColors } from '../utils/platformData';
 
 const ServiceSkeleton = () => (
   <div className="bg-gray-50 rounded-2xl p-4 border border-gray-100 shadow-sm animate-pulse space-y-4">
@@ -65,6 +26,7 @@ export default function Services() {
   const [searchTerm, setSearchTerm] = useState('');
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState('');
+  const [platforms, setPlatforms] = useState<any[]>([]);
   const sliderRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
@@ -72,6 +34,14 @@ export default function Services() {
       try {
         const data = await fetchServices();
         setServices(data);
+        
+        const uniquePlatforms = Array.from(new Set(data.map(s => s.category))).sort();
+        const pList = uniquePlatforms.map(p => ({
+          name: p,
+          icon: platformIcons[p.toLowerCase()] || faGlobe,
+          color: platformTextColors[p.toLowerCase()] || 'text-gray-500'
+        }));
+        setPlatforms(pList);
       } catch (err) {
         setError('Failed to load services');
       } finally {
@@ -83,6 +53,7 @@ export default function Services() {
 
   // Auto-sliding effect for platforms
   useEffect(() => {
+    if (platforms.length === 0) return;
     const interval = setInterval(() => {
       if (sliderRef.current) {
         const { scrollLeft, scrollWidth, clientWidth } = sliderRef.current;
@@ -94,7 +65,7 @@ export default function Services() {
       }
     }, 3000);
     return () => clearInterval(interval);
-  }, []);
+  }, [platforms]);
 
   const filteredServices = services.filter(s => 
     s.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
@@ -109,7 +80,7 @@ export default function Services() {
   }, {});
 
   const handleBoost = (service: Service) => {
-    navigate(`/order?service=${service.apiServiceId}`);
+    navigate(`/order?service=${service.apiServiceId || service.service}`);
   };
 
   const shortenName = (name: string) => {
@@ -147,14 +118,18 @@ export default function Services() {
             ref={sliderRef}
             className="flex overflow-x-auto gap-4 pb-4 no-scrollbar scroll-smooth"
           >
-            {platformsList.map((platform, idx) => (
+            {isLoading ? (
+              [1, 2, 3, 4, 5].map(i => (
+                <div key={i} className="flex-shrink-0 w-40 h-12 bg-white rounded-2xl shadow-md animate-pulse" />
+              ))
+            ) : platforms.map((platform, idx) => (
               <Link
                 key={idx}
                 to={`/platform?platform=${platform.name}`}
                 className="flex-shrink-0 flex items-center space-x-3 px-6 py-3 bg-white rounded-2xl shadow-md border border-gray-50 hover:scale-105 transition-transform"
               >
                 <FontAwesomeIcon icon={platform.icon} className={`text-xl ${platform.color}`} />
-                <span className="text-xs font-black text-gray-900 uppercase tracking-widest">{platform.name}</span>
+                <span className="text-xs font-black text-gray-900 uppercase tracking-widest whitespace-nowrap">{platform.name}</span>
               </Link>
             ))}
           </div>
@@ -210,19 +185,19 @@ export default function Services() {
                           <div className={`w-10 h-10 rounded-xl flex-shrink-0 flex items-center justify-center text-sm shadow-sm ${platformColors[pKey] || 'bg-brand-purple text-white'}`}>
                             <FontAwesomeIcon icon={platformIcons[pKey] || faGlobe} />
                           </div>
-                          <h4 className="text-[11px] font-black text-gray-900 leading-tight group-hover:text-brand-purple transition-colors">
-                            {shortenName(service.name)}
+                          <h4 className="text-[11px] font-black text-gray-900 leading-tight group-hover:text-brand-purple transition-colors line-clamp-2 overflow-hidden text-ellipsis">
+                            {service.name}
                           </h4>
                         </div>
                         
                         <div className="grid grid-cols-2 gap-2 pt-2">
                           <div className="bg-gray-50 p-2 rounded-lg border border-gray-100">
                             <span className="block text-[7px] font-black text-gray-400 uppercase tracking-widest">Price / 1k</span>
-                            <div className="text-[10px] font-black text-brand-purple">UGX {Math.round(service.price || 0).toLocaleString()}</div>
+                            <div className="text-[10px] font-black text-brand-purple whitespace-nowrap overflow-hidden text-ellipsis">UGX {Math.round(service.price || 0).toLocaleString()}</div>
                           </div>
                           <div className="bg-gray-50 p-2 rounded-lg border border-gray-100 text-right">
                             <span className="block text-[7px] font-black text-gray-400 uppercase tracking-widest">Min / Max</span>
-                            <div className="text-[9px] font-bold text-gray-900">
+                            <div className="text-[9px] font-bold text-gray-900 whitespace-nowrap overflow-hidden text-ellipsis">
                               {service.min?.toLocaleString()} / {service.max > 1000000 ? '1M+' : service.max?.toLocaleString()}
                             </div>
                           </div>
@@ -231,7 +206,7 @@ export default function Services() {
 
                       <button
                         onClick={() => handleBoost(service)}
-                        className="mt-4 w-full py-3 bg-gradient-to-r from-blue-600 to-purple-600 text-white text-[9px] font-black uppercase tracking-widest rounded-xl shadow-md hover:shadow-blue-600/20 hover:scale-[1.02] active:scale-[0.98] transition-all flex items-center justify-center space-x-2"
+                        className="mt-4 w-full py-3 bg-gradient-to-r from-blue-600 to-purple-600 text-white text-[9px] font-black uppercase tracking-widest rounded-xl shadow-md hover:shadow-blue-600/20 hover:scale-[1.02] active:scale-[0.98] transition-all flex items-center justify-center space-x-2 whitespace-nowrap overflow-hidden text-ellipsis"
                       >
                         <FontAwesomeIcon icon={faRocket} className="text-[8px]" />
                         <span>Boost Now</span>

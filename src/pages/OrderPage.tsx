@@ -1,33 +1,13 @@
 import { useState, useEffect } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
-import { faInstagram, faTiktok, faYoutube, faFacebook, faTelegram, faTwitter } from '@fortawesome/free-brands-svg-icons';
 import { faArrowLeft, faShoppingCart, faCheckCircle, faInfoCircle, faRocket, faShieldAlt, faGlobe, faBolt } from '@fortawesome/free-solid-svg-icons';
 import { motion, AnimatePresence } from 'motion/react';
 import { useAuth } from '../hooks/useAuth';
 import { db } from '../lib/firebase';
 import { ref, push, set, runTransaction } from 'firebase/database';
 import { fetchServices, Service } from '../lib/servicesStore';
-
-const platformIcons: Record<string, any> = {
-  tiktok: faTiktok,
-  facebook: faFacebook,
-  instagram: faInstagram,
-  youtube: faYoutube,
-  telegram: faTelegram,
-  twitter: faTwitter,
-  others: faGlobe
-};
-
-const platformColors: Record<string, string> = {
-  tiktok: 'bg-black text-white',
-  facebook: 'bg-[#1877F2] text-white',
-  instagram: 'bg-gradient-to-tr from-[#f9ce34] via-[#ee2a7b] to-[#6228d7] text-white',
-  youtube: 'bg-[#FF0000] text-white',
-  telegram: 'bg-[#0088cc] text-white',
-  twitter: 'bg-[#1DA1F2] text-white',
-  others: 'bg-gray-500 text-white'
-};
+import { platformIcons, platformColors } from '../utils/platformData';
 
 export default function OrderPage() {
   const [searchParams] = useSearchParams();
@@ -46,12 +26,17 @@ export default function OrderPage() {
   useEffect(() => {
     const loadService = async () => {
       if (!serviceId) {
-        navigate('/boost');
+        navigate('/services');
         return;
       }
       try {
         const services = await fetchServices();
-        const found = services.find(s => s.apiServiceId === serviceId || s.service === serviceId);
+        // Try both apiServiceId and service (id)
+        const found = services.find(s => 
+          String(s.apiServiceId) === String(serviceId) || 
+          String(s.service) === String(serviceId)
+        );
+        
         if (found) {
           setService(found);
           setQuantity(found.min || 100);
@@ -155,18 +140,34 @@ export default function OrderPage() {
 
   if (isLoading) {
     return (
-      <div className="pt-32 flex flex-col items-center justify-center space-y-4">
-        <div className="w-12 h-12 border-4 border-brand-purple border-t-transparent rounded-full animate-spin" />
-        <p className="text-[10px] font-black text-gray-400 uppercase tracking-widest">Loading Service Details...</p>
+      <div className="min-h-screen bg-white flex flex-col items-center justify-center p-6 space-y-6">
+        <div className="w-16 h-16 border-4 border-brand-purple border-t-transparent rounded-full animate-spin shadow-lg shadow-brand-purple/20" />
+        <div className="text-center space-y-2">
+          <h2 className="text-sm font-black text-gray-900 uppercase tracking-widest">Securing Connection...</h2>
+          <p className="text-[10px] font-bold text-gray-400 uppercase tracking-widest">Fetching service details from provider</p>
+        </div>
       </div>
     );
   }
 
   if (!service) {
     return (
-      <div className="pt-32 text-center space-y-4">
-        <div className="text-rose-500 font-black uppercase tracking-widest">Service Not Found</div>
-        <button onClick={() => navigate('/boost')} className="text-brand-purple font-bold underline">Go Back</button>
+      <div className="min-h-screen bg-white flex flex-col items-center justify-center p-6 text-center space-y-6">
+        <div className="w-20 h-20 bg-rose-50 rounded-full flex items-center justify-center text-rose-500 text-3xl border border-rose-100">
+          <FontAwesomeIcon icon={faInfoCircle} />
+        </div>
+        <div className="space-y-2">
+          <h1 className="text-2xl font-display font-black text-gray-900 tracking-tighter">Service Not Found</h1>
+          <p className="text-gray-500 text-xs max-w-xs mx-auto leading-relaxed">
+            The service you're looking for might have been removed or is currently unavailable.
+          </p>
+        </div>
+        <button 
+          onClick={() => navigate('/services')} 
+          className="px-8 py-4 bg-gray-900 text-white rounded-2xl text-[10px] font-black uppercase tracking-widest hover:bg-brand-purple transition-all shadow-lg"
+        >
+          Browse Other Services
+        </button>
       </div>
     );
   }
@@ -174,7 +175,7 @@ export default function OrderPage() {
   const platformKey = service.category.toLowerCase();
 
   return (
-    <div className="min-h-screen bg-white pb-32">
+    <div className="min-h-screen bg-[#f5f5f5] pb-32">
       {/* Curved Header */}
       <div className="gradient-brand pt-12 pb-24 px-6 text-white text-center rounded-b-[3rem] shadow-lg relative overflow-hidden">
         <div className="absolute top-0 right-0 w-64 h-64 bg-white/10 rounded-full -translate-x-1/2 -translate-y-1/2 blur-3xl" />
@@ -224,15 +225,15 @@ export default function OrderPage() {
             <div className="grid grid-cols-3 gap-4">
               <div className="bg-gray-50 p-4 rounded-2xl border border-gray-100 text-center">
                 <div className="text-[8px] font-black text-gray-400 uppercase tracking-widest mb-1">Price / 1k</div>
-                <div className="text-sm font-black text-brand-purple">UGX {service.price.toLocaleString()}</div>
+                <div className="text-sm font-black text-brand-purple whitespace-nowrap overflow-hidden text-ellipsis">UGX {service.price.toLocaleString()}</div>
               </div>
               <div className="bg-gray-50 p-4 rounded-2xl border border-gray-100 text-center">
                 <div className="text-[8px] font-black text-gray-400 uppercase tracking-widest mb-1">Minimum</div>
-                <div className="text-sm font-black text-gray-900">{service.min.toLocaleString()}</div>
+                <div className="text-sm font-black text-gray-900 whitespace-nowrap overflow-hidden text-ellipsis">{service.min.toLocaleString()}</div>
               </div>
               <div className="bg-gray-50 p-4 rounded-2xl border border-gray-100 text-center">
                 <div className="text-[8px] font-black text-gray-400 uppercase tracking-widest mb-1">Maximum</div>
-                <div className="text-sm font-black text-gray-900">{service.max > 1000000 ? '1M+' : service.max.toLocaleString()}</div>
+                <div className="text-sm font-black text-gray-900 whitespace-nowrap overflow-hidden text-ellipsis">{service.max > 1000000 ? '1M+' : service.max.toLocaleString()}</div>
               </div>
             </div>
 

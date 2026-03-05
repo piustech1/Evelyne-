@@ -1,29 +1,49 @@
 import { useState, useEffect } from 'react';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { faWallet, faShoppingCart, faClock, faCheckCircle, faPlus, faArrowRight, faRocket, faShieldAlt, faThLarge, faGlobe } from '@fortawesome/free-solid-svg-icons';
-import { faInstagram, faTiktok, faYoutube, faFacebook, faTelegram, faTwitter } from '@fortawesome/free-brands-svg-icons';
 import { motion } from 'motion/react';
 import { Link } from 'react-router-dom';
 import { useAuth } from '../hooks/useAuth';
 import { db } from '../lib/firebase';
 import { ref, onValue, query, orderByChild, limitToLast, equalTo } from 'firebase/database';
-
-const platforms = [
-  { id: 'TikTok', icon: faTiktok, name: 'TikTok', color: 'text-black', bg: 'bg-gray-100', desc: 'Followers, Likes, Shares' },
-  { id: 'Facebook', icon: faFacebook, name: 'Facebook', color: 'text-[#1877F2]', bg: 'bg-[#1877F2]/10', desc: 'Page Likes, Post Likes' },
-  { id: 'Instagram', icon: faInstagram, name: 'Instagram', color: 'text-[#E1306C]', bg: 'bg-[#E1306C]/10', desc: 'Followers, Likes, Views' },
-  { id: 'YouTube', icon: faYoutube, name: 'YouTube', color: 'text-[#FF0000]', bg: 'bg-[#FF0000]/10', desc: 'Subs, Views, Watch Time' },
-  { id: 'Telegram', icon: faTelegram, name: 'Telegram', color: 'text-[#0088cc]', bg: 'bg-[#0088cc]/10', desc: 'Members, Views, Reactions' },
-  { id: 'Twitter', icon: faTwitter, name: 'Twitter', color: 'text-[#1DA1F2]', bg: 'bg-[#1DA1F2]/10', desc: 'Followers, Retweets, Likes' },
-  { id: 'Others', icon: faGlobe, name: 'Others', color: 'text-gray-500', bg: 'bg-gray-100', desc: 'Spotify, LinkedIn, & More' },
-];
+import { fetchServices, Service } from '../lib/servicesStore';
+import { platformIcons, platformTextColors, platformBgs } from '../utils/platformData';
 
 export default function Dashboard() {
   const { user, userData } = useAuth();
   const [orderStats, setOrderStats] = useState({ total: 0, pending: 0, completed: 0 });
   const [recentOrders, setRecentOrders] = useState<any[]>([]);
+  const [platforms, setPlatforms] = useState<any[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
 
   useEffect(() => {
+    const loadDashboardData = async () => {
+      try {
+        const services = await fetchServices();
+        const uniquePlatforms = Array.from(new Set(services.map(s => s.category))).sort();
+        
+        const platformData = uniquePlatforms.map(p => {
+          const pKey = p.toLowerCase();
+          return {
+            id: p,
+            name: p,
+            icon: platformIcons[pKey] || faGlobe,
+            color: platformTextColors[pKey] || 'text-gray-500',
+            bg: platformBgs[pKey] || 'bg-gray-100',
+            desc: `Boost your ${p} presence`
+          };
+        });
+        
+        setPlatforms(platformData);
+      } catch (err) {
+        console.error('Error loading platforms:', err);
+      } finally {
+        setIsLoading(false);
+      }
+    };
+
+    loadDashboardData();
+
     if (user) {
       const ordersRef = ref(db, 'orders');
       const userOrdersQuery = query(ordersRef, orderByChild('userId'), equalTo(user.uid));
@@ -123,7 +143,11 @@ export default function Dashboard() {
               <Link to="/services" className="text-[10px] font-black text-brand-purple hover:text-brand-accent uppercase tracking-widest">View All</Link>
             </div>
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-              {platforms.map((platform, idx) => (
+              {isLoading ? (
+                [1, 2, 3, 4].map((i) => (
+                  <div key={i} className="bg-gray-50 p-5 rounded-2xl border border-gray-100 h-24 animate-pulse" />
+                ))
+              ) : platforms.map((platform, idx) => (
                 <Link
                   key={idx}
                   to={`/platform?platform=${platform.id}`}

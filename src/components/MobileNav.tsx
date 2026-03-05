@@ -18,7 +18,7 @@ export default function MobileNav() {
     <div className="md:hidden fixed bottom-0 left-0 right-0 z-[100] px-4 pb-4">
       <div className="relative max-w-lg mx-auto">
         {/* Curved background for center button - Smoother and lower */}
-        <div className="absolute left-1/2 -translate-x-1/2 -top-6 w-24 h-12 bg-[#f5f5f5] rounded-t-full z-0" />
+        <div className="absolute left-1/2 -translate-x-1/2 -top-4 w-20 h-10 bg-white z-0 rounded-t-[2rem] border-t border-gray-100" />
         
         <nav className="bg-white rounded-[2rem] shadow-[0_-10px_40px_rgba(0,0,0,0.08)] border border-gray-100 px-2 py-3 flex items-center justify-between relative z-10">
           {navItems.map((item) => {
@@ -26,14 +26,14 @@ export default function MobileNav() {
             
             if (item.isSpecial) {
               return (
-                <div key={item.name} className="relative -mt-10 flex flex-col items-center w-16">
+                <div key={item.name} className="relative flex flex-col items-center w-16">
                   <Link
                     to={item.path}
-                    className="w-16 h-16 rounded-2xl bg-gradient-to-r from-blue-600 to-purple-600 flex items-center justify-center text-white shadow-xl shadow-blue-600/30 hover:scale-110 active:scale-95 transition-all border-4 border-white relative z-20"
+                    className="w-14 h-14 rounded-2xl bg-gradient-to-r from-blue-600 to-purple-600 flex items-center justify-center text-white shadow-xl shadow-blue-600/30 hover:scale-110 active:scale-95 transition-all border-4 border-white relative z-20 -mt-8"
                   >
-                    <FontAwesomeIcon icon={item.icon} className="text-2xl" />
+                    <FontAwesomeIcon icon={item.icon} className="text-xl" />
                   </Link>
-                  <span className={`text-[9px] font-black uppercase tracking-widest mt-2 ${isActive ? 'text-brand-purple' : 'text-gray-400'}`}>
+                  <span className={`text-[9px] font-black uppercase tracking-widest mt-1 ${isActive ? 'text-brand-purple' : 'text-gray-400'}`}>
                     {item.name}
                   </span>
                 </div>
@@ -52,12 +52,6 @@ export default function MobileNav() {
                 <span className={`text-[9px] font-black uppercase tracking-widest ${isActive ? 'text-brand-purple' : 'text-gray-400'}`}>
                   {item.name}
                 </span>
-                {isActive && (
-                  <motion.div
-                    layoutId="nav-indicator"
-                    className="w-1 h-1 bg-brand-purple rounded-full mt-1"
-                  />
-                )}
               </Link>
             );
           })}

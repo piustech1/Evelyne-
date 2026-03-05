@@ -44,9 +44,9 @@ export const detectPlatform = (name: string, category: string = ''): string => {
   
   if (n.includes('tiktok')) return 'TikTok';
   if (n.includes('instagram') || n.includes(' ig ')) return 'Instagram';
-  if (n.includes('facebook')) return 'Facebook';
+  if (n.includes('facebook') || n.includes(' fb ')) return 'Facebook';
   if (n.includes('youtube') || n.includes(' yt ')) return 'YouTube';
-  if (n.includes('telegram')) return 'Telegram';
+  if (n.includes('telegram') || n.includes(' tg ')) return 'Telegram';
   if (n.includes('twitter') || n.includes(' x ') || n.includes(' x-') || n.includes(' x ')) return 'Twitter';
   if (n.includes('spotify')) return 'Spotify';
   if (n.includes('soundcloud')) return 'SoundCloud';
