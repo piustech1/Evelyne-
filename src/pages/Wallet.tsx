@@ -40,8 +40,8 @@ export default function Wallet() {
   const handleDeposit = async (e: FormEvent) => {
     e.preventDefault();
     if (!user || !userData) return;
-    if (Number(amount) < 5000) {
-      toast.error('Minimum deposit is UGX 5,000');
+    if (Number(amount) < 1000) {
+      toast.error('Minimum deposit is UGX 1,000');
       return;
     }
     if (!phoneNumber) {
@@ -50,28 +50,28 @@ export default function Wallet() {
     }
 
     setIsLoading(true);
-    const loadingToast = toast.loading('Submitting deposit request...');
+    const loadingToast = toast.loading('Initiating payment prompt...');
 
     try {
-      const paymentsRef = ref(db, 'payments');
-      const newPaymentRef = push(paymentsRef);
-      await set(newPaymentRef, {
-        userId: user.uid,
-        userName: userData.name,
-        userEmail: user.email,
-        amount: Number(amount),
-        method: paymentMethod.toUpperCase(),
-        phoneNumber,
-        status: 'Pending',
-        type: 'Deposit',
-        createdAt: new Date().toISOString(),
+      const response = await fetch('/api/create-payment', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          userId: user.uid,
+          phoneNumber,
+          amount: Number(amount),
+          provider: paymentMethod.toUpperCase()
+        })
       });
 
-      toast.success('Deposit request sent! Please wait for approval.', { id: loadingToast });
+      const data = await response.json();
+      if (data.error) throw new Error(data.error);
+
+      toast.success('Payment prompt sent! Please check your phone.', { id: loadingToast });
       setAmount('');
       setPhoneNumber('');
     } catch (err: any) {
-      toast.error(err.message || 'Failed to submit deposit request', { id: loadingToast });
+      toast.error(err.message || 'Failed to initiate payment', { id: loadingToast });
     } finally {
       setIsLoading(false);
     }
@@ -127,8 +127,13 @@ export default function Wallet() {
                       : 'border-white bg-white text-gray-400 hover:border-brand-purple/20 shadow-sm'
                     }`}
                   >
-                    <div className="w-10 h-10 bg-[#FFCC00] rounded-full flex items-center justify-center mb-2 shadow-sm border border-white">
-                      <FontAwesomeIcon icon={faMobileAlt} className="text-black text-sm" />
+                    <div className="w-12 h-12 rounded-full overflow-hidden mb-2 shadow-sm border border-white">
+                      <img 
+                        src="https://upload.wikimedia.org/wikipedia/commons/9/93/New-mtn-logo.jpg" 
+                        alt="MTN" 
+                        className="w-full h-full object-cover"
+                        referrerPolicy="no-referrer"
+                      />
                     </div>
                     <span className="text-[8px] font-black uppercase tracking-widest">MTN MoMo</span>
                   </button>
@@ -141,8 +146,13 @@ export default function Wallet() {
                       : 'border-white bg-white text-gray-400 hover:border-brand-purple/20 shadow-sm'
                     }`}
                   >
-                    <div className="w-10 h-10 bg-[#FF0000] rounded-full flex items-center justify-center mb-2 shadow-sm border border-white">
-                      <FontAwesomeIcon icon={faMobileAlt} className="text-white text-sm" />
+                    <div className="w-12 h-12 rounded-full overflow-hidden mb-2 shadow-sm border border-white">
+                      <img 
+                        src="https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcRneg0-d64LfRJ004eYrlfQWrRaRrDSStBFSbWPZKEmQg&s" 
+                        alt="Airtel" 
+                        className="w-full h-full object-cover"
+                        referrerPolicy="no-referrer"
+                      />
                     </div>
                     <span className="text-[8px] font-black uppercase tracking-widest">Airtel Money</span>
                   </button>
@@ -177,7 +187,7 @@ export default function Wallet() {
                       className="w-full pl-12 pr-4 py-4 bg-white border border-gray-200 rounded-xl text-gray-900 placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-brand-purple/5 focus:border-brand-purple transition-all font-display font-black text-xl shadow-sm"
                     />
                   </div>
-                  <p className="text-[8px] text-gray-400 font-black uppercase tracking-widest ml-1">Min: UGX 5,000</p>
+                  <p className="text-[8px] text-gray-400 font-black uppercase tracking-widest ml-1">Min: UGX 1,000</p>
                 </div>
               </div>
 
@@ -219,25 +229,25 @@ export default function Wallet() {
                   >
                     <div className="flex items-center space-x-4">
                       <div className={`w-10 h-10 rounded-xl flex items-center justify-center text-white text-sm shadow-sm transition-transform group-hover:scale-110 ${
-                        txn.status === 'Approved' ? 'bg-emerald-500' : 
-                        txn.status === 'Pending' ? 'bg-amber-500' : 'bg-rose-500'
+                        txn.status === 'successful' ? 'bg-emerald-500' : 
+                        txn.status === 'pending' ? 'bg-amber-500' : 'bg-rose-500'
                       }`}>
-                        <FontAwesomeIcon icon={txn.type === 'Deposit' ? faArrowDown : faArrowUp} />
+                        <FontAwesomeIcon icon={faArrowDown} />
                       </div>
                       <div>
-                        <div className="text-sm font-black text-gray-900 group-hover:text-brand-purple transition-colors tracking-tight">{txn.type} via {txn.method}</div>
-                        <div className="text-[9px] text-gray-400 font-bold uppercase tracking-widest mt-0.5">{new Date(txn.createdAt).toLocaleDateString()} • {txn.id.slice(-8)}</div>
+                        <div className="text-sm font-black text-gray-900 group-hover:text-brand-purple transition-colors tracking-tight">Deposit via {txn.provider}</div>
+                        <div className="text-[9px] text-gray-400 font-bold uppercase tracking-widest mt-0.5">{new Date(txn.createdAt).toLocaleDateString()} • {txn.reference?.slice(-8) || txn.id?.slice(-8)}</div>
                       </div>
                     </div>
                     <div className="text-right">
                       <div className={`text-lg font-display font-black ${
-                        txn.status === 'Approved' ? 'text-emerald-500' : 'text-gray-900'
+                        txn.status === 'successful' ? 'text-emerald-500' : 'text-gray-900'
                       }`}>UGX {txn.amount?.toLocaleString()}</div>
                       <div className={`text-[9px] font-black uppercase tracking-widest flex items-center justify-end gap-1 mt-0.5 ${
-                        txn.status === 'Approved' ? 'text-emerald-500' : 
-                        txn.status === 'Pending' ? 'text-amber-500' : 'text-rose-500'
+                        txn.status === 'successful' ? 'text-emerald-500' : 
+                        txn.status === 'pending' ? 'text-amber-500' : 'text-rose-500'
                       }`}>
-                        <FontAwesomeIcon icon={txn.status === 'Approved' ? faCheckCircle : faInfoCircle} className="text-[8px]" />
+                        <FontAwesomeIcon icon={txn.status === 'successful' ? faCheckCircle : faInfoCircle} className="text-[8px]" />
                         {txn.status}
                       </div>
                     </div>

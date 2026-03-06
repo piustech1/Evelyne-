@@ -110,8 +110,8 @@ export const fetchServices = async (force = false): Promise<Service[]> => {
     const servicesUpdates: Record<string, Service> = {};
     const processedServices: Service[] = apiServices.map((s: any) => {
       const usdRate = parseFloat(s.rate);
-      const ugxRate = usdRate * 3800;
-      const finalPrice = ugxRate + (ugxRate * profit / 100);
+      // Apply 70% markup and convert to UGX (3800 exchange rate)
+      const finalPrice = usdRate * 1.7 * 3800;
       
       const platform = detectPlatform(s.name, s.category);
       
