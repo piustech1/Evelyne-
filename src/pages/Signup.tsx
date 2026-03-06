@@ -7,15 +7,22 @@ import { motion } from 'motion/react';
 import toast from 'react-hot-toast';
 import { auth, db, googleProvider } from '../lib/firebase';
 import { createUserWithEmailAndPassword, signInWithPopup, updateProfile } from 'firebase/auth';
-import { ref, set } from 'firebase/database';
+import { ref, set, get, push, query, orderByChild, equalTo, runTransaction } from 'firebase/database';
 
 export default function Signup() {
   const [name, setName] = useState('');
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [confirmPassword, setConfirmPassword] = useState('');
+  const [referralCode, setReferralCode] = useState('');
   const [isLoading, setIsLoading] = useState(false);
   const navigate = useNavigate();
+
+  const generateReferralCode = (name: string) => {
+    const prefix = name.substring(0, 4).toUpperCase().replace(/[^A-Z]/g, 'USER');
+    const random = Math.floor(1000 + Math.random() * 9000);
+    return `${prefix}${random}`;
+  };
 
   const handleSubmit = async (e: FormEvent) => {
     e.preventDefault();
@@ -31,11 +38,50 @@ export default function Signup() {
       
       await updateProfile(user, { displayName: name });
       
+      const newReferralCode = generateReferralCode(name);
+      let referredBy = null;
+
+      // Check if referral code is valid
+      if (referralCode.trim()) {
+        const usersRef = ref(db, 'users');
+        const snapshot = await get(usersRef);
+        const allUsers = snapshot.val();
+        
+        if (allUsers) {
+          const referrerId = Object.keys(allUsers).find(uid => allUsers[uid].referralCode === referralCode.trim());
+          if (referrerId) {
+            referredBy = referralCode.trim();
+            
+            // Update referrer's count
+            const referrerRef = ref(db, `users/${referrerId}`);
+            const currentCount = allUsers[referrerId].referralCount || 0;
+            await set(referrerRef, {
+              ...allUsers[referrerId],
+              referralCount: currentCount + 1
+            });
+
+            // Add notification for referrer
+            const notificationRef = push(ref(db, `notifications/${referrerId}`));
+            await set(notificationRef, {
+              message: `Your referral ${name} is active! You will receive your 1K followers soon. Keep referring!`,
+              type: 'referral',
+              timestamp: new Date().toISOString(),
+              read: false
+            });
+          } else {
+            toast.error('Invalid referral code. Proceeding without it.');
+          }
+        }
+      }
+
       // Save user data to database
       await set(ref(db, `users/${user.uid}`), {
         name,
         email,
         balance: 0,
+        referralCode: newReferralCode,
+        referredBy,
+        referralCount: 0,
         createdAt: new Date().toISOString(),
       });
       
@@ -56,10 +102,13 @@ export default function Signup() {
       const user = result.user;
       
       // Save user data to database if it doesn't exist
+      const newReferralCode = generateReferralCode(user.displayName || 'User');
       await set(ref(db, `users/${user.uid}`), {
         name: user.displayName || 'User',
         email: user.email,
         balance: 0,
+        referralCode: newReferralCode,
+        referralCount: 0,
         createdAt: new Date().toISOString(),
       });
       
@@ -163,6 +212,22 @@ export default function Signup() {
                       placeholder="••••••••"
                     />
                   </div>
+                </div>
+              </div>
+
+              <div className="space-y-1.5">
+                <label className="text-[10px] font-black text-gray-500 uppercase tracking-widest ml-1">Referral Code (Optional)</label>
+                <div className="relative group">
+                  <div className="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none text-gray-400 group-focus-within:text-blue-600 transition-colors">
+                    <FontAwesomeIcon icon={faBolt} />
+                  </div>
+                  <input
+                    type="text"
+                    value={referralCode}
+                    onChange={(e) => setReferralCode(e.target.value)}
+                    className="block w-full pl-11 pr-4 py-3 bg-[#f5f5f5] border border-[#ddd] rounded-lg text-[#111] placeholder-gray-400 focus:outline-none focus:ring-4 focus:ring-blue-600/5 focus:border-blue-600 transition-all font-bold text-sm"
+                    placeholder="PIUS3482"
+                  />
                 </div>
               </div>
             </div>

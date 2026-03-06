@@ -58,6 +58,8 @@ export default function Wallet() {
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           userId: user.uid,
+          username: userData.name,
+          userEmail: user.email,
           phoneNumber,
           amount: Number(amount),
           provider: paymentMethod.toUpperCase()
@@ -266,6 +268,12 @@ export default function Wallet() {
               )}
             </div>
           </div>
+        </div>
+
+        <div className="text-center pt-8">
+          <p className="text-gray-400 text-[10px] font-black uppercase tracking-widest">
+            Powered by Pius Tech
+          </p>
         </div>
       </div>
     </div>

@@ -1,13 +1,14 @@
 import { useState, useEffect } from 'react';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
-import { faWallet, faShoppingCart, faClock, faCheckCircle, faPlus, faArrowRight, faRocket, faShieldAlt, faThLarge, faGlobe } from '@fortawesome/free-solid-svg-icons';
-import { motion } from 'motion/react';
+import { faWallet, faShoppingCart, faClock, faCheckCircle, faPlus, faArrowRight, faRocket, faShieldAlt, faThLarge, faGlobe, faUserFriends, faCopy, faTimes } from '@fortawesome/free-solid-svg-icons';
+import { motion, AnimatePresence } from 'motion/react';
 import { Link } from 'react-router-dom';
 import { useAuth } from '../hooks/useAuth';
 import { db } from '../lib/firebase';
 import { ref, onValue, query, orderByChild, limitToLast, equalTo } from 'firebase/database';
 import { fetchServices, Service } from '../lib/servicesStore';
 import { platformIcons, platformTextColors, platformBgs } from '../utils/platformData';
+import toast from 'react-hot-toast';
 
 export default function Dashboard() {
   const { user, userData } = useAuth();
@@ -15,6 +16,37 @@ export default function Dashboard() {
   const [recentOrders, setRecentOrders] = useState<any[]>([]);
   const [platforms, setPlatforms] = useState<any[]>([]);
   const [isLoading, setIsLoading] = useState(true);
+  const [showReferralBanner, setShowReferralBanner] = useState(false);
+
+  useEffect(() => {
+    // Check if referral banner should be shown
+    const sessionBannerShown = sessionStorage.getItem('referral_banner_shown');
+    const localBannerDismissed = localStorage.getItem('referral_banner_dismissed');
+    
+    if (!sessionBannerShown && !localBannerDismissed) {
+      setShowReferralBanner(true);
+      sessionStorage.setItem('referral_banner_shown', 'true');
+    }
+  }, []);
+
+  const copyReferralCode = () => {
+    if (userData?.referralCode) {
+      navigator.clipboard.writeText(userData.referralCode);
+      toast.success('Referral code copied!');
+    }
+  };
+
+  const inviteFriends = () => {
+    if (userData?.referralCode) {
+      const text = `Join EasyBoost and grow your social media instantly! Use my referral code: ${userData.referralCode} \n\nSign up here: ${window.location.origin}/signup`;
+      window.open(`https://wa.me/?text=${encodeURIComponent(text)}`, '_blank');
+    }
+  };
+
+  const dismissReferralBanner = () => {
+    setShowReferralBanner(false);
+    localStorage.setItem('referral_banner_dismissed', 'true');
+  };
 
   useEffect(() => {
     const loadDashboardData = async () => {
@@ -77,6 +109,104 @@ export default function Dashboard() {
 
   return (
     <div className="pt-12 pb-32 px-4 sm:px-6 lg:px-8 max-w-7xl mx-auto space-y-8">
+      {/* Low Balance Warning Banner */}
+      {userData && (userData.balance || 0) < 1000 && (
+        <motion.div 
+          initial={{ opacity: 0, y: -20 }}
+          animate={{ opacity: 1, y: 0 }}
+          className="relative h-48 rounded-[2rem] overflow-hidden shadow-xl group"
+        >
+          <img 
+            src="https://www.knadsacco.com/wp-content/uploads/2025/03/Deposit-Banner-1.jpg" 
+            alt="Low Balance" 
+            className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-700"
+            referrerPolicy="no-referrer"
+          />
+          <div className="absolute inset-0 bg-gradient-to-r from-black/80 via-black/40 to-transparent flex items-center px-8">
+            <div className="space-y-4">
+              <div className="space-y-1">
+                <h3 className="text-2xl font-display font-black text-white tracking-tighter">Deposit Now</h3>
+                <p className="text-white/70 text-[10px] font-black uppercase tracking-widest">Your account balance is low</p>
+              </div>
+              <Link 
+                to="/wallet"
+                className="inline-flex items-center px-8 py-3 bg-white text-gray-900 font-black rounded-xl text-[10px] uppercase tracking-widest shadow-lg hover:scale-105 active-press transition-all"
+              >
+                Deposit Funds
+              </Link>
+            </div>
+          </div>
+        </motion.div>
+      )}
+
+      {/* Referral Banner Modal */}
+      <AnimatePresence>
+        {showReferralBanner && (
+          <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm">
+            <motion.div 
+              initial={{ opacity: 0, scale: 0.9, y: 20 }}
+              animate={{ opacity: 1, scale: 1, y: 0 }}
+              exit={{ opacity: 0, scale: 0.9, y: 20 }}
+              className="relative max-w-lg w-full bg-white rounded-[3rem] overflow-hidden shadow-2xl"
+            >
+              <button 
+                onClick={dismissReferralBanner}
+                className="absolute top-6 right-6 w-10 h-10 bg-black/10 hover:bg-black/20 rounded-full flex items-center justify-center text-gray-900 z-20 transition-all active-press"
+              >
+                <FontAwesomeIcon icon={faTimes} />
+              </button>
+
+              <div className="h-48 relative">
+                <img 
+                  src="https://img.freepik.com/premium-vector/refer-friend-banner-referral-program-badge-with-loudspeaker_349999-1767.jpg" 
+                  alt="Referral" 
+                  className="w-full h-full object-cover"
+                  referrerPolicy="no-referrer"
+                />
+                <div className="absolute inset-0 bg-gradient-to-t from-white via-transparent to-transparent" />
+              </div>
+
+              <div className="p-8 pt-4 text-center space-y-6">
+                <div className="space-y-2">
+                  <h3 className="text-2xl font-display font-black text-gray-900 tracking-tighter">Invite Friends & Earn!</h3>
+                  <p className="text-gray-500 text-xs font-medium leading-relaxed">
+                    Share your referral code and earn <span className="text-brand-purple font-black">1K TikTok followers</span> for every friend who joins!
+                  </p>
+                </div>
+
+                <div className="bg-gray-50 p-4 rounded-2xl border border-gray-100 flex items-center justify-between">
+                  <div className="text-left">
+                    <p className="text-[8px] font-black text-gray-400 uppercase tracking-widest mb-1">Your Code</p>
+                    <p className="text-lg font-display font-black text-brand-purple tracking-widest">{userData?.referralCode || 'USER1234'}</p>
+                  </div>
+                  <button 
+                    onClick={copyReferralCode}
+                    className="w-10 h-10 bg-white shadow-sm border border-gray-100 rounded-xl flex items-center justify-center text-brand-purple hover:scale-110 transition-all active-press"
+                  >
+                    <FontAwesomeIcon icon={faCopy} />
+                  </button>
+                </div>
+
+                <div className="grid grid-cols-2 gap-4">
+                  <button 
+                    onClick={copyReferralCode}
+                    className="py-4 bg-gray-100 text-gray-900 font-black rounded-2xl text-[10px] uppercase tracking-widest hover:bg-gray-200 transition-all active-press"
+                  >
+                    Copy Code
+                  </button>
+                  <button 
+                    onClick={inviteFriends}
+                    className="py-4 bg-gradient-to-r from-blue-600 to-purple-600 text-white font-black rounded-2xl text-[10px] uppercase tracking-widest shadow-lg shadow-blue-600/20 hover:scale-[1.02] transition-all active-press"
+                  >
+                    Invite Friends
+                  </button>
+                </div>
+              </div>
+            </motion.div>
+          </div>
+        )}
+      </AnimatePresence>
+
       {/* Hero Section */}
       <motion.div 
         initial={{ opacity: 0, y: -20 }}
@@ -250,6 +380,12 @@ export default function Dashboard() {
             </div>
           </section>
         </div>
+      </div>
+
+      <div className="text-center pt-8">
+        <p className="text-gray-400 text-[10px] font-black uppercase tracking-widest">
+          Powered by Pius Tech
+        </p>
       </div>
     </div>
   );

@@ -118,7 +118,7 @@ async function startServer() {
 
   app.post('/api/create-payment', async (req, res) => {
     try {
-      const { userId, phoneNumber, amount, provider } = req.body;
+      const { userId, username, userEmail, phoneNumber, amount, provider } = req.body;
       
       if (!userId || !phoneNumber || !amount) {
         return res.status(400).json({ error: 'Missing required fields' });
@@ -132,6 +132,8 @@ async function startServer() {
       await set(paymentRef, {
         reference,
         userId,
+        username: username || 'User',
+        userEmail: userEmail || '',
         phone: normalizedPhone,
         amount: Number(amount),
         provider,
@@ -190,7 +192,7 @@ async function startServer() {
           // Update payment status
           await set(paymentRef, {
             ...paymentData,
-            status: 'successful',
+            status: 'completed',
             updatedAt: new Date().toISOString()
           });
 
@@ -201,6 +203,15 @@ async function startServer() {
               currentData.balance = (currentData.balance || 0) + Number(amount);
             }
             return currentData;
+          });
+
+          // Add notification
+          const notificationRef = push(ref(db, `notifications/${paymentData.userId}`));
+          await set(notificationRef, {
+            message: `Deposit successful! Your balance has been updated by UGX ${Number(amount).toLocaleString()}.`,
+            type: 'deposit',
+            timestamp: new Date().toISOString(),
+            read: false
           });
 
           console.log(`Wallet updated for user ${paymentData.userId}: +${amount}`);

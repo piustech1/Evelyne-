@@ -277,6 +277,12 @@ export default function Profile() {
             </button>
           </div>
         </div>
+
+        <div className="text-center pt-8">
+          <p className="text-gray-400 text-[10px] font-black uppercase tracking-widest">
+            Powered by Pius Tech
+          </p>
+        </div>
       </div>
     </div>
   );

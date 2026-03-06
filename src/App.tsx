@@ -18,6 +18,7 @@ import OrderPage from './pages/OrderPage';
 import Orders from './pages/Orders';
 import Wallet from './pages/Wallet';
 import Profile from './pages/Profile';
+import Notifications from './pages/Notifications';
 import Navbar from './components/Navbar';
 import MobileNav from './components/MobileNav';
 
@@ -91,6 +92,7 @@ export default function App() {
                   <Route path="/orders" element={user ? <Orders /> : <Navigate to="/login" />} />
                   <Route path="/wallet" element={user ? <Wallet /> : <Navigate to="/login" />} />
                   <Route path="/profile" element={user ? <Profile /> : <Navigate to="/login" />} />
+                  <Route path="/notifications" element={user ? <Notifications /> : <Navigate to="/login" />} />
                 </Routes>
               </main>
 

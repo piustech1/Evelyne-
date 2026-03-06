@@ -152,6 +152,18 @@ export default function LandingPage() {
           </div>
         </div>
       </section>
+
+      {/* Footer */}
+      <footer className="py-12 border-t border-gray-100">
+        <div className="max-w-7xl mx-auto px-6 text-center">
+          <p className="text-gray-400 text-[10px] font-black uppercase tracking-widest">
+            &copy; {new Date().getFullYear()} EasyBoost. All rights reserved.
+          </p>
+          <p className="text-gray-400 text-[10px] font-black uppercase tracking-widest mt-2">
+            Powered by Pius Tech
+          </p>
+        </div>
+      </footer>
     </div>
   );
 }

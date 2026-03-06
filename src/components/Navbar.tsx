@@ -1,16 +1,18 @@
 import { Link, useNavigate } from 'react-router-dom';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
-import { faRocket, faBars, faTimes, faUserCircle, faWallet, faHistory, faChartLine, faSignOutAlt } from '@fortawesome/free-solid-svg-icons';
+import { faRocket, faBars, faTimes, faUserCircle, faWallet, faHistory, faChartLine, faSignOutAlt, faBell } from '@fortawesome/free-solid-svg-icons';
 import { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'motion/react';
-import { auth } from '../lib/firebase';
+import { auth, db } from '../lib/firebase';
 import { signOut } from 'firebase/auth';
 import { useAuth } from '../hooks/useAuth';
+import { ref, onValue } from 'firebase/database';
 
 export default function Navbar() {
   const { user, userData } = useAuth();
   const [isOpen, setIsOpen] = useState(false);
   const [isScrolled, setIsScrolled] = useState(false);
+  const [unreadCount, setUnreadCount] = useState(0);
   const navigate = useNavigate();
 
   useEffect(() => {
@@ -18,6 +20,21 @@ export default function Navbar() {
     window.addEventListener('scroll', handleScroll);
     return () => window.removeEventListener('scroll', handleScroll);
   }, []);
+
+  useEffect(() => {
+    if (user) {
+      const notificationsRef = ref(db, `notifications/${user.uid}`);
+      onValue(notificationsRef, (snapshot) => {
+        const data = snapshot.val();
+        if (data) {
+          const unread = Object.values(data).filter((n: any) => !n.read).length;
+          setUnreadCount(unread);
+        } else {
+          setUnreadCount(0);
+        }
+      });
+    }
+  }, [user]);
 
   const handleLogout = async () => {
     try {
@@ -70,6 +87,14 @@ export default function Navbar() {
                   <div className="text-[7px] font-black uppercase tracking-widest text-white/60">Balance</div>
                   <div className="text-[10px] font-black text-white">UGX {userData?.balance?.toLocaleString() || 0}</div>
                 </div>
+                <Link to="/notifications" className="relative w-8 h-8 rounded-lg flex items-center justify-center transition-all bg-white/10 text-white hover:bg-white/20">
+                  <FontAwesomeIcon icon={faBell} className="text-sm" />
+                  {unreadCount > 0 && (
+                    <span className="absolute -top-1 -right-1 w-4 h-4 bg-rose-500 text-white text-[8px] font-black rounded-full flex items-center justify-center border-2 border-brand-purple shadow-sm">
+                      {unreadCount > 9 ? '9+' : unreadCount}
+                    </span>
+                  )}
+                </Link>
                 <Link to="/profile" className="w-8 h-8 rounded-lg overflow-hidden flex items-center justify-center transition-all bg-white/10 text-white hover:bg-white/20">
                   <img 
                     src="https://www.svgrepo.com/show/384670/account-avatar-profile-user.svg" 
@@ -102,9 +127,19 @@ export default function Navbar() {
           {/* Mobile Menu Button */}
           <div className="md:hidden flex items-center space-x-4">
             {user && (
-              <div className="text-right">
-                <div className="text-[7px] font-black uppercase tracking-widest text-white/60">Balance</div>
-                <div className="text-[10px] font-black text-white">UGX {userData?.balance?.toLocaleString() || 0}</div>
+              <div className="flex items-center space-x-3">
+                <Link to="/notifications" className="relative w-8 h-8 rounded-lg flex items-center justify-center transition-all bg-white/10 text-white">
+                  <FontAwesomeIcon icon={faBell} className="text-base" />
+                  {unreadCount > 0 && (
+                    <span className="absolute -top-1 -right-1 w-4 h-4 bg-rose-500 text-white text-[8px] font-black rounded-full flex items-center justify-center border-2 border-brand-purple shadow-sm">
+                      {unreadCount > 9 ? '9+' : unreadCount}
+                    </span>
+                  )}
+                </Link>
+                <div className="text-right">
+                  <div className="text-[7px] font-black uppercase tracking-widest text-white/60">Balance</div>
+                  <div className="text-[10px] font-black text-white">UGX {userData?.balance?.toLocaleString() || 0}</div>
+                </div>
               </div>
             )}
             <button
