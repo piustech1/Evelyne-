@@ -98,7 +98,7 @@ export default function Dashboard() {
           <div className="flex-shrink-0">
             <Link
               to="/wallet"
-              className="px-4 md:px-6 py-2.5 md:py-3 bg-white text-brand-blue font-black rounded-xl shadow-sm hover:scale-105 transition-all active:scale-95 text-[10px] md:text-xs flex items-center gap-2 whitespace-nowrap uppercase tracking-widest"
+              className="px-4 md:px-6 py-2.5 md:py-3 bg-white text-brand-blue font-black rounded-xl shadow-sm hover:scale-105 transition-all active-press text-[10px] md:text-xs flex items-center gap-2 whitespace-nowrap uppercase tracking-widest"
             >
               <FontAwesomeIcon icon={faPlus} />
               <span>Add Funds</span>
@@ -109,13 +109,17 @@ export default function Dashboard() {
 
       {/* Stats Grid */}
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
-        {stats.map((stat, idx) => (
+        {isLoading ? (
+          [1, 2, 3, 4].map(i => (
+            <div key={i} className="bg-gray-50 p-5 rounded-2xl border border-gray-200 h-24 shimmer" />
+          ))
+        ) : stats.map((stat, idx) => (
           <motion.div
             key={idx}
             initial={{ opacity: 0, scale: 0.9 }}
             animate={{ opacity: 1, scale: 1 }}
             transition={{ delay: idx * 0.05 }}
-            className="bg-gray-50 p-4 md:p-5 rounded-2xl shadow-sm border border-gray-200 hover:border-brand-purple/20 transition-all group"
+            className="bg-gray-50 p-4 md:p-5 rounded-2xl shadow-sm border border-gray-200 hover:border-brand-purple/20 transition-all group hover-lift"
           >
             <div className="flex items-center justify-between mb-3">
               <div className={`w-8 h-8 md:w-10 md:h-10 ${stat.bg} ${stat.color} rounded-lg flex items-center justify-center text-sm md:text-base transition-transform group-hover:scale-110 shadow-sm border border-white`}>
@@ -145,13 +149,13 @@ export default function Dashboard() {
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
               {isLoading ? (
                 [1, 2, 3, 4].map((i) => (
-                  <div key={i} className="bg-gray-50 p-5 rounded-2xl border border-gray-100 h-24 animate-pulse" />
+                  <div key={i} className="bg-gray-50 p-5 rounded-2xl border border-gray-100 h-24 shimmer" />
                 ))
               ) : platforms.map((platform, idx) => (
                 <Link
                   key={idx}
                   to={`/platform?platform=${platform.id}`}
-                  className="bg-gray-50 p-5 rounded-2xl shadow-sm border border-gray-200 flex items-center space-x-4 hover:border-brand-purple/20 transition-all group relative overflow-hidden"
+                  className="bg-gray-50 p-5 rounded-2xl shadow-sm border border-gray-200 flex items-center space-x-4 hover:border-brand-purple/20 transition-all group relative overflow-hidden hover-lift active-press"
                 >
                   <div className={`w-12 h-12 ${platform.bg} ${platform.color} rounded-xl flex items-center justify-center text-xl group-hover:scale-110 transition-transform shadow-sm relative z-10 border border-white`}>
                     <FontAwesomeIcon icon={platform.icon} />

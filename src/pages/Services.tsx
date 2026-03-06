@@ -152,12 +152,13 @@ export default function Services() {
 
               <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
                 {categoryServices.map((service, idx) => (
-                  <ServiceCard 
-                    key={service.apiServiceId} 
-                    service={service} 
-                    onBoost={handleBoost} 
-                    index={idx} 
-                  />
+                  <div key={service.apiServiceId}>
+                    <ServiceCard 
+                      service={service} 
+                      onBoost={handleBoost} 
+                      index={idx} 
+                    />
+                  </div>
                 ))}
               </div>
             </div>

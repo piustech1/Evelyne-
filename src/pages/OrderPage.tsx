@@ -3,6 +3,7 @@ import { useNavigate, useSearchParams } from 'react-router-dom';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { faArrowLeft, faShoppingCart, faCheckCircle, faInfoCircle, faRocket, faShieldAlt, faGlobe, faBolt } from '@fortawesome/free-solid-svg-icons';
 import { motion, AnimatePresence } from 'motion/react';
+import toast from 'react-hot-toast';
 import { useAuth } from '../hooks/useAuth';
 import { db } from '../lib/firebase';
 import { ref, push, set, runTransaction } from 'firebase/database';
@@ -20,8 +21,6 @@ export default function OrderPage() {
   const [link, setLink] = useState('');
   const [isLoading, setIsLoading] = useState(true);
   const [isOrdering, setIsOrdering] = useState(false);
-  const [orderError, setOrderError] = useState('');
-  const [orderSuccess, setOrderSuccess] = useState(false);
 
   useEffect(() => {
     const loadService = async () => {
@@ -31,7 +30,6 @@ export default function OrderPage() {
       }
       try {
         const services = await fetchServices();
-        // Try both apiServiceId and service (id)
         const found = services.find(s => 
           String(s.apiServiceId) === String(serviceId) || 
           String(s.service) === String(serviceId)
@@ -41,11 +39,11 @@ export default function OrderPage() {
           setService(found);
           setQuantity(found.min || 100);
         } else {
-          setOrderError('Service not found');
+          toast.error('Service not found');
         }
       } catch (err) {
         console.error(err);
-        setOrderError('Failed to load service');
+        toast.error('Failed to load service');
       } finally {
         setIsLoading(false);
       }
@@ -58,29 +56,29 @@ export default function OrderPage() {
 
   const handlePlaceOrder = async () => {
     if (!user || !userData) {
-      setOrderError('Please login to place an order');
+      toast.error('Please login to place an order');
       return;
     }
     if (!service) {
-      setOrderError('Service not found');
+      toast.error('Service not found');
       return;
     }
     if (!link) {
-      setOrderError('Please provide a target link');
+      toast.error('Please provide a target link');
       return;
     }
     if (quantity < (service.min || 100)) {
-      setOrderError(`Minimum quantity is ${service.min || 100}`);
+      toast.error(`Minimum quantity is ${service.min || 100}`);
       return;
     }
     
     if (hasInsufficientBalance) {
-      setOrderError('Insufficient balance. Please top up to continue.');
+      toast.error('Insufficient balance. Please top up to continue.');
       return;
     }
 
     setIsOrdering(true);
-    setOrderError('');
+    const loadingToast = toast.loading('Processing your order...');
 
     try {
       const apiResponse = await fetch('/api/smm/order', {
@@ -106,7 +104,7 @@ export default function OrderPage() {
         return currentData;
       });
 
-      const originalCost = (service.rate * quantity) / 1000;
+      const originalCost = (service.rate * 3800 * quantity) / 1000;
       const profit = totalPrice - originalCost;
 
       const ordersRef = ref(db, 'orders');
@@ -129,10 +127,10 @@ export default function OrderPage() {
         createdAt: new Date().toISOString(),
       });
 
-      setOrderSuccess(true);
+      toast.success('Order placed successfully!', { id: loadingToast });
       setTimeout(() => navigate('/orders'), 2000);
     } catch (err: any) {
-      setOrderError(err.message || 'Failed to place order');
+      toast.error(err.message || 'Failed to place order', { id: loadingToast });
     } finally {
       setIsOrdering(false);
     }
@@ -233,27 +231,6 @@ export default function OrderPage() {
 
             {/* Order Form */}
             <div className="space-y-6">
-              {orderError && (
-                <div className="p-4 bg-rose-50 border border-rose-100 rounded-2xl text-rose-500 text-[10px] font-bold text-center space-y-3">
-                  <div>{orderError}</div>
-                  {hasInsufficientBalance && (
-                    <button 
-                      onClick={() => navigate('/wallet')}
-                      className="w-full py-2 bg-rose-500 text-white rounded-lg text-[9px] uppercase tracking-widest hover:bg-rose-600 transition-colors"
-                    >
-                      Top Up Now
-                    </button>
-                  )}
-                </div>
-              )}
-
-              {orderSuccess && (
-                <div className="p-4 bg-emerald-50 border border-emerald-100 rounded-2xl text-emerald-500 text-[10px] font-bold text-center flex items-center justify-center space-x-2">
-                  <FontAwesomeIcon icon={faCheckCircle} />
-                  <span>Order placed successfully! Redirecting...</span>
-                </div>
-              )}
-
               <div className="space-y-2">
                 <label className="text-[10px] font-black text-gray-500 ml-1 uppercase tracking-widest">Target Link / URL</label>
                 <div className="relative">
@@ -294,7 +271,7 @@ export default function OrderPage() {
 
               <button 
                 onClick={handlePlaceOrder}
-                disabled={isOrdering || orderSuccess}
+                disabled={isOrdering}
                 className="w-full py-5 bg-gradient-to-r from-blue-600 to-purple-600 text-white font-black uppercase tracking-widest rounded-2xl shadow-xl shadow-blue-600/20 hover:shadow-blue-600/40 hover:scale-[1.02] active:scale-[0.98] transition-all text-sm flex items-center justify-center space-x-3 group disabled:opacity-50"
               >
                 <FontAwesomeIcon icon={isOrdering ? faBolt : faRocket} className={`${isOrdering ? 'animate-spin' : 'group-hover:translate-x-1 transition-transform'}`} />

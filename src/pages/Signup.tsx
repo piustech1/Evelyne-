@@ -4,6 +4,7 @@ import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { faEnvelope, faLock, faRocket, faArrowRight, faUser, faBolt, faShieldAlt } from '@fortawesome/free-solid-svg-icons';
 import { faGoogle } from '@fortawesome/free-brands-svg-icons';
 import { motion } from 'motion/react';
+import toast from 'react-hot-toast';
 import { auth, db, googleProvider } from '../lib/firebase';
 import { createUserWithEmailAndPassword, signInWithPopup, updateProfile } from 'firebase/auth';
 import { ref, set } from 'firebase/database';
@@ -14,17 +15,16 @@ export default function Signup() {
   const [password, setPassword] = useState('');
   const [confirmPassword, setConfirmPassword] = useState('');
   const [isLoading, setIsLoading] = useState(false);
-  const [error, setError] = useState('');
   const navigate = useNavigate();
 
   const handleSubmit = async (e: FormEvent) => {
     e.preventDefault();
     if (password !== confirmPassword) {
-      setError('Passwords do not match');
+      toast.error('Passwords do not match');
       return;
     }
     setIsLoading(true);
-    setError('');
+    const loadingToast = toast.loading('Creating your account...');
     try {
       const userCredential = await createUserWithEmailAndPassword(auth, email, password);
       const user = userCredential.user;
@@ -39,9 +39,10 @@ export default function Signup() {
         createdAt: new Date().toISOString(),
       });
       
+      toast.success('Account created successfully!', { id: loadingToast });
       navigate('/dashboard');
     } catch (err: any) {
-      setError(err.message || 'Failed to create account');
+      toast.error(err.message || 'Failed to create account', { id: loadingToast });
     } finally {
       setIsLoading(false);
     }
@@ -49,7 +50,7 @@ export default function Signup() {
 
   const handleGoogleSignup = async () => {
     setIsLoading(true);
-    setError('');
+    const loadingToast = toast.loading('Connecting to Google...');
     try {
       const result = await signInWithPopup(auth, googleProvider);
       const user = result.user;
@@ -62,9 +63,10 @@ export default function Signup() {
         createdAt: new Date().toISOString(),
       });
       
+      toast.success('Account created successfully!', { id: loadingToast });
       navigate('/dashboard');
     } catch (err: any) {
-      setError(err.message || 'Failed to signup with Google');
+      toast.error(err.message || 'Failed to signup with Google', { id: loadingToast });
     } finally {
       setIsLoading(false);
     }
@@ -90,12 +92,6 @@ export default function Signup() {
             <h2 className="text-2xl font-display font-black text-gray-900 tracking-tighter mb-1">Join Us</h2>
             <p className="text-gray-400 font-bold text-[10px] uppercase tracking-[0.2em]">Create your free account</p>
           </div>
-
-          {error && (
-            <div className="mb-4 p-3 bg-rose-50 border border-rose-100 rounded-lg text-rose-500 text-[10px] font-bold text-center">
-              {error}
-            </div>
-          )}
 
           <form className="space-y-4" onSubmit={handleSubmit}>
             <div className="space-y-3">
@@ -193,7 +189,7 @@ export default function Signup() {
             <button
               type="submit"
               disabled={isLoading}
-              className="group relative w-full flex justify-center items-center py-3.5 px-4 border border-transparent text-xs font-black uppercase tracking-widest rounded-lg text-white bg-gradient-to-r from-blue-600 to-purple-600 shadow-lg shadow-blue-600/20 hover:scale-[1.02] active:scale-[0.98] transition-all disabled:opacity-50"
+              className="group relative w-full flex justify-center items-center py-3.5 px-4 border border-transparent text-xs font-black uppercase tracking-widest rounded-lg text-white bg-gradient-to-r from-blue-600 to-purple-600 shadow-lg shadow-blue-600/20 hover:scale-[1.02] active-press transition-all disabled:opacity-50"
             >
               {isLoading ? 'Creating Account...' : 'Sign Up'}
               {!isLoading && <FontAwesomeIcon icon={faArrowRight} className="ml-2 group-hover:translate-x-1 transition-transform" />}
@@ -212,7 +208,7 @@ export default function Signup() {
               type="button"
               onClick={handleGoogleSignup}
               disabled={isLoading}
-              className="w-full flex justify-center items-center py-3.5 px-4 border border-gray-200 rounded-lg text-gray-600 font-black uppercase tracking-widest text-[10px] hover:bg-gray-50 transition-all shadow-sm disabled:opacity-50"
+              className="w-full flex justify-center items-center py-3.5 px-4 border border-gray-200 rounded-lg text-gray-600 font-black uppercase tracking-widest text-[10px] hover:bg-gray-50 transition-all shadow-sm disabled:opacity-50 active-press"
             >
               <FontAwesomeIcon icon={faGoogle} className="mr-3 text-base text-blue-600" />
               Google Account

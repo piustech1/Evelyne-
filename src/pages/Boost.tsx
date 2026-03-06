@@ -98,12 +98,6 @@ export default function Boost() {
           className="max-w-4xl mx-auto relative z-10 space-y-4"
         >
           <div className="flex items-center justify-center space-x-4">
-            <button 
-              onClick={() => navigate(-1)}
-              className="w-10 h-10 rounded-xl bg-white/10 backdrop-blur-md border border-white/20 flex items-center justify-center hover:bg-white/20 transition-all"
-            >
-              <FontAwesomeIcon icon={faArrowLeft} />
-            </button>
             <div className="w-12 h-12 bg-white/20 backdrop-blur-md rounded-xl flex items-center justify-center text-xl shadow-lg border border-white/30">
               <FontAwesomeIcon icon={faRocket} className="animate-pulse" />
             </div>

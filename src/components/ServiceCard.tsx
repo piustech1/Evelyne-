@@ -1,3 +1,4 @@
+import React from 'react';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { faRocket, faBolt, faCheckCircle, faStar, faGlobe, faClock } from '@fortawesome/free-solid-svg-icons';
 import { motion } from 'motion/react';

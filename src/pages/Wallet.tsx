@@ -2,6 +2,7 @@ import { useState, useEffect, FormEvent } from 'react';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { faWallet, faPlus, faHistory, faArrowUp, faArrowDown, faCheckCircle, faMobileAlt, faInfoCircle } from '@fortawesome/free-solid-svg-icons';
 import { motion } from 'motion/react';
+import toast from 'react-hot-toast';
 import { useAuth } from '../hooks/useAuth';
 import { db } from '../lib/firebase';
 import { ref, onValue, push, set, query, orderByChild, equalTo } from 'firebase/database';
@@ -12,8 +13,8 @@ export default function Wallet() {
   const [phoneNumber, setPhoneNumber] = useState('');
   const [paymentMethod, setPaymentMethod] = useState<'mtn' | 'airtel'>('mtn');
   const [isLoading, setIsLoading] = useState(false);
+  const [isDataLoading, setIsDataLoading] = useState(true);
   const [transactions, setTransactions] = useState<any[]>([]);
-  const [message, setMessage] = useState({ type: '', text: '' });
 
   useEffect(() => {
     if (user) {
@@ -31,6 +32,7 @@ export default function Wallet() {
         } else {
           setTransactions([]);
         }
+        setIsDataLoading(false);
       });
     }
   }, [user]);
@@ -39,16 +41,16 @@ export default function Wallet() {
     e.preventDefault();
     if (!user || !userData) return;
     if (Number(amount) < 5000) {
-      setMessage({ type: 'error', text: 'Minimum deposit is UGX 5,000' });
+      toast.error('Minimum deposit is UGX 5,000');
       return;
     }
     if (!phoneNumber) {
-      setMessage({ type: 'error', text: 'Please provide a phone number' });
+      toast.error('Please provide a phone number');
       return;
     }
 
     setIsLoading(true);
-    setMessage({ type: '', text: '' });
+    const loadingToast = toast.loading('Submitting deposit request...');
 
     try {
       const paymentsRef = ref(db, 'payments');
@@ -65,11 +67,11 @@ export default function Wallet() {
         createdAt: new Date().toISOString(),
       });
 
-      setMessage({ type: 'success', text: 'Deposit request sent! Please wait for approval.' });
+      toast.success('Deposit request sent! Please wait for approval.', { id: loadingToast });
       setAmount('');
       setPhoneNumber('');
     } catch (err: any) {
-      setMessage({ type: 'error', text: err.message || 'Failed to submit deposit request' });
+      toast.error(err.message || 'Failed to submit deposit request', { id: loadingToast });
     } finally {
       setIsLoading(false);
     }
@@ -112,14 +114,6 @@ export default function Wallet() {
               Add Funds
             </h2>
 
-            {message.text && (
-              <div className={`mb-6 p-3 rounded-xl text-[10px] font-bold text-center border ${
-                message.type === 'success' ? 'bg-emerald-50 border-emerald-100 text-emerald-600' : 'bg-rose-50 border-rose-100 text-rose-600'
-              }`}>
-                {message.text}
-              </div>
-            )}
-
             <form className="space-y-6" onSubmit={handleDeposit}>
               <div className="space-y-3">
                 <label className="text-[9px] font-black text-gray-500 ml-1 uppercase tracking-widest">Payment Method</label>
@@ -127,7 +121,7 @@ export default function Wallet() {
                   <button 
                     type="button" 
                     onClick={() => setPaymentMethod('mtn')}
-                    className={`flex flex-col items-center justify-center p-4 rounded-xl border-2 transition-all ${
+                    className={`flex flex-col items-center justify-center p-4 rounded-xl border-2 transition-all hover-lift active-press ${
                       paymentMethod === 'mtn' 
                       ? 'border-brand-purple bg-brand-purple/5 text-brand-purple shadow-sm' 
                       : 'border-white bg-white text-gray-400 hover:border-brand-purple/20 shadow-sm'
@@ -141,7 +135,7 @@ export default function Wallet() {
                   <button 
                     type="button" 
                     onClick={() => setPaymentMethod('airtel')}
-                    className={`flex flex-col items-center justify-center p-4 rounded-xl border-2 transition-all ${
+                    className={`flex flex-col items-center justify-center p-4 rounded-xl border-2 transition-all hover-lift active-press ${
                       paymentMethod === 'airtel' 
                       ? 'border-brand-purple bg-brand-purple/5 text-brand-purple shadow-sm' 
                       : 'border-white bg-white text-gray-400 hover:border-brand-purple/20 shadow-sm'
@@ -189,7 +183,7 @@ export default function Wallet() {
 
               <button 
                 disabled={isLoading}
-                className="w-full py-4 bg-gradient-to-r from-blue-600 to-purple-600 text-white font-black uppercase tracking-widest rounded-xl shadow-sm hover:scale-[1.02] active:scale-[0.98] transition-all text-[10px] disabled:opacity-50 disabled:cursor-not-allowed"
+                className="w-full py-4 bg-gradient-to-r from-blue-600 to-purple-600 text-white font-black uppercase tracking-widest rounded-xl shadow-sm hover:scale-[1.02] active-press transition-all text-[10px] disabled:opacity-50 disabled:cursor-not-allowed"
               >
                 {isLoading ? 'Processing...' : 'Deposit Funds'}
               </button>
@@ -210,14 +204,18 @@ export default function Wallet() {
             </div>
             
             <div className="space-y-3 relative z-10">
-              {transactions.length > 0 ? (
+              {isDataLoading ? (
+                [1, 2, 3, 4, 5].map(i => (
+                  <div key={i} className="h-20 bg-white rounded-2xl border border-gray-100 shimmer" />
+                ))
+              ) : transactions.length > 0 ? (
                 transactions.map((txn, idx) => (
                   <motion.div
                     key={txn.id}
                     initial={{ opacity: 0, y: 10 }}
                     animate={{ opacity: 1, y: 0 }}
                     transition={{ delay: idx * 0.05 }}
-                    className="flex items-center justify-between p-4 rounded-2xl bg-white border border-gray-100 hover:border-brand-purple/20 transition-all group shadow-sm"
+                    className="flex items-center justify-between p-4 rounded-2xl bg-white border border-gray-100 hover:border-brand-purple/20 transition-all group shadow-sm hover-lift"
                   >
                     <div className="flex items-center space-x-4">
                       <div className={`w-10 h-10 rounded-xl flex items-center justify-center text-white text-sm shadow-sm transition-transform group-hover:scale-110 ${

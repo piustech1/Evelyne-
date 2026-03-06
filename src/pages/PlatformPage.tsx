@@ -157,12 +157,13 @@ export default function PlatformPage() {
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
               {filteredServices.length > 0 ? (
                 filteredServices.map((service, idx) => (
-                  <ServiceCard 
-                    key={service.apiServiceId} 
-                    service={service} 
-                    onBoost={handleBoost} 
-                    index={idx} 
-                  />
+                  <div key={service.apiServiceId}>
+                    <ServiceCard 
+                      service={service} 
+                      onBoost={handleBoost} 
+                      index={idx} 
+                    />
+                  </div>
                 ))
               ) : (
                 <div className="col-span-full py-24 text-center space-y-4">

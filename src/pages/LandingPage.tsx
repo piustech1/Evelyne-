@@ -1,5 +1,5 @@
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
-import { faBolt, faShieldAlt, faTag, faChartLine, faCheckCircle } from '@fortawesome/free-solid-svg-icons';
+import { faBolt, faShieldAlt, faTag, faChartLine, faCheckCircle, faGlobe } from '@fortawesome/free-solid-svg-icons';
 import { motion } from 'motion/react';
 import { Link } from 'react-router-dom';
 import { platformIcons, platformTextColors } from '../utils/platformData';
@@ -28,7 +28,7 @@ export default function LandingPage() {
   return (
     <div className="overflow-x-hidden bg-white">
       {/* Hero Section */}
-      <section className="relative min-h-[85vh] flex items-center pt-12 pb-24 overflow-hidden">
+      <section className="relative min-h-[85vh] flex items-center pt-6 pb-24 overflow-hidden">
         {/* Background Image with Overlay */}
         <div className="absolute inset-0 z-0">
           <img

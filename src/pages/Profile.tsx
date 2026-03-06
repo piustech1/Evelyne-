@@ -1,8 +1,9 @@
 import { useState, useEffect, FormEvent } from 'react';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
-import { faUser, faEnvelope, faWallet, faSignOutAlt, faShieldAlt, faBell, faCog, faCheckCircle, faPlus, faHistory, faBolt, faArrowRight, faRocket } from '@fortawesome/free-solid-svg-icons';
+import { faUser, faEnvelope, faWallet, faSignOutAlt, faShieldAlt, faBell, faCog, faCheckCircle, faPlus, faHistory, faBolt, faArrowRight, faRocket, faLock, faChevronRight } from '@fortawesome/free-solid-svg-icons';
 import { motion } from 'motion/react';
 import { useNavigate, Link } from 'react-router-dom';
+import toast from 'react-hot-toast';
 import { useAuth } from '../hooks/useAuth';
 import { auth, db } from '../lib/firebase';
 import { signOut, updateProfile } from 'firebase/auth';
@@ -13,7 +14,6 @@ export default function Profile() {
   const navigate = useNavigate();
   const [name, setName] = useState('');
   const [isLoading, setIsLoading] = useState(false);
-  const [message, setMessage] = useState({ type: '', text: '' });
   const [orderStats, setOrderStats] = useState({ total: 0, pending: 0, completed: 0 });
 
   useEffect(() => {
@@ -43,9 +43,11 @@ export default function Profile() {
   const handleLogout = async () => {
     try {
       await signOut(auth);
+      toast.success('Logged out successfully');
       navigate('/');
     } catch (err) {
       console.error('Logout failed', err);
+      toast.error('Logout failed');
     }
   };
 
@@ -53,14 +55,14 @@ export default function Profile() {
     e.preventDefault();
     if (!user) return;
     setIsLoading(true);
-    setMessage({ type: '', text: '' });
+    const loadingToast = toast.loading('Updating profile...');
 
     try {
       await updateProfile(user, { displayName: name });
       await update(ref(db, `users/${user.uid}`), { name });
-      setMessage({ type: 'success', text: 'Profile updated successfully!' });
+      toast.success('Profile updated successfully!', { id: loadingToast });
     } catch (err: any) {
-      setMessage({ type: 'error', text: err.message || 'Failed to update profile' });
+      toast.error(err.message || 'Failed to update profile', { id: loadingToast });
     } finally {
       setIsLoading(false);
     }
@@ -141,7 +143,7 @@ export default function Profile() {
                 <Link
                   key={idx}
                   to={action.path}
-                  className="bg-gray-50 p-5 rounded-2xl border border-gray-200 shadow-sm hover:border-brand-purple/30 hover:-translate-y-1 transition-all group text-center"
+                  className="bg-gray-50 p-5 rounded-2xl border border-gray-200 shadow-sm hover:border-brand-purple/30 transition-all group text-center hover-lift active-press"
                 >
                   <div className={`w-10 h-10 ${action.color} rounded-xl flex items-center justify-center text-white mx-auto mb-3 shadow-sm group-hover:scale-110 transition-transform`}>
                     <FontAwesomeIcon icon={action.icon} className="text-xs" />
@@ -157,7 +159,7 @@ export default function Profile() {
             <h3 className="text-[9px] font-black text-gray-500 uppercase tracking-[0.2em] mb-4 ml-1">Account Statistics</h3>
             <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
               {stats.map((stat, idx) => (
-                <div key={idx} className="bg-gray-50 p-5 rounded-2xl border border-gray-200 shadow-sm">
+                <div key={idx} className="bg-gray-50 p-5 rounded-2xl border border-gray-200 shadow-sm hover-lift transition-all">
                   <div className="flex items-center justify-between mb-3">
                     <div className="w-7 h-7 bg-white rounded-lg flex items-center justify-center text-gray-400 text-[10px] border border-gray-100 shadow-sm">
                       <FontAwesomeIcon icon={stat.icon} />
@@ -178,14 +180,6 @@ export default function Profile() {
           >
             <h3 className="text-xl font-display font-black text-gray-900 tracking-tighter mb-8">Edit Profile</h3>
             
-            {message.text && (
-              <div className={`mb-6 p-3 rounded-xl text-[10px] font-bold text-center border ${
-                message.type === 'success' ? 'bg-emerald-50 border-emerald-100 text-emerald-600' : 'bg-rose-50 border-rose-100 text-rose-600'
-              }`}>
-                {message.text}
-              </div>
-            )}
-
             <form className="space-y-8" onSubmit={handleUpdateProfile}>
               <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                 <div className="space-y-2">
@@ -212,7 +206,7 @@ export default function Profile() {
                 <button 
                   type="submit" 
                   disabled={isLoading}
-                  className="px-8 py-4 bg-gradient-to-r from-blue-600 to-purple-600 text-white font-black uppercase tracking-widest text-[10px] rounded-xl shadow-sm hover:scale-[1.02] active:scale-[0.98] transition-all disabled:opacity-50"
+                  className="px-8 py-4 bg-gradient-to-r from-blue-600 to-purple-600 text-white font-black uppercase tracking-widest text-[10px] rounded-xl shadow-sm hover:scale-[1.02] active-press transition-all disabled:opacity-50"
                 >
                   {isLoading ? 'Updating...' : 'Update Profile'}
                 </button>
@@ -232,7 +226,7 @@ export default function Profile() {
             </div>
 
             <div className="space-y-3">
-              <button className="w-full p-4 rounded-2xl bg-white/5 hover:bg-white/10 flex items-center justify-between transition-all group border border-white/5">
+              <button className="w-full p-4 rounded-2xl bg-white/5 hover:bg-white/10 flex items-center justify-between transition-all group border border-white/5 active-press">
                 <div className="flex items-center space-x-3">
                   <div className="w-8 h-8 rounded-lg bg-purple-500/20 flex items-center justify-center text-purple-400 border border-purple-500/10">
                     <FontAwesomeIcon icon={faShieldAlt} className="text-xs" />
@@ -243,7 +237,7 @@ export default function Profile() {
                   <div className="absolute left-0.5 top-0.5 w-3 h-3 bg-white/20 rounded-full" />
                 </div>
               </button>
-              <button className="w-full p-4 rounded-2xl bg-white/5 hover:bg-white/10 flex items-center justify-between transition-all group border border-white/5">
+              <button className="w-full p-4 rounded-2xl bg-white/5 hover:bg-white/10 flex items-center justify-between transition-all group border border-white/5 active-press">
                 <div className="flex items-center space-x-3">
                   <div className="w-8 h-8 rounded-lg bg-blue-500/20 flex items-center justify-center text-blue-400 border border-blue-500/10">
                     <FontAwesomeIcon icon={faBell} className="text-xs" />
@@ -259,7 +253,7 @@ export default function Profile() {
             <div className="pt-4">
               <button
                 onClick={handleLogout}
-                className="w-full py-4 rounded-xl bg-rose-500/10 text-rose-500 font-black uppercase tracking-widest text-[10px] hover:bg-rose-500 hover:text-white transition-all flex items-center justify-center space-x-2 group border border-rose-500/20"
+                className="w-full py-4 rounded-xl bg-rose-500/10 text-rose-500 font-black uppercase tracking-widest text-[10px] hover:bg-rose-500 hover:text-white transition-all flex items-center justify-center space-x-2 group border border-rose-500/20 active-press"
               >
                 <FontAwesomeIcon icon={faSignOutAlt} className="group-hover:-translate-x-1 transition-transform" />
                 <span>Logout Account</span>
@@ -277,7 +271,7 @@ export default function Profile() {
             <p className="text-gray-400 text-[10px] font-medium mb-6 leading-relaxed">Our support team is available 24/7 to assist you.</p>
             <button 
               onClick={() => window.open('https://wa.me/256709728323?text=Easy%20Boost%20user', '_blank')}
-              className="w-full py-3 bg-white text-gray-900 font-black uppercase tracking-widest text-[9px] rounded-xl hover:bg-gradient-to-r hover:from-blue-600 hover:to-purple-600 hover:text-white transition-all border border-gray-200 shadow-sm"
+              className="w-full py-3 bg-white text-gray-900 font-black uppercase tracking-widest text-[9px] rounded-xl hover:bg-gradient-to-r hover:from-blue-600 hover:to-purple-600 hover:text-white transition-all border border-gray-200 shadow-sm active-press"
             >
               Contact Support
             </button>

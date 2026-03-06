@@ -13,6 +13,16 @@
   --color-brand-accent: #818CF8;
 }
 
+@utility gradient-brand {
+  background: linear-gradient(135deg, #4f46e5, #7c3aed);
+}
+
+@utility text-gradient {
+  background: linear-gradient(135deg, #4f46e5, #7c3aed);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+}
+
 @layer base {
   body {
     @apply font-sans text-brand-dark bg-white;
@@ -21,16 +31,6 @@
   
   h1, h2, h3, h4, h5, h6 {
     @apply font-display font-bold;
-  }
-
-  .gradient-brand {
-    background: linear-gradient(135deg, #4f46e5, #7c3aed);
-  }
-
-  .text-gradient {
-    background: linear-gradient(135deg, #4f46e5, #7c3aed);
-    -webkit-background-clip: text;
-    -webkit-text-fill-color: transparent;
   }
 }
 

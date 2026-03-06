@@ -4,6 +4,7 @@ import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { faEnvelope, faLock, faRocket, faArrowRight } from '@fortawesome/free-solid-svg-icons';
 import { faGoogle } from '@fortawesome/free-brands-svg-icons';
 import { motion } from 'motion/react';
+import toast from 'react-hot-toast';
 import { auth, googleProvider } from '../lib/firebase';
 import { signInWithEmailAndPassword, signInWithPopup } from 'firebase/auth';
 
@@ -11,18 +12,18 @@ export default function Login() {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [isLoading, setIsLoading] = useState(false);
-  const [error, setError] = useState('');
   const navigate = useNavigate();
 
   const handleSubmit = async (e: FormEvent) => {
     e.preventDefault();
     setIsLoading(true);
-    setError('');
+    const loadingToast = toast.loading('Signing in...');
     try {
       await signInWithEmailAndPassword(auth, email, password);
+      toast.success('Welcome back!', { id: loadingToast });
       navigate('/dashboard');
     } catch (err: any) {
-      setError(err.message || 'Failed to login');
+      toast.error(err.message || 'Failed to login', { id: loadingToast });
     } finally {
       setIsLoading(false);
     }
@@ -30,12 +31,13 @@ export default function Login() {
 
   const handleGoogleLogin = async () => {
     setIsLoading(true);
-    setError('');
+    const loadingToast = toast.loading('Connecting to Google...');
     try {
       await signInWithPopup(auth, googleProvider);
+      toast.success('Welcome back!', { id: loadingToast });
       navigate('/dashboard');
     } catch (err: any) {
-      setError(err.message || 'Failed to login with Google');
+      toast.error(err.message || 'Failed to login with Google', { id: loadingToast });
     } finally {
       setIsLoading(false);
     }
@@ -61,12 +63,6 @@ export default function Login() {
             <h2 className="text-2xl font-display font-black text-gray-900 tracking-tighter mb-1">Welcome Back</h2>
             <p className="text-gray-400 font-bold text-[10px] uppercase tracking-[0.2em]">Login to your account</p>
           </div>
-
-          {error && (
-            <div className="mb-4 p-3 bg-rose-50 border border-rose-100 rounded-lg text-rose-500 text-[10px] font-bold text-center">
-              {error}
-            </div>
-          )}
 
           <form className="space-y-4" onSubmit={handleSubmit}>
             <div className="space-y-3">
@@ -124,7 +120,7 @@ export default function Login() {
             <button
               type="submit"
               disabled={isLoading}
-              className="group relative w-full flex justify-center items-center py-3.5 px-4 border border-transparent text-xs font-black uppercase tracking-widest rounded-lg text-white bg-gradient-to-r from-blue-600 to-purple-600 shadow-lg shadow-blue-600/20 hover:scale-[1.02] active:scale-[0.98] transition-all disabled:opacity-50"
+              className="group relative w-full flex justify-center items-center py-3.5 px-4 border border-transparent text-xs font-black uppercase tracking-widest rounded-lg text-white bg-gradient-to-r from-blue-600 to-purple-600 shadow-lg shadow-blue-600/20 hover:scale-[1.02] active-press transition-all disabled:opacity-50"
             >
               {isLoading ? 'Authenticating...' : 'Sign In'}
               {!isLoading && <FontAwesomeIcon icon={faArrowRight} className="ml-2 group-hover:translate-x-1 transition-transform" />}
@@ -143,7 +139,7 @@ export default function Login() {
               type="button"
               onClick={handleGoogleLogin}
               disabled={isLoading}
-              className="w-full flex justify-center items-center py-3.5 px-4 border border-gray-200 rounded-lg text-gray-600 font-black uppercase tracking-widest text-[10px] hover:bg-gray-50 transition-all shadow-sm disabled:opacity-50"
+              className="w-full flex justify-center items-center py-3.5 px-4 border border-gray-200 rounded-lg text-gray-600 font-black uppercase tracking-widest text-[10px] hover:bg-gray-50 transition-all shadow-sm disabled:opacity-50 active-press"
             >
               <FontAwesomeIcon icon={faGoogle} className="mr-3 text-base text-blue-600" />
               Google Account

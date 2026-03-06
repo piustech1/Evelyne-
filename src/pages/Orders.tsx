@@ -18,6 +18,22 @@ const statusStyles: Record<string, any> = {
   'Failed': { bg: 'bg-rose-50', text: 'text-rose-600', icon: faTimesCircle },
 };
 
+const OrderSkeleton = () => (
+  <div className="bg-white rounded-2xl p-5 border border-gray-100 shadow-sm shimmer space-y-4 h-32">
+    <div className="flex justify-between">
+      <div className="space-y-2 w-1/2">
+        <div className="h-2 bg-gray-200 rounded w-1/4"></div>
+        <div className="h-3 bg-gray-200 rounded w-full"></div>
+      </div>
+      <div className="h-6 bg-gray-200 rounded-full w-20"></div>
+    </div>
+    <div className="flex justify-between pt-4 border-t border-gray-50">
+      <div className="h-3 bg-gray-200 rounded w-16"></div>
+      <div className="h-3 bg-gray-200 rounded w-20"></div>
+    </div>
+  </div>
+);
+
 export default function Orders() {
   const { user } = useAuth();
   const [orders, setOrders] = useState<any[]>([]);
@@ -51,7 +67,16 @@ export default function Orders() {
     order.platform.toLowerCase().includes(searchTerm.toLowerCase())
   );
 
-  if (isLoading) return <div className="pt-32 text-center text-brand-light font-black uppercase tracking-widest text-[10px]">Loading Orders...</div>;
+  if (isLoading) {
+    return (
+      <div className="pt-12 pb-32 px-4 sm:px-6 lg:px-8 max-w-7xl mx-auto space-y-8">
+        <div className="h-12 bg-gray-100 rounded-2xl w-full max-w-md shimmer"></div>
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+          {[1, 2, 3, 4, 5, 6].map(i => <OrderSkeleton key={i} />)}
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="pt-12 pb-32 px-4 sm:px-6 lg:px-8 max-w-7xl mx-auto space-y-8">
