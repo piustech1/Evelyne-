@@ -231,8 +231,8 @@ export default function Wallet() {
                   >
                     <div className="flex items-center space-x-4">
                       <div className={`w-10 h-10 rounded-xl flex items-center justify-center text-white text-sm shadow-sm transition-transform group-hover:scale-110 ${
-                        txn.status === 'successful' ? 'bg-emerald-500' : 
-                        txn.status === 'pending' ? 'bg-amber-500' : 'bg-rose-500'
+                        txn.status === 'successful' || txn.status === 'Successful' ? 'bg-emerald-500' : 
+                        txn.status === 'pending' || txn.status === 'Pending' ? 'bg-amber-500' : 'bg-rose-500'
                       }`}>
                         <FontAwesomeIcon icon={faArrowDown} />
                       </div>
@@ -243,13 +243,13 @@ export default function Wallet() {
                     </div>
                     <div className="text-right">
                       <div className={`text-lg font-display font-black ${
-                        txn.status === 'successful' ? 'text-emerald-500' : 'text-gray-900'
+                        txn.status === 'successful' || txn.status === 'Successful' ? 'text-emerald-500' : 'text-gray-900'
                       }`}>UGX {txn.amount?.toLocaleString()}</div>
                       <div className={`text-[9px] font-black uppercase tracking-widest flex items-center justify-end gap-1 mt-0.5 ${
-                        txn.status === 'successful' ? 'text-emerald-500' : 
-                        txn.status === 'pending' ? 'text-amber-500' : 'text-rose-500'
+                        txn.status === 'successful' || txn.status === 'Successful' ? 'text-emerald-500' : 
+                        txn.status === 'pending' || txn.status === 'Pending' ? 'text-amber-500' : 'text-rose-500'
                       }`}>
-                        <FontAwesomeIcon icon={txn.status === 'successful' ? faCheckCircle : faInfoCircle} className="text-[8px]" />
+                        <FontAwesomeIcon icon={txn.status === 'successful' || txn.status === 'Successful' ? faCheckCircle : faInfoCircle} className="text-[8px]" />
                         {txn.status}
                       </div>
                     </div>

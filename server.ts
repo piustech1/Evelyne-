@@ -144,27 +144,42 @@ async function startServer() {
       // Call MarzPay API
       const auth = Buffer.from(`${MARZPAY_API_KEY}:${MARZPAY_API_SECRET}`).toString('base64');
       
-      const marzResponse = await fetch(`${MARZPAY_BASE_URL}/collect-money`, {
+      const callbackUrl = process.env.APP_URL 
+        ? `${process.env.APP_URL}/api/marz-webhook`
+        : `${req.protocol}://${req.get('host')}/api/marz-webhook`;
+
+      console.log('Initiating MarzPay collection for:', normalizedPhone, 'Amount:', Math.floor(Number(amount)));
+
+      const marzResponse = await fetch('https://wallet.wearemarz.com/api/v1/collect-money', {
         method: 'POST',
         headers: {
           'Authorization': `Basic ${auth}`,
-          'Content-Type': 'application/json'
+          'Content-Type': 'application/json',
+          'Accept': 'application/json'
         },
         body: JSON.stringify({
-          amount: Number(amount),
+          amount: Math.floor(Number(amount)), // Ensure it's an integer
           phone_number: normalizedPhone,
           country: 'UG',
-          reference: reference,
+          reference: reference, // reference is generated using crypto.randomUUID()
           description: 'Wallet top-up',
-          callback_url: `${req.protocol}://${req.get('host')}/api/marz-webhook`
+          callback_url: callbackUrl
         })
       });
 
-      const marzData = await marzResponse.json();
-      console.log('MarzPay Response:', marzData);
+      const responseText = await marzResponse.text();
+      console.log('MarzPay Raw Response:', responseText);
+
+      let marzData;
+      try {
+        marzData = JSON.parse(responseText);
+      } catch (e) {
+        console.error('Failed to parse MarzPay response as JSON:', responseText);
+        throw new Error(`MarzPay returned invalid response: ${responseText.substring(0, 100)}`);
+      }
 
       if (!marzResponse.ok) {
-        throw new Error(marzData.message || 'Failed to initiate payment with MarzPay');
+        throw new Error(marzData.message || marzData.error || 'Failed to initiate payment with MarzPay');
       }
 
       res.json({ success: true, reference });
@@ -176,23 +191,36 @@ async function startServer() {
 
   app.post('/api/marz-webhook', async (req, res) => {
     try {
-      const { event_type, transaction } = req.body;
-      console.log('Webhook Received:', req.body);
+      const data = req.body;
+      console.log('Webhook Received:', JSON.stringify(data, null, 2));
 
-      if (event_type === 'collection.completed' && transaction.status === 'completed') {
-        const reference = transaction.reference;
-        const amount = transaction.amount.raw;
+      // Security check: ensure payload is not empty and contains the expected nested dictionary structure
+      if (!data || typeof data !== 'object' || !data.transaction || typeof data.transaction !== 'object') {
+        console.error('Invalid Webhook Payload Structure');
+        return res.status(200).send('OK'); // Return 200 OK immediately to stop retries
+      }
+
+      const { event_type } = data;
+      const { status, reference, amount } = data.transaction;
+      const rawAmount = amount?.raw;
+
+      // Verification: Only update the balance if event_type is collection.completed and status is completed
+      if (event_type === 'collection.completed' && status === 'completed') {
+        if (!reference) {
+          console.error('Missing reference in webhook');
+          return res.status(200).send('OK');
+        }
 
         // Find payment in Firebase
         const paymentRef = ref(db, `payments/${reference}`);
         const snapshot = await get(paymentRef);
         const paymentData = snapshot.val();
 
-        if (paymentData && paymentData.status === 'pending') {
-          // Update payment status
+        if (paymentData && (paymentData.status === 'pending' || paymentData.status === 'Pending')) {
+          // Update payment status to 'Successful'
           await set(paymentRef, {
             ...paymentData,
-            status: 'completed',
+            status: 'Successful',
             updatedAt: new Date().toISOString()
           });
 
@@ -200,7 +228,7 @@ async function startServer() {
           const userRef = ref(db, `users/${paymentData.userId}`);
           await runTransaction(userRef, (currentData) => {
             if (currentData) {
-              currentData.balance = (currentData.balance || 0) + Number(amount);
+              currentData.balance = (currentData.balance || 0) + Number(rawAmount);
             }
             return currentData;
           });
@@ -208,20 +236,26 @@ async function startServer() {
           // Add notification
           const notificationRef = push(ref(db, `notifications/${paymentData.userId}`));
           await set(notificationRef, {
-            message: `Deposit successful! Your balance has been updated by UGX ${Number(amount).toLocaleString()}.`,
+            message: `Deposit successful! Your balance has been updated by UGX ${Number(rawAmount).toLocaleString()}.`,
             type: 'deposit',
             timestamp: new Date().toISOString(),
             read: false
           });
 
-          console.log(`Wallet updated for user ${paymentData.userId}: +${amount}`);
+          console.log(`Wallet updated for user ${paymentData.userId}: +${rawAmount}`);
+        } else {
+          console.log(`Payment already processed or not found for reference: ${reference}`);
         }
+      } else {
+        console.log(`Ignoring webhook event: ${event_type}, status: ${status}`);
       }
 
-      res.json({ status: 'received' });
+      // Response: Ensure the webhook returns a 200 OK immediately so MarzPay stops retrying
+      res.status(200).send('OK');
     } catch (error) {
       console.error('Webhook Error:', error);
-      res.status(500).json({ error: 'Internal server error' });
+      // Still return 200 to stop retries even on internal errors
+      res.status(200).send('OK');
     }
   });
 
