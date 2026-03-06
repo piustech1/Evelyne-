@@ -5,7 +5,7 @@ import dotenv from 'dotenv';
 import fetch from 'node-fetch';
 import crypto from 'crypto';
 import { db } from './src/lib/firebase';
-import { ref, get, set, runTransaction, push } from 'firebase/database';
+import { ref, get, set, runTransaction, push, query, orderByChild, equalTo, increment, update } from 'firebase/database';
 
 dotenv.config();
 
@@ -201,7 +201,7 @@ async function startServer() {
       }
 
       const { event_type } = data;
-      const { status, reference, amount } = data.transaction;
+      const { status, reference, amount, phone_number, provider } = data.transaction;
       const rawAmount = amount?.raw;
 
       // Verification: Only update the balance if event_type is collection.completed and status is completed
@@ -211,30 +211,49 @@ async function startServer() {
           return res.status(200).send('OK');
         }
 
-        // Find payment in Firebase
+        // Find payment in Firebase using the reference as the key
         const paymentRef = ref(db, `payments/${reference}`);
         const snapshot = await get(paymentRef);
         const paymentData = snapshot.val();
 
         if (paymentData && (paymentData.status === 'pending' || paymentData.status === 'Pending')) {
-          // Update payment status to 'Successful'
+          const userEmail = paymentData.userEmail;
+          if (!userEmail) {
+            console.error('No userEmail found in payment record');
+            return res.status(200).send('OK');
+          }
+
+          // Find the User ID by searching the users/ node for the user whose email matches
+          const usersRef = ref(db, 'users');
+          const userQuery = query(usersRef, orderByChild('email'), equalTo(userEmail));
+          const userSnapshot = await get(userQuery);
+          const usersData = userSnapshot.val();
+
+          if (!usersData) {
+            console.error(`No user found for email: ${userEmail}`);
+            return res.status(200).send('OK');
+          }
+
+          // Extract the userId (the key in the users/ node)
+          const userId = Object.keys(usersData)[0];
+
+          // Update transaction status to 'Successful' and save phone/method info
           await set(paymentRef, {
             ...paymentData,
             status: 'Successful',
+            phone: phone_number || paymentData.phone,
+            provider: provider || paymentData.provider,
             updatedAt: new Date().toISOString()
           });
 
-          // Update user balance
-          const userRef = ref(db, `users/${paymentData.userId}`);
-          await runTransaction(userRef, (currentData) => {
-            if (currentData) {
-              currentData.balance = (currentData.balance || 0) + Number(rawAmount);
-            }
-            return currentData;
+          // Reliability: Atomic increment for user balance
+          const userRef = ref(db, `users/${userId}`);
+          await update(userRef, {
+            balance: increment(Number(rawAmount))
           });
 
           // Add notification
-          const notificationRef = push(ref(db, `notifications/${paymentData.userId}`));
+          const notificationRef = push(ref(db, `notifications/${userId}`));
           await set(notificationRef, {
             message: `Deposit successful! Your balance has been updated by UGX ${Number(rawAmount).toLocaleString()}.`,
             type: 'deposit',
@@ -242,7 +261,7 @@ async function startServer() {
             read: false
           });
 
-          console.log(`Wallet updated for user ${paymentData.userId}: +${rawAmount}`);
+          console.log(`Wallet updated for user ${userId}: +${rawAmount}`);
         } else {
           console.log(`Payment already processed or not found for reference: ${reference}`);
         }
