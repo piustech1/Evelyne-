@@ -1,23 +1,17 @@
 /**
- * EASYBOOST PAYMENT BACKEND (Google Apps Script)
+ * EASYBOOST PAYMENT BACKEND (Google Apps Script - 2026 Specs)
  * 
- * Instructions:
- * 1. Replace the constants below with your actual credentials.
- * 2. Deploy as a Web App:
- *    - Click "Deploy" > "New Deployment"
- *    - Select "Web App"
- *    - Set "Execute as" to "Me"
- *    - Set "Who has access" to "Anyone"
- * 3. Copy the Web App URL and use it in your frontend and MarzPay dashboard.
+ * Backend URL: https://script.google.com/macros/s/AKfycbx3R9hK-5O-ROqvY3XVkBaqOgSE1XXolFg35xD73p__aY274FHPNZN3qeNE1dnZMjmy/exec
  */
 
 // --- CONFIGURATION ---
 const MARZPAY_API_KEY = "YOUR_MARZPAY_API_KEY";
 const MARZPAY_API_SECRET = "YOUR_MARZPAY_API_SECRET";
 const FIREBASE_DB_URL = "https://your-project-id.firebaseio.com/"; // Include trailing slash
+const FIREBASE_SECRET = "YOUR_FIREBASE_DATABASE_SECRET"; // For ?auth= parameter
 
 /**
- * Main entry point for POST requests
+ * Main entry point for POST requests (CORS compliant)
  */
 function doPost(e) {
   try {
@@ -45,21 +39,22 @@ function doPost(e) {
  * PART 1: Handle Payment Initiation from Frontend
  */
 function handlePaymentRequest(data) {
-  const { phone, amount, userId, userEmail } = data;
+  const { phone, amount, userId, userEmail, username } = data;
   
   if (!phone || !amount || !userId) {
     return jsonResponse({ success: false, message: "Missing required fields (phone, amount, userId)" });
   }
   
-  // Generate unique reference
-  const reference = "txn_" + new Date().getTime();
+  // Requirement: Every collect-money request MUST have a unique reference in UUID v4 format
+  const reference = generateUUID();
   Logger.log("Initiating Payment Request. Ref: " + reference);
   
-  // 1. Save pending payment to Firebase
+  // 1. Save pending payment to Firebase (REST Protocol: .json?auth=)
   const paymentData = {
     reference: reference,
     userId: userId,
     userEmail: userEmail || "",
+    username: username || "User",
     amount: Number(amount),
     phone: phone,
     status: "pending",
@@ -69,7 +64,7 @@ function handlePaymentRequest(data) {
   
   firebasePut("payments/" + reference, paymentData);
   
-  // 2. Call MarzPay API
+  // 2. Call MarzPay API (Basic Auth: base64(API_KEY:API_SECRET))
   const auth = Utilities.base64Encode(MARZPAY_API_KEY + ":" + MARZPAY_API_SECRET);
   const payload = {
     amount: Math.floor(Number(amount)),
@@ -77,7 +72,7 @@ function handlePaymentRequest(data) {
     country: "UG",
     reference: reference,
     description: "Wallet Top-up",
-    callback_url: ScriptApp.getService().getUrl() // Automatically uses this script's URL
+    callback_url: "https://script.google.com/macros/s/AKfycbx3R9hK-5O-ROqvY3XVkBaqOgSE1XXolFg35xD73p__aY274FHPNZN3qeNE1dnZMjmy/exec"
   };
   
   const options = {
@@ -116,32 +111,32 @@ function handleWebhook(payload) {
   // Extract transaction data (MarzPay sends it inside 'data.transaction')
   const transaction = payload.data ? payload.data.transaction : payload.transaction;
   
-  if (!transaction || payload.event_type !== "collection.completed") {
-    return jsonResponse({ received: true, message: "Ignored event type" });
+  // Requirement: MarzPay uses the keyword 'completed' (lowercase)
+  if (!transaction || payload.event_type !== "collection.completed" || transaction.status !== "completed") {
+    return jsonResponse({ received: true, message: "Ignored event type or status" });
   }
   
   const reference = transaction.reference;
-  const status = transaction.status;
-  
-  if (status !== "completed") {
-    return jsonResponse({ received: true, message: "Transaction status not completed" });
-  }
   
   // 1. Fetch Payment Record from Firebase
   const payment = firebaseGet("payments/" + reference);
   
   if (payment && (payment.status === "pending" || payment.status === "Pending")) {
     const userId = payment.userId;
-    const amount = Number(transaction.amount.raw || transaction.amount);
     
-    // 2. Update User Balance (Atomic-like fetch and patch)
+    // Requirement: Extract the amount from transaction.amount.raw
+    const amountRaw = transaction.amount ? (transaction.amount.raw || transaction.amount) : payment.amount;
+    const amount = Number(amountRaw);
+    
+    // 2. Update User Balance (Fetch current, add, PATCH)
     updateUserBalance(userId, amount);
     
     // 3. Update Payment Status to Successful
     firebasePatch("payments/" + reference, {
       status: "Successful",
       completedAt: new Date().toISOString(),
-      provider: transaction.provider || "MarzPay"
+      provider: transaction.provider || "MarzPay",
+      rawAmountReceived: amount
     });
     
     // 4. Create Notification for User
@@ -153,23 +148,23 @@ function handleWebhook(payload) {
     };
     firebasePush("notifications/" + userId, notification);
     
-    Logger.log("Wallet credited successfully for User: " + userId);
+    Logger.log("Wallet credited successfully for User: " + userId + " Amount: " + amount);
     return jsonResponse({ received: true, message: "Wallet updated" });
   }
   
   return jsonResponse({ received: true, message: "Payment already processed or not found" });
 }
 
-// --- PART 3: FIREBASE REST API HELPERS ---
+// --- PART 3: FIREBASE REST API HELPERS (REST Protocol: .json?auth=) ---
 
 function firebaseGet(path) {
-  const url = FIREBASE_DB_URL + path + ".json";
+  const url = FIREBASE_DB_URL + path + ".json?auth=" + FIREBASE_SECRET;
   const response = UrlFetchApp.fetch(url);
   return JSON.parse(response.getContentText());
 }
 
 function firebasePut(path, data) {
-  const url = FIREBASE_DB_URL + path + ".json";
+  const url = FIREBASE_DB_URL + path + ".json?auth=" + FIREBASE_SECRET;
   const options = {
     method: "put",
     contentType: "application/json",
@@ -179,7 +174,7 @@ function firebasePut(path, data) {
 }
 
 function firebasePatch(path, data) {
-  const url = FIREBASE_DB_URL + path + ".json";
+  const url = FIREBASE_DB_URL + path + ".json?auth=" + FIREBASE_SECRET;
   const options = {
     method: "patch",
     contentType: "application/json",
@@ -189,7 +184,7 @@ function firebasePatch(path, data) {
 }
 
 function firebasePush(path, data) {
-  const url = FIREBASE_DB_URL + path + ".json";
+  const url = FIREBASE_DB_URL + path + ".json?auth=" + FIREBASE_SECRET;
   const options = {
     method: "post",
     contentType: "application/json",
@@ -199,7 +194,7 @@ function firebasePush(path, data) {
 }
 
 /**
- * Atomic-like balance update
+ * Requirement: Fetch current balance, add amount, and use PATCH
  */
 function updateUserBalance(userId, amount) {
   const userPath = "users/" + userId;
@@ -213,7 +208,17 @@ function updateUserBalance(userId, amount) {
 }
 
 /**
- * PART 4: Helper to return JSON responses
+ * Requirement: Every collect-money request MUST have a unique reference in UUID v4 format
+ */
+function generateUUID() {
+  return 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g, function(c) {
+    var r = Math.random() * 16 | 0, v = c == 'x' ? r : (r & 0x3 | 0x8);
+    return v.toString(16);
+  });
+}
+
+/**
+ * Requirement: Always return responses using ContentService.createTextOutput(JSON.stringify(data)).setMimeType(ContentService.MimeType.JSON)
  */
 function jsonResponse(obj) {
   return ContentService.createTextOutput(JSON.stringify(obj))
