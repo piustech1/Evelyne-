@@ -412,7 +412,7 @@ export default function Dashboard() {
                 <p className="text-[10px] text-white/70 leading-relaxed font-medium">Need help with an order or have a question? Our team is here for you.</p>
               </div>
               <button 
-                onClick={() => window.open('https://wa.me/256709728322', '_blank')}
+                onClick={() => window.open('https://wa.me/256709728322?text=Hello%20EasyBoost%20Support,%20I%20need%20help%20with%20my%20order.', '_blank')}
                 className="w-full py-3 bg-white text-blue-600 hover:bg-white/90 rounded-xl text-[10px] font-black uppercase tracking-widest transition-all flex items-center justify-center group shadow-sm"
               >
                 Contact Us

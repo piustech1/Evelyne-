@@ -362,7 +362,7 @@ export default function Profile() {
             <h4 className="text-xl font-display font-black text-gray-900 tracking-tighter mb-2">Need Help?</h4>
             <p className="text-gray-400 text-[10px] font-medium mb-6 leading-relaxed">Our support team is available 24/7 to assist you.</p>
             <button 
-              onClick={() => window.open('https://wa.me/256709728322', '_blank')}
+              onClick={() => window.open('https://wa.me/256709728322?text=Hello%20EasyBoost%20Support,%20I%20need%20help%20with%20my%20account.', '_blank')}
               className="w-full py-3 bg-white text-gray-900 font-black uppercase tracking-widest text-[9px] rounded-xl hover:bg-gradient-to-r hover:from-blue-600 hover:to-purple-600 hover:text-white transition-all border border-gray-200 shadow-sm active-press"
             >
               Contact Support

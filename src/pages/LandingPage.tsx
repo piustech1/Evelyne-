@@ -146,7 +146,12 @@ export default function LandingPage() {
                 </div>
                 <div className="flex items-center space-x-2">
                   <FontAwesomeIcon icon={faCheckCircle} className="text-white/80" />
-                  <span>24/7 Support</span>
+                  <button 
+                    onClick={() => window.open('https://wa.me/256709728322?text=Hello%20EasyBoost%20Support,%20I%20have%20a%20question.', '_blank')}
+                    className="hover:text-brand-accent transition-colors"
+                  >
+                    24/7 Support
+                  </button>
                 </div>
               </div>
             </div>
