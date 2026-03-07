@@ -53,21 +53,22 @@ export default function Wallet() {
     const loadingToast = toast.loading('Initiating payment prompt...');
 
     try {
-      const response = await fetch('/api/create-payment', {
+      const GAS_URL = 'https://script.google.com/macros/s/AKfycbx3R9hK-5O-ROqvY3XVkBaqOgSE1XXolFg35xD73p__aY274FHPNZN3qeNE1dnZMjmy/exec';
+      
+      const response = await fetch(GAS_URL, {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+        headers: { 'Content-Type': 'text/plain;charset=utf-8' }, // GAS requires text/plain for CORS sometimes or handles it better
         body: JSON.stringify({
           userId: user.uid,
           username: userData.name,
           userEmail: user.email,
-          phoneNumber,
-          amount: Number(amount),
-          provider: paymentMethod.toUpperCase()
+          phone: phoneNumber,
+          amount: Number(amount)
         })
       });
 
       const data = await response.json();
-      if (data.error) throw new Error(data.error);
+      if (!data.success) throw new Error(data.message || 'Payment initiation failed');
 
       toast.success('Payment prompt sent! Please check your phone.', { id: loadingToast });
       setAmount('');
@@ -231,25 +232,25 @@ export default function Wallet() {
                   >
                     <div className="flex items-center space-x-4">
                       <div className={`w-10 h-10 rounded-xl flex items-center justify-center text-white text-sm shadow-sm transition-transform group-hover:scale-110 ${
-                        txn.status === 'successful' || txn.status === 'Successful' ? 'bg-emerald-500' : 
-                        txn.status === 'pending' || txn.status === 'Pending' ? 'bg-amber-500' : 'bg-rose-500'
+                        txn.status?.toLowerCase() === 'successful' || txn.status?.toLowerCase() === 'completed' ? 'bg-emerald-500' : 
+                        txn.status?.toLowerCase() === 'pending' ? 'bg-amber-500' : 'bg-rose-500'
                       }`}>
                         <FontAwesomeIcon icon={faArrowDown} />
                       </div>
                       <div>
-                        <div className="text-sm font-black text-gray-900 group-hover:text-brand-purple transition-colors tracking-tight">Deposit via {txn.provider}</div>
+                        <div className="text-sm font-black text-gray-900 group-hover:text-brand-purple transition-colors tracking-tight">Deposit via {txn.provider || 'MarzPay'}</div>
                         <div className="text-[9px] text-gray-400 font-bold uppercase tracking-widest mt-0.5">{new Date(txn.createdAt).toLocaleDateString()} • {txn.reference?.slice(-8) || txn.id?.slice(-8)}</div>
                       </div>
                     </div>
                     <div className="text-right">
                       <div className={`text-lg font-display font-black ${
-                        txn.status === 'successful' || txn.status === 'Successful' ? 'text-emerald-500' : 'text-gray-900'
+                        txn.status?.toLowerCase() === 'successful' || txn.status?.toLowerCase() === 'completed' ? 'text-emerald-500' : 'text-gray-900'
                       }`}>UGX {txn.amount?.toLocaleString()}</div>
                       <div className={`text-[9px] font-black uppercase tracking-widest flex items-center justify-end gap-1 mt-0.5 ${
-                        txn.status === 'successful' || txn.status === 'Successful' ? 'text-emerald-500' : 
-                        txn.status === 'pending' || txn.status === 'Pending' ? 'text-amber-500' : 'text-rose-500'
+                        txn.status?.toLowerCase() === 'successful' || txn.status?.toLowerCase() === 'completed' ? 'text-emerald-500' : 
+                        txn.status?.toLowerCase() === 'pending' ? 'text-amber-500' : 'text-rose-500'
                       }`}>
-                        <FontAwesomeIcon icon={txn.status === 'successful' || txn.status === 'Successful' ? faCheckCircle : faInfoCircle} className="text-[8px]" />
+                        <FontAwesomeIcon icon={txn.status?.toLowerCase() === 'successful' || txn.status?.toLowerCase() === 'completed' ? faCheckCircle : faInfoCircle} className="text-[8px]" />
                         {txn.status}
                       </div>
                     </div>
