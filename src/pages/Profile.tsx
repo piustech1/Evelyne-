@@ -16,7 +16,7 @@ export default function Profile() {
   const [isLoading, setIsLoading] = useState(false);
   const [orderStats, setOrderStats] = useState({ total: 0, pending: 0, completed: 0 });
 
-  const referralLink = `${window.location.origin}/signup?ref=${userData?.username || ''}`;
+  const referralLink = `https://easyboost.app/register?ref=${userData?.username || ''}`;
 
   useEffect(() => {
     if (userData) {
@@ -33,12 +33,12 @@ export default function Profile() {
 
   const shareReferral = async () => {
     if (userData?.username) {
-      const text = `Join EasyBoost and grow your social media instantly! \n\nSign up here: ${referralLink}`;
+      const text = `Grow your social media using EasyBoost. \n\nSign up here: ${referralLink}`;
       
       if (navigator.share) {
         try {
           await navigator.share({
-            title: 'EasyBoost Referral',
+            title: 'Join EasyBoost',
             text: text,
             url: referralLink,
           });
@@ -340,7 +340,7 @@ export default function Profile() {
             <h4 className="text-xl font-display font-black text-gray-900 tracking-tighter mb-2">Need Help?</h4>
             <p className="text-gray-400 text-[10px] font-medium mb-6 leading-relaxed">Our support team is available 24/7 to assist you.</p>
             <button 
-              onClick={() => window.open('https://wa.me/256709728323?text=Easy%20Boost%20user', '_blank')}
+              onClick={() => window.open('https://wa.me/256709728322', '_blank')}
               className="w-full py-3 bg-white text-gray-900 font-black uppercase tracking-widest text-[9px] rounded-xl hover:bg-gradient-to-r hover:from-blue-600 hover:to-purple-600 hover:text-white transition-all border border-gray-200 shadow-sm active-press"
             >
               Contact Support

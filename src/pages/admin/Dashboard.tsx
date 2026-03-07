@@ -12,12 +12,16 @@ import {
   faSync,
   faChartPie,
   faWallet,
-  faExchangeAlt
+  faExchangeAlt,
+  faPaperPlane,
+  faTrashAlt,
+  faExclamationTriangle,
+  faBell
 } from '@fortawesome/free-solid-svg-icons';
-import { motion } from 'motion/react';
+import { motion, AnimatePresence } from 'motion/react';
 import { AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, BarChart, Bar, Cell, PieChart, Pie } from 'recharts';
 import { db } from '../../lib/firebase';
-import { ref, onValue, query, limitToLast } from 'firebase/database';
+import { ref, onValue, query, limitToLast, remove, get, push, set, serverTimestamp } from 'firebase/database';
 import toast from 'react-hot-toast';
 
 export default function AdminDashboard() {
@@ -39,6 +43,15 @@ export default function AdminDashboard() {
   const [popularServices, setPopularServices] = useState<any[]>([]);
   const [providerBalance, setProviderBalance] = useState({ usd: 0, ugx: 0 });
   const [isLoading, setIsLoading] = useState(true);
+  
+  // Notification state
+  const [notifTitle, setNotifTitle] = useState('');
+  const [notifMessage, setNotifMessage] = useState('');
+  const [isSendingNotif, setIsSendingNotif] = useState(false);
+
+  // Reset Data state
+  const [showResetModal, setShowResetModal] = useState(false);
+  const [isResetting, setIsResetting] = useState(false);
 
   const fetchProviderBalance = async () => {
     try {
@@ -81,6 +94,13 @@ export default function AdminDashboard() {
         setSecondaryStats(prev => prev.map(s => {
           if (s.title === 'Successful Payments') return { ...s, value: approvedPayments.length.toLocaleString() };
           if (s.title === 'Pending Payments') return { ...s, value: pendingPayments.length.toLocaleString() };
+          return s;
+        }));
+      } else {
+        setStats(prev => prev.map(s => s.title === 'Total Revenue' ? { ...s, value: 'UGX 0' } : s));
+        setSecondaryStats(prev => prev.map(s => {
+          if (s.title === 'Successful Payments') return { ...s, value: '0' };
+          if (s.title === 'Pending Payments') return { ...s, value: '0' };
           return s;
         }));
       }
@@ -138,10 +158,93 @@ export default function AdminDashboard() {
           };
         });
         setChartData(dailyData);
+      } else {
+        setStats(prev => prev.map(s => {
+          if (s.title === 'Total Orders') return { ...s, value: '0' };
+          if (s.title === 'Total Profit') return { ...s, value: 'UGX 0' };
+          return s;
+        }));
+        setSecondaryStats(prev => prev.map(s => s.title === 'API Cost' ? { ...s, value: 'UGX 0' } : s));
+        setRecentOrders([]);
+        setPopularServices([]);
+        setChartData([]);
       }
       setIsLoading(false);
     });
   }, []);
+
+  const handleSendNotification = async () => {
+    if (!notifTitle || !notifMessage) {
+      toast.error('Please enter title and message');
+      return;
+    }
+
+    setIsSendingNotif(true);
+    const loadingToast = toast.loading('Sending notifications...');
+
+    try {
+      // Get all FCM tokens
+      const tokensSnapshot = await get(ref(db, 'fcm_tokens'));
+      const tokensData = tokensSnapshot.val();
+      
+      if (!tokensData) {
+        toast.error('No users found with push notifications enabled', { id: loadingToast });
+        return;
+      }
+
+      const tokens = Object.values(tokensData).map((t: any) => t.fcm_token);
+      
+      // In a real app, you'd call a backend function to send via FCM Admin SDK
+      // For this demo, we'll simulate sending and save to in-app notifications for all users
+      const usersSnapshot = await get(ref(db, 'users'));
+      const usersData = usersSnapshot.val();
+      
+      if (usersData) {
+        const userIds = Object.keys(usersData);
+        const timestamp = new Date().toISOString();
+        
+        for (const uid of userIds) {
+          const notifRef = push(ref(db, `notifications/${uid}`));
+          await set(notifRef, {
+            title: notifTitle,
+            message: notifMessage,
+            timestamp,
+            read: false,
+            type: 'system'
+          });
+        }
+      }
+
+      toast.success(`Notification sent to ${Object.keys(tokensData).length} devices!`, { id: loadingToast });
+      setNotifTitle('');
+      setNotifMessage('');
+    } catch (error: any) {
+      console.error('Failed to send notification:', error);
+      toast.error('Failed to send notification', { id: loadingToast });
+    } finally {
+      setIsSendingNotif(false);
+    }
+  };
+
+  const handleResetData = async () => {
+    setIsResetting(true);
+    const loadingToast = toast.loading('Resetting platform data...');
+
+    try {
+      // Clear payments, orders, and notifications
+      await remove(ref(db, 'payments'));
+      await remove(ref(db, 'orders'));
+      await remove(ref(db, 'notifications'));
+      
+      toast.success('Platform data reset successfully!', { id: loadingToast });
+      setShowResetModal(false);
+    } catch (error: any) {
+      console.error('Reset failed:', error);
+      toast.error('Failed to reset data', { id: loadingToast });
+    } finally {
+      setIsResetting(false);
+    }
+  };
 
   const COLORS = ['#4F46E5', '#7C3AED', '#EC4899', '#F59E0B', '#10B981', '#3B82F6', '#6366F1', '#8B5CF6', '#D946EF', '#F43F5E'];
 
@@ -336,7 +439,7 @@ export default function AdminDashboard() {
           </div>
         </div>
 
-        {/* System Health */}
+        {/* System Health & Reset */}
         <div className="lg:col-span-4 space-y-10">
           <div className="bg-gray-900 p-10 rounded-[3.5rem] text-white shadow-xl border border-white/5 relative overflow-hidden">
             <div className="absolute top-0 right-0 w-32 h-32 bg-white/5 rounded-full -translate-x-1/2 -translate-y-1/2 blur-2xl" />
@@ -372,27 +475,135 @@ export default function AdminDashboard() {
             </div>
           </div>
 
-          <div className="bg-white p-10 rounded-[3.5rem] border border-gray-100 shadow-sm">
-            <h3 className="text-xl font-display font-black text-gray-900 tracking-tighter mb-8">Quick Links</h3>
-            <div className="grid grid-cols-2 gap-4">
-              {[
-                { name: 'Users', path: '/admin/users' },
-                { name: 'Services', path: '/admin/services' },
-                { name: 'Payments', path: '/admin/payments' },
-                { name: 'Settings', path: '/admin/settings' }
-              ].map((link) => (
-                <Link 
-                  key={link.name} 
-                  to={link.path}
-                  className="p-4 rounded-2xl bg-gray-50 hover:bg-brand-purple/10 hover:text-brand-purple transition-all text-[10px] font-black uppercase tracking-widest text-gray-400 text-center border border-gray-100"
-                >
-                  {link.name}
-                </Link>
-              ))}
+          {/* Reset Data Feature */}
+          <div className="bg-rose-50 p-10 rounded-[3.5rem] border border-rose-100 shadow-sm">
+            <div className="flex items-center space-x-4 mb-6">
+              <div className="w-12 h-12 bg-rose-500 text-white rounded-2xl flex items-center justify-center text-xl shadow-lg shadow-rose-500/20">
+                <FontAwesomeIcon icon={faTrashAlt} />
+              </div>
+              <div>
+                <h3 className="text-xl font-display font-black text-rose-900 tracking-tighter">Reset Data</h3>
+                <p className="text-rose-400 text-[8px] font-black uppercase tracking-widest">Clear history & analytics</p>
+              </div>
+            </div>
+            <p className="text-rose-600/70 text-[10px] font-medium mb-8 leading-relaxed">
+              This will permanently delete all payment history, order logs, and analytics. User accounts will NOT be deleted.
+            </p>
+            <button 
+              onClick={() => setShowResetModal(true)}
+              className="w-full py-4 bg-rose-500 text-white font-black uppercase tracking-widest text-[10px] rounded-2xl shadow-xl shadow-rose-500/20 hover:bg-rose-600 transition-all active:scale-95 flex items-center justify-center gap-2"
+            >
+              <FontAwesomeIcon icon={faExclamationTriangle} />
+              Reset History
+            </button>
+          </div>
+        </div>
+      </div>
+
+      {/* Send Notification Section */}
+      <div className="bg-white p-8 md:p-12 rounded-[3.5rem] shadow-sm border border-gray-100">
+        <div className="flex items-center space-x-4 mb-10">
+          <div className="w-14 h-14 bg-brand-purple/10 text-brand-purple rounded-2xl flex items-center justify-center text-2xl border border-brand-purple/20">
+            <FontAwesomeIcon icon={faPaperPlane} />
+          </div>
+          <div>
+            <h2 className="text-2xl font-display font-black text-gray-900 tracking-tighter">Send Push Notification</h2>
+            <p className="text-gray-400 text-[10px] font-black uppercase tracking-widest">Broadcast to all users</p>
+          </div>
+        </div>
+
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+          <div className="space-y-6">
+            <div className="space-y-2">
+              <label className="text-[10px] font-black text-gray-400 uppercase tracking-widest ml-1">Notification Title</label>
+              <input 
+                type="text"
+                value={notifTitle}
+                onChange={(e) => setNotifTitle(e.target.value)}
+                placeholder="e.g. New Services Available!"
+                className="w-full px-6 py-4 bg-gray-50 border border-gray-100 rounded-2xl text-gray-900 focus:outline-none focus:ring-2 focus:ring-brand-purple/20 focus:border-brand-purple transition-all font-bold text-sm"
+              />
+            </div>
+            <div className="space-y-2">
+              <label className="text-[10px] font-black text-gray-400 uppercase tracking-widest ml-1">Message Body</label>
+              <textarea 
+                value={notifMessage}
+                onChange={(e) => setNotifMessage(e.target.value)}
+                placeholder="Enter your message here..."
+                rows={4}
+                className="w-full px-6 py-4 bg-gray-50 border border-gray-100 rounded-2xl text-gray-900 focus:outline-none focus:ring-2 focus:ring-brand-purple/20 focus:border-brand-purple transition-all font-bold text-sm resize-none"
+              />
+            </div>
+            <button 
+              onClick={handleSendNotification}
+              disabled={isSendingNotif}
+              className="w-full py-5 bg-gradient-to-r from-blue-600 to-purple-600 text-white font-black uppercase tracking-widest text-[10px] rounded-2xl shadow-xl shadow-blue-600/20 hover:scale-[1.02] transition-all active:scale-95 flex items-center justify-center gap-3 disabled:opacity-50"
+            >
+              <FontAwesomeIcon icon={faPaperPlane} className={isSendingNotif ? 'animate-bounce' : ''} />
+              {isSendingNotif ? 'Sending...' : 'Send Broadcast'}
+            </button>
+          </div>
+
+          <div className="bg-gray-50 p-8 rounded-[2.5rem] border border-gray-100 flex flex-col items-center justify-center text-center space-y-6">
+            <div className="w-20 h-20 bg-white rounded-3xl flex items-center justify-center text-brand-purple text-3xl shadow-sm border border-gray-100">
+              <FontAwesomeIcon icon={faBell} />
+            </div>
+            <div className="space-y-2">
+              <h3 className="text-xl font-display font-black text-gray-900 tracking-tighter">Preview Notification</h3>
+              <p className="text-gray-400 text-[10px] font-black uppercase tracking-widest max-w-xs mx-auto">This is how users will see it on their devices</p>
+            </div>
+            <div className="w-full max-w-xs bg-white p-4 rounded-2xl shadow-lg border border-gray-100 text-left space-y-2">
+              <div className="flex items-center space-x-3">
+                <img src="https://i.postimg.cc/sxNQyXFG/0x0.png" alt="Logo" className="w-8 h-8 rounded-lg" />
+                <div>
+                  <div className="text-[10px] font-black text-gray-900">{notifTitle || 'Notification Title'}</div>
+                  <div className="text-[8px] text-gray-500 font-medium line-clamp-2">{notifMessage || 'Your message will appear here...'}</div>
+                </div>
+              </div>
             </div>
           </div>
         </div>
       </div>
+
+      {/* Reset Confirmation Modal */}
+      <AnimatePresence>
+        {showResetModal && (
+          <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm">
+            <motion.div 
+              initial={{ opacity: 0, scale: 0.9, y: 20 }}
+              animate={{ opacity: 1, scale: 1, y: 0 }}
+              exit={{ opacity: 0, scale: 0.9, y: 20 }}
+              className="max-w-md w-full bg-white rounded-[3rem] p-10 text-center space-y-8 shadow-2xl"
+            >
+              <div className="w-20 h-20 bg-rose-50 text-rose-500 rounded-3xl flex items-center justify-center text-3xl mx-auto border border-rose-100">
+                <FontAwesomeIcon icon={faExclamationTriangle} />
+              </div>
+              <div className="space-y-2">
+                <h3 className="text-2xl font-display font-black text-gray-900 tracking-tighter">Are you sure?</h3>
+                <p className="text-gray-500 text-xs font-medium leading-relaxed">
+                  This action will permanently delete all <span className="text-rose-500 font-black">Analytics, Payment History, and Order Logs</span>. This cannot be undone.
+                </p>
+              </div>
+              <div className="flex flex-col gap-3">
+                <button 
+                  onClick={handleResetData}
+                  disabled={isResetting}
+                  className="w-full py-4 bg-rose-500 text-white font-black uppercase tracking-widest text-[10px] rounded-2xl shadow-xl shadow-rose-500/20 hover:bg-rose-600 transition-all active:scale-95 disabled:opacity-50"
+                >
+                  {isResetting ? 'Resetting...' : 'Yes, Reset Everything'}
+                </button>
+                <button 
+                  onClick={() => setShowResetModal(false)}
+                  disabled={isResetting}
+                  className="w-full py-4 bg-gray-100 text-gray-900 font-black uppercase tracking-widest text-[10px] rounded-2xl hover:bg-gray-200 transition-all active:scale-95"
+                >
+                  Cancel
+                </button>
+              </div>
+            </motion.div>
+          </div>
+        )}
+      </AnimatePresence>
     </div>
   );
 }

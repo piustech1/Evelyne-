@@ -6,6 +6,8 @@
 import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
 import { Toaster } from 'react-hot-toast';
 import { useAuth } from './hooks/useAuth';
+import { useNotifications } from './hooks/useNotifications';
+import { useOrderStatusSync } from './hooks/useOrderStatusSync';
 import ScrollToTop from './components/ScrollToTop';
 import LandingPage from './pages/LandingPage';
 import Login from './pages/Login';
@@ -39,6 +41,8 @@ import AdminSettings from './pages/admin/Settings';
 
 export default function App() {
   const { user, loading } = useAuth();
+  useNotifications();
+  useOrderStatusSync();
 
   if (loading) {
     return (

@@ -74,6 +74,21 @@ async function startServer() {
     }
   });
 
+  app.post('/api/smm/status', async (req, res) => {
+    try {
+      const { orderId } = req.body;
+      const response = await fetch(SMM_API_URL, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+        body: `key=${API_KEY}&action=status&order=${encodeURIComponent(orderId)}`
+      });
+      const data = await response.json();
+      res.json(data);
+    } catch (error: any) {
+      res.status(500).json({ error: error.message });
+    }
+  });
+
   if (process.env.NODE_ENV !== 'production') {
     const vite = await createViteServer({
       server: { middlewareMode: true },

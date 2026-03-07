@@ -19,7 +19,7 @@ export default function Dashboard() {
   const [isLoading, setIsLoading] = useState(true);
   const [showReferralBanner, setShowReferralBanner] = useState(false);
 
-  const referralLink = `${window.location.origin}/signup?ref=${userData?.username || ''}`;
+  const referralLink = `https://easyboost.app/register?ref=${userData?.username || ''}`;
 
   useEffect(() => {
     // Check if referral banner should be shown
@@ -41,12 +41,12 @@ export default function Dashboard() {
 
   const shareReferral = async () => {
     if (userData?.username) {
-      const text = `Join EasyBoost and grow your social media instantly! \n\nSign up here: ${referralLink}`;
+      const text = `Grow your social media using EasyBoost. \n\nSign up here: ${referralLink}`;
       
       if (navigator.share) {
         try {
           await navigator.share({
-            title: 'EasyBoost Referral',
+            title: 'Join EasyBoost',
             text: text,
             url: referralLink,
           });
@@ -391,7 +391,7 @@ export default function Dashboard() {
                 <p className="text-[10px] text-white/70 leading-relaxed font-medium">Need help with an order or have a question? Our team is here for you.</p>
               </div>
               <button 
-                onClick={() => window.open('https://wa.me/256709728323?text=Easy%20Boost%20user', '_blank')}
+                onClick={() => window.open('https://wa.me/256709728322', '_blank')}
                 className="w-full py-3 bg-white text-blue-600 hover:bg-white/90 rounded-xl text-[10px] font-black uppercase tracking-widest transition-all flex items-center justify-center group shadow-sm"
               >
                 Contact Us

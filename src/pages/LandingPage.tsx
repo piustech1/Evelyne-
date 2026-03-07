@@ -85,8 +85,8 @@ export default function LandingPage() {
       </section>
 
       {/* Platforms Section */}
-      <section className="py-20 bg-gray-50/50 relative z-30">
-        <div className="max-w-7xl mx-auto px-6 text-center space-y-12">
+      <section className="py-12 bg-gray-50/50 relative z-30">
+        <div className="max-w-7xl mx-auto px-6 text-center space-y-8">
           <div className="space-y-2">
             <h2 className="text-[10px] font-black text-brand-purple uppercase tracking-[0.3em]">Supported Platforms</h2>
             <p className="text-2xl md:text-4xl font-display font-black text-brand-dark tracking-tighter">We Boost Everything</p>
@@ -117,25 +117,25 @@ export default function LandingPage() {
       </section>
 
       {/* CTA Section */}
-      <section className="py-24 relative overflow-hidden bg-white">
+      <section className="py-12 relative overflow-hidden bg-white">
         <div className="max-w-7xl mx-auto px-6">
-          <div className="bg-gradient-to-br from-blue-600 to-purple-600 rounded-[3rem] p-12 md:p-24 text-center text-white relative overflow-hidden shadow-2xl shadow-blue-600/30">
+          <div className="bg-gradient-to-br from-blue-600 to-purple-600 rounded-[3rem] p-10 md:p-20 text-center text-white relative overflow-hidden shadow-2xl shadow-blue-600/30">
             {/* Decorative circles */}
             <div className="absolute top-0 left-0 w-64 h-64 bg-white/10 rounded-full -translate-x-1/2 -translate-y-1/2 blur-3xl" />
             <div className="absolute bottom-0 right-0 w-96 h-96 bg-black/5 rounded-full translate-x-1/3 translate-y-1/3 blur-3xl" />
             
-            <div className="relative z-10 space-y-8 md:space-y-10">
-              <h2 className="text-4xl md:text-7xl font-bold leading-tight tracking-tighter">Ready to Boost <br /> Your Growth?</h2>
+            <div className="relative z-10 space-y-6 md:space-y-8">
+              <h2 className="text-4xl md:text-6xl font-bold leading-tight tracking-tighter">Ready to Boost <br /> Your Growth?</h2>
               <p className="text-white/80 text-lg md:text-xl max-w-xl mx-auto font-medium">
                 Join 50,000+ users who are already using EasyBoost to grow their social media presence and dominate their niche.
               </p>
               <Link
                 to="/signup"
-                className="inline-block px-12 py-5 md:px-16 md:py-6 bg-white text-blue-600 font-black rounded-2xl shadow-xl hover:scale-105 transition-transform text-xl md:text-2xl uppercase tracking-widest"
+                className="inline-block px-10 py-4 md:px-14 md:py-5 bg-white text-blue-600 font-black rounded-2xl shadow-xl hover:scale-105 transition-transform text-lg md:text-xl uppercase tracking-widest"
               >
                 Start Boosting
               </Link>
-              <div className="flex flex-wrap items-center justify-center gap-6 md:gap-12 text-[10px] md:text-sm font-bold text-white/60 uppercase tracking-widest pt-4">
+              <div className="flex flex-wrap items-center justify-center gap-6 md:gap-10 text-[10px] md:text-sm font-bold text-white/60 uppercase tracking-widest pt-4">
                 <div className="flex items-center space-x-2">
                   <FontAwesomeIcon icon={faCheckCircle} className="text-white/80" />
                   <span>Secure Payments</span>
@@ -155,7 +155,7 @@ export default function LandingPage() {
       </section>
 
       {/* WhatsApp Community Section */}
-      <section className="py-20 bg-gray-50/30 relative z-30">
+      <section className="py-12 bg-gray-50/30 relative z-30">
         <div className="max-w-4xl mx-auto px-6">
           <WhatsAppCommunity />
         </div>

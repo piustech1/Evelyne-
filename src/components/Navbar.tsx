@@ -60,8 +60,13 @@ export default function Navbar() {
         <div className="flex justify-between items-center h-12">
           {/* Logo */}
           <Link to="/" className="flex items-center space-x-3 group">
-            <div className="w-8 h-8 bg-white rounded-lg flex items-center justify-center shadow-sm group-hover:scale-110 transition-transform">
-              <FontAwesomeIcon icon={faRocket} className="text-blue-600 text-sm" />
+            <div className="w-8 h-8 bg-white rounded-lg flex items-center justify-center shadow-sm group-hover:scale-110 transition-transform overflow-hidden">
+              <img 
+                src="https://i.postimg.cc/sxNQyXFG/0x0.png" 
+                alt="EasyBoost Logo" 
+                className="w-full h-full object-cover"
+                referrerPolicy="no-referrer"
+              />
             </div>
             <span className="text-lg font-display font-black tracking-tighter text-white">
               Easy<span className="text-white/80">Boost</span>
