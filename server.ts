@@ -133,16 +133,19 @@ async function startServer() {
     setInterval(async () => {
       try {
         const paymentsRef = ref(db, 'payments');
-        const pendingQuery = query(paymentsRef, orderByChild('status'), equalTo('pending'));
-        const snapshot = await get(pendingQuery);
-        const pendingPayments = snapshot.val();
+        // Fetch all payments and filter client-side to avoid "Index not defined" error
+        const snapshot = await get(paymentsRef);
+        const allPayments = snapshot.val();
 
-        if (!pendingPayments) return;
+        if (!allPayments) return;
 
         const auth = Buffer.from(`${MARZPAY_API_KEY}:${MARZPAY_API_SECRET}`).toString('base64');
 
-        for (const reference of Object.keys(pendingPayments)) {
-          const payment = pendingPayments[reference];
+        for (const reference of Object.keys(allPayments)) {
+          const payment = allPayments[reference];
+          
+          // Only process 'pending' payments
+          if (payment.status !== 'pending' && payment.status !== 'Pending') continue;
           
           // Wait at least 30 seconds after creation before polling to give webhook a chance
           const createdAt = new Date(payment.createdAt).getTime();
@@ -178,6 +181,7 @@ async function startServer() {
 
   app.post('/api/create-payment', async (req, res) => {
     try {
+      console.log("Payment request received");
       const { userId, username, userEmail, phoneNumber, amount, provider } = req.body;
       
       if (!userId || !phoneNumber || !amount) {
@@ -201,9 +205,10 @@ async function startServer() {
         createdAt: new Date().toISOString()
       });
 
+      console.log("Calling MarzPay API");
       const auth = Buffer.from(`${MARZPAY_API_KEY}:${MARZPAY_API_SECRET}`).toString('base64');
       
-      // Use the Vercel URL if provided, otherwise fallback to dynamic APP_URL
+      // Use the production URL for the callback
       const callbackUrl = "https://easyboost.vercel.app/api/marz-webhook";
 
       const marzResponse = await fetch('https://wallet.wearemarz.com/api/v1/collect-money', {
@@ -218,6 +223,7 @@ async function startServer() {
           phone_number: normalizedPhone,
           country: 'UG',
           reference: reference,
+          description: "Wallet Top-up",
           callback_url: callbackUrl
         })
       });
@@ -227,31 +233,48 @@ async function startServer() {
         throw new Error(errorData.message || 'MarzPay initiation failed');
       }
 
-      res.json({ success: true, message: 'Payment initiated', reference });
+      return res.json({ 
+        success: true, 
+        reference: reference,
+        message: 'Payment initiated' 
+      });
     } catch (error: any) {
       console.error('Create Payment Error:', error);
-      res.status(500).json({ success: false, message: error.message });
+      return res.status(500).json({ 
+        success: false, 
+        message: error.message || "Payment initiation failed"
+      });
     }
   });
 
   app.post('/api/marz-webhook', async (req, res) => {
     try {
-      const data = req.body;
-      console.log('Webhook Received:', JSON.stringify(data, null, 2));
+      const payload = req.body;
+      console.log('Webhook received', JSON.stringify(payload, null, 2));
 
-      if (!data?.transaction) return res.status(200).send('OK');
+      // Extract transaction data - handle both direct and nested structures
+      const transaction = payload?.data?.transaction || payload?.transaction;
+      
+      if (!transaction) {
+        console.log('No transaction data in webhook');
+        return res.status(200).json({ received: true, message: "No transaction data" });
+      }
 
-      const { status, reference, amount, provider } = data.transaction;
+      const { status, reference, amount, provider } = transaction;
       const rawAmount = typeof amount === 'object' ? amount?.raw : amount;
 
-      if (data.event_type === 'collection.completed' && status === 'completed') {
-        await processSuccessfulPayment(reference, rawAmount, provider, 'webhook');
+      // Only process if event_type is collection.completed and status is completed
+      if (payload.event_type === 'collection.completed' && status === 'completed') {
+        const success = await processSuccessfulPayment(reference, rawAmount, provider, 'webhook');
+        if (success) {
+          console.log("Wallet credited", reference);
+        }
       }
       
-      res.status(200).send('OK');
+      return res.status(200).json({ received: true });
     } catch (error) {
       console.error('Webhook processing failed:', error);
-      res.status(200).send('OK');
+      return res.status(200).json({ received: true, error: "Internal processing error" });
     }
   });
 
