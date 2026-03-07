@@ -64,13 +64,130 @@ async function startServer() {
     return normalized;
   };
 
+  // Helper function to process successful payments (used by webhook and worker)
+  async function processSuccessfulPayment(reference: string, rawAmount: number, providerInfo?: string, verifiedBy: string = 'webhook') {
+    try {
+      const paymentRef = ref(db, `payments/${reference}`);
+      const snapshot = await get(paymentRef);
+      const paymentData = snapshot.val();
+
+      if (paymentData && (paymentData.status === 'pending' || paymentData.status === 'Pending')) {
+        let userId = paymentData.userId;
+
+        // Fallback: If userId is missing, lookup by email
+        if (!userId && paymentData.userEmail) {
+          console.log(`[${verifiedBy.toUpperCase()}] UserId missing, falling back to email lookup: ${paymentData.userEmail}`);
+          const usersRef = ref(db, 'users');
+          const userQuery = query(usersRef, orderByChild('email'), equalTo(paymentData.userEmail));
+          const userSnapshot = await get(userQuery);
+          const usersData = userSnapshot.val();
+          if (usersData) {
+            userId = Object.keys(usersData)[0];
+          }
+        }
+
+        if (userId) {
+          console.log(`[${verifiedBy.toUpperCase()}] Crediting User ${userId}: UGX ${rawAmount} (Ref: ${reference})`);
+          
+          // 1. Atomic Balance Update
+          const userRef = ref(db, `users/${userId}`);
+          await update(userRef, {
+            balance: increment(Number(rawAmount))
+          });
+
+          // 2. Update Payment Record
+          await update(paymentRef, {
+            status: 'Successful',
+            phone: paymentData.phone || '',
+            provider: providerInfo || paymentData.provider || 'MarzPay',
+            verifiedBy,
+            completedAt: new Date().toISOString(),
+            updatedAt: new Date().toISOString()
+          });
+
+          // 3. Add Notification
+          const notificationRef = push(ref(db, `notifications/${userId}`));
+          await set(notificationRef, {
+            message: `Deposit successful! UGX ${Number(rawAmount).toLocaleString()} has been credited to your wallet.`,
+            type: 'deposit',
+            timestamp: new Date().toISOString(),
+            read: false
+          });
+
+          console.log(`[${verifiedBy.toUpperCase()}] SUCCESS: Wallet updated for User ${userId}`);
+          return true;
+        } else {
+          console.error(`[${verifiedBy.toUpperCase()}] FAILED: No userId found for payment ${reference}`);
+        }
+      }
+      return false;
+    } catch (error) {
+      console.error(`[${verifiedBy.toUpperCase()}] Error processing payment ${reference}:`, error);
+      return false;
+    }
+  }
+
+  // Background Verification Worker
+  function startPaymentVerificationWorker() {
+    console.log('Payment Verification Worker started (Polling every 20s)');
+    setInterval(async () => {
+      try {
+        const paymentsRef = ref(db, 'payments');
+        const pendingQuery = query(paymentsRef, orderByChild('status'), equalTo('pending'));
+        const snapshot = await get(pendingQuery);
+        const pendingPayments = snapshot.val();
+
+        if (!pendingPayments) return;
+
+        const auth = Buffer.from(`${MARZPAY_API_KEY}:${MARZPAY_API_SECRET}`).toString('base64');
+
+        for (const reference of Object.keys(pendingPayments)) {
+          const payment = pendingPayments[reference];
+          
+          // Wait at least 30 seconds after creation before polling to give webhook a chance
+          const createdAt = new Date(payment.createdAt).getTime();
+          if (Date.now() - createdAt < 30000) continue;
+
+          try {
+            const response = await fetch(`https://wallet.wearemarz.com/api/v1/transaction-status/${reference}`, {
+              headers: {
+                'Authorization': `Basic ${auth}`,
+                'Accept': 'application/json'
+              }
+            });
+
+            if (response.ok) {
+              const data = await response.json();
+              if (data?.status === 'completed') {
+                const amount = typeof data.amount === 'object' ? data.amount?.raw : (data.amount || payment.amount);
+                await processSuccessfulPayment(reference, amount, data.provider, 'system-check');
+              }
+            }
+          } catch (err) {
+            // Silently fail for individual checks to not break the loop
+          }
+        }
+      } catch (error) {
+        console.error('Verification Worker Error:', error);
+      }
+    }, 20000);
+  }
+
+  // Start the worker
+  startPaymentVerificationWorker();
+
   app.post('/api/create-payment', async (req, res) => {
     try {
       const { userId, username, userEmail, phoneNumber, amount, provider } = req.body;
+      
+      if (!userId || !phoneNumber || !amount) {
+        return res.status(400).json({ success: false, message: 'Missing required fields' });
+      }
+
       const normalizedPhone = normalizePhoneNumber(phoneNumber);
       const reference = crypto.randomUUID();
 
-      // IMPORTANT: Store the userId directly in the payment record
+      // Store pending payment in Firebase
       const paymentRef = ref(db, `payments/${reference}`);
       await set(paymentRef, {
         reference,
@@ -79,15 +196,15 @@ async function startServer() {
         userEmail: userEmail || '',
         phone: normalizedPhone,
         amount: Number(amount),
-        provider,
+        provider: provider || 'MarzPay',
         status: 'pending',
         createdAt: new Date().toISOString()
       });
 
       const auth = Buffer.from(`${MARZPAY_API_KEY}:${MARZPAY_API_SECRET}`).toString('base64');
-      const callbackUrl = process.env.APP_URL 
-        ? `${process.env.APP_URL}/api/marz-webhook`
-        : `${req.protocol}://${req.get('host')}/api/marz-webhook`;
+      
+      // Use the Vercel URL if provided, otherwise fallback to dynamic APP_URL
+      const callbackUrl = "https://easyboost.vercel.app/api/marz-webhook";
 
       const marzResponse = await fetch('https://wallet.wearemarz.com/api/v1/collect-money', {
         method: 'POST',
@@ -105,87 +222,32 @@ async function startServer() {
         })
       });
 
-      res.json({ success: true, reference });
+      if (!marzResponse.ok) {
+        const errorData = await marzResponse.json().catch(() => ({}));
+        throw new Error(errorData.message || 'MarzPay initiation failed');
+      }
+
+      res.json({ success: true, message: 'Payment initiated', reference });
     } catch (error: any) {
-      res.status(500).json({ error: error.message });
+      console.error('Create Payment Error:', error);
+      res.status(500).json({ success: false, message: error.message });
     }
   });
 
   app.post('/api/marz-webhook', async (req, res) => {
     try {
       const data = req.body;
-      console.log('Webhook Data Received:', JSON.stringify(data, null, 2));
+      console.log('Webhook Received:', JSON.stringify(data, null, 2));
 
-      if (!data?.transaction) {
-        console.log('No transaction data in webhook');
-        return res.status(200).send('OK');
-      }
+      if (!data?.transaction) return res.status(200).send('OK');
 
-      const { status, reference, amount, phone_number, provider } = data.transaction;
-      // Handle both object and number formats for amount
+      const { status, reference, amount, provider } = data.transaction;
       const rawAmount = typeof amount === 'object' ? amount?.raw : amount;
 
-      console.log(`Processing Webhook: Ref=${reference}, Status=${status}, Event=${data.event_type}, Amount=${rawAmount}`);
-
-      // Only proceed if MarzPay says 'completed'
       if (data.event_type === 'collection.completed' && status === 'completed') {
-        
-        // 1. Find the payment record directly by its UUID key
-        const paymentRef = ref(db, `payments/${reference}`);
-        const snapshot = await get(paymentRef);
-        const paymentData = snapshot.val();
-
-        if (paymentData && (paymentData.status === 'pending' || paymentData.status === 'Pending')) {
-          let userId = paymentData.userId;
-
-          // Fallback: If userId is missing, lookup by email
-          if (!userId && paymentData.userEmail) {
-            console.log(`UserId missing in payment record, falling back to email lookup for: ${paymentData.userEmail}`);
-            const usersRef = ref(db, 'users');
-            const userQuery = query(usersRef, orderByChild('email'), equalTo(paymentData.userEmail));
-            const userSnapshot = await get(userQuery);
-            const usersData = userSnapshot.val();
-            if (usersData) {
-              userId = Object.keys(usersData)[0];
-              console.log(`Found userId via fallback: ${userId}`);
-            }
-          }
-
-          if (userId) {
-            console.log(`Updating balance for User: ${userId}, Amount: ${rawAmount}`);
-            
-            // 2. DIRECT BALANCE UPDATE: Use atomic increment
-            const userRef = ref(db, `users/${userId}`);
-            await update(userRef, {
-              balance: increment(Number(rawAmount))
-            });
-
-            // 3. UPDATE PAYMENT: Mark as Successful and save phone/method
-            await update(paymentRef, {
-              status: 'Successful',
-              phone: phone_number || paymentData.phone || '',
-              provider: provider || paymentData.provider || '',
-              completedAt: new Date().toISOString(),
-              updatedAt: new Date().toISOString()
-            });
-
-            // 4. ADD NOTIFICATION
-            const notificationRef = push(ref(db, `notifications/${userId}`));
-            await set(notificationRef, {
-              message: `Deposit successful! UGX ${Number(rawAmount).toLocaleString()} has been credited to your wallet.`,
-              type: 'deposit',
-              timestamp: new Date().toISOString(),
-              read: false
-            });
-
-            console.log(`SUCCESS: Wallet updated for User ${userId}`);
-          } else {
-            console.error(`FAILED: No userId found for payment reference ${reference}`);
-          }
-        } else {
-          console.log(`Payment ${reference} already processed or not found. Status: ${paymentData?.status}`);
-        }
+        await processSuccessfulPayment(reference, rawAmount, provider, 'webhook');
       }
+      
       res.status(200).send('OK');
     } catch (error) {
       console.error('Webhook processing failed:', error);
