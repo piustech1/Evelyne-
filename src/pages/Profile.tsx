@@ -16,7 +16,7 @@ export default function Profile() {
   const [isLoading, setIsLoading] = useState(false);
   const [orderStats, setOrderStats] = useState({ total: 0, pending: 0, completed: 0 });
 
-  const referralLink = `https://easyboost.app/register?ref=${userData?.username || ''}`;
+  const referralLink = `${window.location.origin}/register?ref=${userData?.username || ''}`;
 
   useEffect(() => {
     if (userData) {
@@ -27,13 +27,13 @@ export default function Profile() {
   const copyReferralLink = () => {
     if (userData?.username) {
       navigator.clipboard.writeText(referralLink);
-      toast.success('Referral link copied!');
+      toast.success('Referral link copied successfully!');
     }
   };
 
   const shareReferral = async () => {
     if (userData?.username) {
-      const text = `Grow your social media using EasyBoost. \n\nSign up here: ${referralLink}`;
+      const text = `Grow your social media using EasyBoost.`;
       
       if (navigator.share) {
         try {
@@ -43,10 +43,12 @@ export default function Profile() {
             url: referralLink,
           });
         } catch (err) {
-          window.open(`https://wa.me/?text=${encodeURIComponent(text)}`, '_blank');
+          // Fallback to copy if share fails or is cancelled
+          copyReferralLink();
         }
       } else {
-        window.open(`https://wa.me/?text=${encodeURIComponent(text)}`, '_blank');
+        // Fallback to copy if Web Share API is not supported
+        copyReferralLink();
       }
     }
   };

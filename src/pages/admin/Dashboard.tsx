@@ -194,8 +194,24 @@ export default function AdminDashboard() {
 
       const tokens = Object.values(tokensData).map((t: any) => t.fcm_token);
       
-      // In a real app, you'd call a backend function to send via FCM Admin SDK
-      // For this demo, we'll simulate sending and save to in-app notifications for all users
+      // Call backend to send actual push notifications
+      try {
+        await fetch('/api/admin/send-notification', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            tokens,
+            title: notifTitle,
+            message: notifMessage,
+            url: '/notifications'
+          })
+        });
+      } catch (fcmErr) {
+        console.error('FCM Backend Error:', fcmErr);
+        // Continue to save in-app notifications even if push fails
+      }
+
+      // Save to in-app notifications for all users
       const usersSnapshot = await get(ref(db, 'users'));
       const usersData = usersSnapshot.val();
       

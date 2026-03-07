@@ -20,7 +20,7 @@ messaging.onBackgroundMessage((payload) => {
     body: payload.notification.body,
     icon: 'https://i.postimg.cc/sxNQyXFG/0x0.png',
     data: {
-      url: payload.data?.url || '/'
+      url: payload.data?.url || '/notifications'
     }
   };
 

@@ -59,8 +59,25 @@ export function useOrderStatusSync() {
               orderId: id
             });
 
-            // Note: Push notification will be handled by the background listener in useNotifications
-            // if we were using a real backend. For now, the user will see it when they open the app.
+            // Send actual push notification via backend
+            try {
+              const tokenSnapshot = await get(ref(db, `fcm_tokens/${user.uid}`));
+              const tokenData = tokenSnapshot.val();
+              if (tokenData?.fcm_token) {
+                await fetch('/api/admin/send-notification', {
+                  method: 'POST',
+                  headers: { 'Content-Type': 'application/json' },
+                  body: JSON.stringify({
+                    tokens: [tokenData.fcm_token],
+                    title,
+                    message,
+                    url: '/orders'
+                  })
+                });
+              }
+            } catch (pushErr) {
+              console.error('Failed to send order status push:', pushErr);
+            }
           }
         } catch (error) {
           console.error(`Failed to sync order ${id}:`, error);

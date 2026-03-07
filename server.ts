@@ -3,8 +3,24 @@ import { createServer as createViteServer } from 'vite';
 import cors from 'cors';
 import dotenv from 'dotenv';
 import fetch from 'node-fetch';
+import admin from 'firebase-admin';
 
 dotenv.config();
+
+// Initialize Firebase Admin
+if (process.env.FIREBASE_SERVICE_ACCOUNT) {
+  try {
+    const serviceAccount = JSON.parse(process.env.FIREBASE_SERVICE_ACCOUNT);
+    if (!admin.apps.length) {
+      admin.initializeApp({
+        credential: admin.credential.cert(serviceAccount)
+      });
+      console.log("Firebase Admin initialized");
+    }
+  } catch (error) {
+    console.error("Failed to initialize Firebase Admin:", error);
+  }
+}
 
 async function startServer() {
   const app = express();
@@ -85,6 +101,37 @@ async function startServer() {
       const data = await response.json();
       res.json(data);
     } catch (error: any) {
+      res.status(500).json({ error: error.message });
+    }
+  });
+
+  app.post('/api/admin/send-notification', async (req, res) => {
+    try {
+      const { tokens, title, message, url } = req.body;
+      
+      if (!admin.apps.length) {
+        return res.status(500).json({ error: "Firebase Admin not initialized. Please set FIREBASE_SERVICE_ACCOUNT env var." });
+      }
+
+      if (!tokens || !tokens.length) {
+        return res.status(400).json({ error: "No tokens provided" });
+      }
+
+      const payload = {
+        notification: {
+          title,
+          body: message,
+        },
+        data: {
+          url: url || '/notifications'
+        },
+        tokens: tokens
+      };
+
+      const response = await admin.messaging().sendEachForMulticast(payload);
+      res.json({ success: true, response });
+    } catch (error: any) {
+      console.error("FCM Error:", error);
       res.status(500).json({ error: error.message });
     }
   });
