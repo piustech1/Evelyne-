@@ -1,6 +1,6 @@
 import { useState, useEffect, FormEvent } from 'react';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
-import { faUser, faEnvelope, faWallet, faSignOutAlt, faShieldAlt, faBell, faCog, faCheckCircle, faPlus, faHistory, faBolt, faArrowRight, faRocket, faLock, faChevronRight } from '@fortawesome/free-solid-svg-icons';
+import { faUser, faEnvelope, faWallet, faSignOutAlt, faShieldAlt, faBell, faCog, faCheckCircle, faPlus, faHistory, faBolt, faArrowRight, faRocket, faLock, faChevronRight, faCopy, faShareAlt } from '@fortawesome/free-solid-svg-icons';
 import { motion } from 'motion/react';
 import { useNavigate, Link } from 'react-router-dom';
 import toast from 'react-hot-toast';
@@ -16,11 +16,40 @@ export default function Profile() {
   const [isLoading, setIsLoading] = useState(false);
   const [orderStats, setOrderStats] = useState({ total: 0, pending: 0, completed: 0 });
 
+  const referralLink = `${window.location.origin}/signup?ref=${userData?.username || ''}`;
+
   useEffect(() => {
     if (userData) {
       setName(userData.name || '');
     }
   }, [userData]);
+
+  const copyReferralLink = () => {
+    if (userData?.username) {
+      navigator.clipboard.writeText(referralLink);
+      toast.success('Referral link copied!');
+    }
+  };
+
+  const shareReferral = async () => {
+    if (userData?.username) {
+      const text = `Join EasyBoost and grow your social media instantly! \n\nSign up here: ${referralLink}`;
+      
+      if (navigator.share) {
+        try {
+          await navigator.share({
+            title: 'EasyBoost Referral',
+            text: text,
+            url: referralLink,
+          });
+        } catch (err) {
+          window.open(`https://wa.me/?text=${encodeURIComponent(text)}`, '_blank');
+        }
+      } else {
+        window.open(`https://wa.me/?text=${encodeURIComponent(text)}`, '_blank');
+      }
+    }
+  };
 
   useEffect(() => {
     if (user) {
@@ -171,6 +200,47 @@ export default function Profile() {
               ))}
             </div>
           </section>
+
+          {/* Referral Link Section */}
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            className="bg-gray-50 p-6 md:p-10 rounded-3xl shadow-sm border border-gray-200"
+          >
+            <div className="flex items-center justify-between mb-8">
+              <h3 className="text-xl font-display font-black text-gray-900 tracking-tighter">Referral Program</h3>
+              <div className="px-3 py-1 bg-brand-purple/10 text-brand-purple text-[8px] font-black uppercase tracking-widest rounded-full">Earn Rewards</div>
+            </div>
+            
+            <div className="space-y-6">
+              <p className="text-gray-500 text-xs font-medium leading-relaxed">
+                Invite your friends to EasyBoost and earn rewards for every successful referral. Your friends also get a special welcome bonus!
+              </p>
+
+              <div className="bg-white p-4 rounded-2xl border border-gray-100 flex flex-col sm:flex-row items-center justify-between gap-4">
+                <div className="text-left w-full overflow-hidden">
+                  <p className="text-[8px] font-black text-gray-400 uppercase tracking-widest mb-1">Your Referral Link</p>
+                  <p className="text-xs font-bold text-brand-purple truncate">{referralLink}</p>
+                </div>
+                <div className="flex items-center gap-2 w-full sm:w-auto">
+                  <button 
+                    onClick={copyReferralLink}
+                    className="flex-1 sm:flex-none h-10 px-4 bg-gray-100 hover:bg-gray-200 text-gray-900 rounded-xl flex items-center justify-center gap-2 transition-all active-press text-[10px] font-black uppercase tracking-widest"
+                  >
+                    <FontAwesomeIcon icon={faCopy} />
+                    Copy
+                  </button>
+                  <button 
+                    onClick={shareReferral}
+                    className="flex-1 sm:flex-none h-10 px-4 bg-gradient-to-r from-blue-600 to-purple-600 text-white rounded-xl flex items-center justify-center gap-2 transition-all active-press text-[10px] font-black uppercase tracking-widest shadow-sm"
+                  >
+                    <FontAwesomeIcon icon={faShareAlt} />
+                    Share
+                  </button>
+                </div>
+              </div>
+            </div>
+          </motion.div>
 
           {/* Account Details Form */}
           <motion.div

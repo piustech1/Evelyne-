@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
-import { faWallet, faShoppingCart, faClock, faCheckCircle, faPlus, faArrowRight, faRocket, faShieldAlt, faThLarge, faGlobe, faUserFriends, faCopy, faTimes } from '@fortawesome/free-solid-svg-icons';
+import { faWallet, faShoppingCart, faClock, faCheckCircle, faPlus, faArrowRight, faRocket, faShieldAlt, faThLarge, faGlobe, faUserFriends, faCopy, faTimes, faShareAlt } from '@fortawesome/free-solid-svg-icons';
 import { motion, AnimatePresence } from 'motion/react';
 import { Link } from 'react-router-dom';
 import { useAuth } from '../hooks/useAuth';
@@ -9,6 +9,7 @@ import { ref, onValue, query, orderByChild, limitToLast, equalTo } from 'firebas
 import { fetchServices, Service } from '../lib/servicesStore';
 import { platformIcons, platformTextColors, platformBgs } from '../utils/platformData';
 import toast from 'react-hot-toast';
+import WhatsAppCommunity from '../components/WhatsAppCommunity';
 
 export default function Dashboard() {
   const { user, userData } = useAuth();
@@ -17,6 +18,8 @@ export default function Dashboard() {
   const [platforms, setPlatforms] = useState<any[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [showReferralBanner, setShowReferralBanner] = useState(false);
+
+  const referralLink = `${window.location.origin}/signup?ref=${userData?.username || ''}`;
 
   useEffect(() => {
     // Check if referral banner should be shown
@@ -29,17 +32,30 @@ export default function Dashboard() {
     }
   }, []);
 
-  const copyReferralCode = () => {
-    if (userData?.referralCode) {
-      navigator.clipboard.writeText(userData.referralCode);
-      toast.success('Referral code copied!');
+  const copyReferralLink = () => {
+    if (userData?.username) {
+      navigator.clipboard.writeText(referralLink);
+      toast.success('Referral link copied!');
     }
   };
 
-  const inviteFriends = () => {
-    if (userData?.referralCode) {
-      const text = `Join EasyBoost and grow your social media instantly! Use my referral code: ${userData.referralCode} \n\nSign up here: ${window.location.origin}/signup`;
-      window.open(`https://wa.me/?text=${encodeURIComponent(text)}`, '_blank');
+  const shareReferral = async () => {
+    if (userData?.username) {
+      const text = `Join EasyBoost and grow your social media instantly! \n\nSign up here: ${referralLink}`;
+      
+      if (navigator.share) {
+        try {
+          await navigator.share({
+            title: 'EasyBoost Referral',
+            text: text,
+            url: referralLink,
+          });
+        } catch (err) {
+          window.open(`https://wa.me/?text=${encodeURIComponent(text)}`, '_blank');
+        }
+      } else {
+        window.open(`https://wa.me/?text=${encodeURIComponent(text)}`, '_blank');
+      }
     }
   };
 
@@ -175,13 +191,13 @@ export default function Dashboard() {
                 </div>
 
                 <div className="bg-gray-50 p-4 rounded-2xl border border-gray-100 flex items-center justify-between">
-                  <div className="text-left">
-                    <p className="text-[8px] font-black text-gray-400 uppercase tracking-widest mb-1">Your Code</p>
-                    <p className="text-lg font-display font-black text-brand-purple tracking-widest">{userData?.referralCode || 'USER1234'}</p>
+                  <div className="text-left overflow-hidden">
+                    <p className="text-[8px] font-black text-gray-400 uppercase tracking-widest mb-1">Your Referral Link</p>
+                    <p className="text-xs font-bold text-brand-purple truncate">{referralLink}</p>
                   </div>
                   <button 
-                    onClick={copyReferralCode}
-                    className="w-10 h-10 bg-white shadow-sm border border-gray-100 rounded-xl flex items-center justify-center text-brand-purple hover:scale-110 transition-all active-press"
+                    onClick={copyReferralLink}
+                    className="w-10 h-10 bg-white shadow-sm border border-gray-100 rounded-xl flex items-center justify-center text-brand-purple hover:scale-110 transition-all active-press flex-shrink-0 ml-2"
                   >
                     <FontAwesomeIcon icon={faCopy} />
                   </button>
@@ -189,16 +205,17 @@ export default function Dashboard() {
 
                 <div className="grid grid-cols-2 gap-4">
                   <button 
-                    onClick={copyReferralCode}
+                    onClick={copyReferralLink}
                     className="py-4 bg-gray-100 text-gray-900 font-black rounded-2xl text-[10px] uppercase tracking-widest hover:bg-gray-200 transition-all active-press"
                   >
-                    Copy Code
+                    Copy Link
                   </button>
                   <button 
-                    onClick={inviteFriends}
-                    className="py-4 bg-gradient-to-r from-blue-600 to-purple-600 text-white font-black rounded-2xl text-[10px] uppercase tracking-widest shadow-lg shadow-blue-600/20 hover:scale-[1.02] transition-all active-press"
+                    onClick={shareReferral}
+                    className="py-4 bg-gradient-to-r from-blue-600 to-purple-600 text-white font-black rounded-2xl text-[10px] uppercase tracking-widest shadow-lg shadow-blue-600/20 hover:scale-[1.02] transition-all active-press flex items-center justify-center gap-2"
                   >
-                    Invite Friends
+                    <FontAwesomeIcon icon={faShareAlt} />
+                    Share
                   </button>
                 </div>
               </div>
@@ -318,6 +335,9 @@ export default function Dashboard() {
 
         {/* Sidebar */}
         <div className="lg:col-span-4 space-y-8">
+          {/* WhatsApp Community */}
+          <WhatsAppCommunity />
+
           {/* Recent Orders */}
           <section className="bg-gray-50 p-6 rounded-3xl shadow-sm border border-gray-200">
             <div className="flex items-center justify-between mb-6">

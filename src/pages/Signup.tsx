@@ -1,5 +1,5 @@
-import { useState, FormEvent } from 'react';
-import { Link, useNavigate } from 'react-router-dom';
+import { useState, FormEvent, useEffect } from 'react';
+import { Link, useNavigate, useSearchParams } from 'react-router-dom';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { faEnvelope, faLock, faRocket, faArrowRight, faUser, faBolt, faShieldAlt } from '@fortawesome/free-solid-svg-icons';
 import { faGoogle } from '@fortawesome/free-brands-svg-icons';
@@ -17,6 +17,14 @@ export default function Signup() {
   const [referralCode, setReferralCode] = useState('');
   const [isLoading, setIsLoading] = useState(false);
   const navigate = useNavigate();
+  const [searchParams] = useSearchParams();
+
+  useEffect(() => {
+    const refParam = searchParams.get('ref');
+    if (refParam) {
+      setReferralCode(refParam);
+    }
+  }, [searchParams]);
 
   const generateReferralCode = (name: string) => {
     const prefix = name.substring(0, 4).toUpperCase().replace(/[^A-Z]/g, 'USER');

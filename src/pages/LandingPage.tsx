@@ -3,6 +3,7 @@ import { faBolt, faShieldAlt, faTag, faChartLine, faCheckCircle, faGlobe } from 
 import { motion } from 'motion/react';
 import { Link } from 'react-router-dom';
 import { platformIcons, platformTextColors } from '../utils/platformData';
+import WhatsAppCommunity from '../components/WhatsAppCommunity';
 
 const platformsList = [
   { id: 'instagram', name: 'Instagram' },
@@ -150,6 +151,13 @@ export default function LandingPage() {
               </div>
             </div>
           </div>
+        </div>
+      </section>
+
+      {/* WhatsApp Community Section */}
+      <section className="py-20 bg-gray-50/30 relative z-30">
+        <div className="max-w-4xl mx-auto px-6">
+          <WhatsAppCommunity />
         </div>
       </section>
 

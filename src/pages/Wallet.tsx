@@ -1,11 +1,12 @@
 import { useState, useEffect, FormEvent } from 'react';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
-import { faWallet, faPlus, faHistory, faArrowUp, faArrowDown, faCheckCircle, faMobileAlt, faInfoCircle } from '@fortawesome/free-solid-svg-icons';
-import { motion } from 'motion/react';
+import { faWallet, faPlus, faHistory, faArrowUp, faArrowDown, faCheckCircle, faMobileAlt, faInfoCircle, faSpinner, faCheck } from '@fortawesome/free-solid-svg-icons';
+import { motion, AnimatePresence } from 'motion/react';
 import toast from 'react-hot-toast';
 import { useAuth } from '../hooks/useAuth';
 import { db } from '../lib/firebase';
 import { ref, onValue, push, set, query, orderByChild, equalTo } from 'firebase/database';
+import WhatsAppCommunity from '../components/WhatsAppCommunity';
 
 export default function Wallet() {
   const { user, userData } = useAuth();
@@ -15,6 +16,23 @@ export default function Wallet() {
   const [isLoading, setIsLoading] = useState(false);
   const [isDataLoading, setIsDataLoading] = useState(true);
   const [transactions, setTransactions] = useState<any[]>([]);
+  const [showPaymentModal, setShowPaymentModal] = useState(false);
+  const [paymentStatus, setPaymentStatus] = useState<'processing' | 'success'>('processing');
+  const [lastBalance, setLastBalance] = useState(0);
+
+  useEffect(() => {
+    if (userData?.balance !== undefined) {
+      // If balance increased while modal is showing, show success
+      if (showPaymentModal && paymentStatus === 'processing' && userData.balance > lastBalance) {
+        setPaymentStatus('success');
+        setTimeout(() => {
+          setShowPaymentModal(false);
+          setPaymentStatus('processing');
+        }, 3000);
+      }
+      setLastBalance(userData.balance);
+    }
+  }, [userData?.balance, showPaymentModal, paymentStatus, lastBalance]);
 
   useEffect(() => {
     if (user) {
@@ -37,9 +55,21 @@ export default function Wallet() {
     }
   }, [user]);
 
+  const formatPhoneNumber = (phone: string) => {
+    let cleaned = phone.replace(/\D/g, '');
+    if (cleaned.startsWith('0')) {
+      cleaned = '256' + cleaned.substring(1);
+    }
+    if (!cleaned.startsWith('256') && cleaned.length === 9) {
+      cleaned = '256' + cleaned;
+    }
+    return '+' + cleaned;
+  };
+
   const handleDeposit = async (e: FormEvent) => {
     e.preventDefault();
     if (!user || !userData) return;
+    
     if (Number(amount) < 1000) {
       toast.error('Minimum deposit is UGX 1,000');
       return;
@@ -49,20 +79,23 @@ export default function Wallet() {
       return;
     }
 
+    const formattedPhone = formatPhoneNumber(phoneNumber);
+    
     setIsLoading(true);
-    const loadingToast = toast.loading('Initiating payment prompt...');
+    setShowPaymentModal(true);
+    setPaymentStatus('processing');
 
     try {
       const GAS_URL = 'https://script.google.com/macros/s/AKfycbx3R9hK-5O-ROqvY3XVkBaqOgSE1XXolFg35xD73p__aY274FHPNZN3qeNE1dnZMjmy/exec';
       
       const response = await fetch(GAS_URL, {
         method: 'POST',
-        headers: { 'Content-Type': 'text/plain;charset=utf-8' }, // GAS requires text/plain for CORS sometimes or handles it better
+        headers: { 'Content-Type': 'text/plain;charset=utf-8' },
         body: JSON.stringify({
           userId: user.uid,
           username: userData.name,
           userEmail: user.email,
-          phone: phoneNumber,
+          phone: formattedPhone,
           amount: Number(amount)
         })
       });
@@ -70,11 +103,11 @@ export default function Wallet() {
       const data = await response.json();
       if (!data.success) throw new Error(data.message || 'Payment initiation failed');
 
-      toast.success('Payment prompt sent! Please check your phone.', { id: loadingToast });
       setAmount('');
       setPhoneNumber('');
     } catch (err: any) {
-      toast.error(err.message || 'Failed to initiate payment', { id: loadingToast });
+      toast.error(err.message || 'Failed to initiate payment');
+      setShowPaymentModal(false);
     } finally {
       setIsLoading(false);
     }
@@ -82,6 +115,57 @@ export default function Wallet() {
 
   return (
     <div className="pt-12 pb-32 px-4 sm:px-6 lg:px-8 max-w-7xl mx-auto space-y-8">
+      <AnimatePresence>
+        {showPaymentModal && (
+          <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm">
+            <motion.div 
+              initial={{ opacity: 0, scale: 0.9, y: 20 }}
+              animate={{ opacity: 1, scale: 1, y: 0 }}
+              exit={{ opacity: 0, scale: 0.9, y: 20 }}
+              className="relative max-w-sm w-full bg-white rounded-[2.5rem] overflow-hidden shadow-2xl p-8 text-center space-y-6"
+            >
+              {paymentStatus === 'processing' ? (
+                <>
+                  <div className="w-20 h-20 bg-blue-50 rounded-3xl flex items-center justify-center mx-auto border border-blue-100 shadow-sm relative overflow-hidden">
+                    <motion.div 
+                      animate={{ rotate: 360 }}
+                      transition={{ duration: 2, repeat: Infinity, ease: "linear" }}
+                      className="text-blue-600 text-3xl"
+                    >
+                      <FontAwesomeIcon icon={faSpinner} />
+                    </motion.div>
+                  </div>
+                  <div className="space-y-2">
+                    <h3 className="text-xl font-display font-black text-gray-900 tracking-tighter">Processing Payment</h3>
+                    <p className="text-gray-500 text-xs font-medium leading-relaxed">
+                      Please complete the Mobile Money prompt on your phone. Your wallet will update automatically.
+                    </p>
+                  </div>
+                </>
+              ) : (
+                <>
+                  <div className="w-20 h-20 bg-emerald-50 rounded-3xl flex items-center justify-center mx-auto border border-emerald-100 shadow-sm relative overflow-hidden">
+                    <motion.div 
+                      initial={{ scale: 0 }}
+                      animate={{ scale: 1 }}
+                      className="text-emerald-500 text-3xl"
+                    >
+                      <FontAwesomeIcon icon={faCheck} />
+                    </motion.div>
+                  </div>
+                  <div className="space-y-2">
+                    <h3 className="text-xl font-display font-black text-emerald-500 tracking-tighter">Payment Successful</h3>
+                    <p className="text-gray-500 text-xs font-medium leading-relaxed">
+                      Your wallet has been topped up.
+                    </p>
+                  </div>
+                </>
+              )}
+            </motion.div>
+          </div>
+        )}
+      </AnimatePresence>
+
       <div className="grid grid-cols-1 lg:grid-cols-12 gap-8">
         {/* Balance Card & Add Funds */}
         <div className="lg:col-span-4 space-y-8">
@@ -202,6 +286,8 @@ export default function Wallet() {
               </button>
             </form>
           </div>
+
+          <WhatsAppCommunity />
         </div>
 
         {/* Transaction History */}

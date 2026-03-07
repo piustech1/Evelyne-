@@ -41,7 +41,7 @@ export default function AdminPayments() {
   }, [searchTerm, payments]);
 
   const handleApprove = async (payment: any) => {
-    if (payment.status !== 'Pending') return;
+    if (payment.status !== 'Pending' && payment.status !== 'pending') return;
     
     try {
       // 1. Update payment status
@@ -79,7 +79,7 @@ export default function AdminPayments() {
         </div>
         <div className="flex items-center space-x-4">
           <div className="px-6 py-3 bg-white rounded-2xl border border-gray-100 shadow-xl text-[10px] font-black text-gray-400 uppercase tracking-widest">
-            Pending Requests: <span className="text-amber-500">{payments.filter(p => p.status === 'Pending').length}</span>
+            Pending Requests: <span className="text-amber-500">{payments.filter(p => p.status === 'Pending' || p.status === 'pending').length}</span>
           </div>
         </div>
       </div>
@@ -135,8 +135,8 @@ export default function AdminPayments() {
                   <td className="py-6 px-4 text-xs font-mono text-gray-400">{pay.phoneNumber || 'N/A'}</td>
                   <td className="py-6 px-4">
                     <span className={`inline-flex items-center px-4 py-1.5 rounded-full text-[9px] font-black uppercase tracking-widest border ${
-                      pay.status === 'Approved' ? 'bg-emerald-500/10 text-emerald-500 border-emerald-500/20' :
-                      pay.status === 'Pending' ? 'bg-amber-500/10 text-amber-500 border-amber-500/20' : 'bg-rose-500/10 text-rose-500 border-rose-500/20'
+                      (pay.status === 'Approved' || pay.status === 'completed' || pay.status === 'Successful') ? 'bg-emerald-500/10 text-emerald-500 border-emerald-500/20' :
+                      (pay.status === 'Pending' || pay.status === 'pending') ? 'bg-amber-500/10 text-amber-500 border-amber-500/20' : 'bg-rose-500/10 text-rose-500 border-rose-500/20'
                     }`}>
                       {pay.status}
                     </span>

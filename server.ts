@@ -44,6 +44,30 @@ async function startServer() {
         body: `key=${API_KEY}&action=add&service=${encodeURIComponent(service)}&link=${encodeURIComponent(link)}&quantity=${encodeURIComponent(quantity)}`
       });
       const data = await response.json();
+      
+      // Friendly error messages
+      if (data.error) {
+        const errorMsg = data.error.toLowerCase();
+        if (errorMsg.includes('insufficient balance') || errorMsg.includes('balance')) {
+          return res.json({ error: 'Server processing request. Please try again later.' });
+        }
+        return res.json({ error: 'Service temporarily unavailable. Try again later.' });
+      }
+      
+      res.json(data);
+    } catch (error: any) {
+      res.status(500).json({ error: 'Service temporarily unavailable. Try again later.' });
+    }
+  });
+
+  app.post('/api/smm/balance', async (req, res) => {
+    try {
+      const response = await fetch(SMM_API_URL, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+        body: `key=${API_KEY}&action=balance`
+      });
+      const data = await response.json();
       res.json(data);
     } catch (error: any) {
       res.status(500).json({ error: error.message });
