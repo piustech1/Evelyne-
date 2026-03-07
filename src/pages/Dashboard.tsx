@@ -19,7 +19,7 @@ export default function Dashboard() {
   const [isLoading, setIsLoading] = useState(true);
   const [showReferralBanner, setShowReferralBanner] = useState(false);
 
-  const referralLink = `${window.location.origin}/register?ref=${userData?.username || ''}`;
+  const referralLink = `${window.location.origin}/register?ref=${userData?.referralCode || ''}`;
 
   useEffect(() => {
     // Check if referral banner should be shown
@@ -33,14 +33,25 @@ export default function Dashboard() {
   }, []);
 
   const copyReferralLink = () => {
-    if (userData?.username) {
+    if (userData?.referralCode) {
       navigator.clipboard.writeText(referralLink);
       toast.success('Referral link copied successfully!');
+    } else {
+      toast.error('Referral code not found. Please try again.');
+    }
+  };
+
+  const copyReferralCode = () => {
+    if (userData?.referralCode) {
+      navigator.clipboard.writeText(userData.referralCode);
+      toast.success('Referral code copied successfully!');
+    } else {
+      toast.error('Referral code not found. Please try again.');
     }
   };
 
   const shareReferral = async () => {
-    if (userData?.username) {
+    if (userData?.referralCode) {
       const text = `Grow your social media using EasyBoost.`;
       
       if (navigator.share) {
@@ -58,6 +69,8 @@ export default function Dashboard() {
         // Fallback to copy if Web Share API is not supported
         copyReferralLink();
       }
+    } else {
+      toast.error('Referral code not found. Please try again.');
     }
   };
 
@@ -205,7 +218,13 @@ export default function Dashboard() {
                   </button>
                 </div>
 
-                <div className="grid grid-cols-2 gap-4">
+                <div className="grid grid-cols-3 gap-3">
+                  <button 
+                    onClick={copyReferralCode}
+                    className="py-4 bg-gray-100 text-gray-900 font-black rounded-2xl text-[10px] uppercase tracking-widest hover:bg-gray-200 transition-all active-press"
+                  >
+                    Copy Code
+                  </button>
                   <button 
                     onClick={copyReferralLink}
                     className="py-4 bg-gray-100 text-gray-900 font-black rounded-2xl text-[10px] uppercase tracking-widest hover:bg-gray-200 transition-all active-press"

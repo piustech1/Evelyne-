@@ -7,6 +7,8 @@ export interface UserData {
   name: string;
   email: string;
   balance: number;
+  referralCode: string;
+  referralCount?: number;
   createdAt: string;
   isAdmin?: boolean;
 }

@@ -16,7 +16,7 @@ export default function Profile() {
   const [isLoading, setIsLoading] = useState(false);
   const [orderStats, setOrderStats] = useState({ total: 0, pending: 0, completed: 0 });
 
-  const referralLink = `${window.location.origin}/register?ref=${userData?.username || ''}`;
+  const referralLink = `${window.location.origin}/register?ref=${userData?.referralCode || ''}`;
 
   useEffect(() => {
     if (userData) {
@@ -25,14 +25,25 @@ export default function Profile() {
   }, [userData]);
 
   const copyReferralLink = () => {
-    if (userData?.username) {
+    if (userData?.referralCode) {
       navigator.clipboard.writeText(referralLink);
       toast.success('Referral link copied successfully!');
+    } else {
+      toast.error('Referral code not found. Please try again.');
+    }
+  };
+
+  const copyReferralCode = () => {
+    if (userData?.referralCode) {
+      navigator.clipboard.writeText(userData.referralCode);
+      toast.success('Referral code copied successfully!');
+    } else {
+      toast.error('Referral code not found. Please try again.');
     }
   };
 
   const shareReferral = async () => {
-    if (userData?.username) {
+    if (userData?.referralCode) {
       const text = `Grow your social media using EasyBoost.`;
       
       if (navigator.share) {
@@ -50,6 +61,8 @@ export default function Profile() {
         // Fallback to copy if Web Share API is not supported
         copyReferralLink();
       }
+    } else {
+      toast.error('Referral code not found. Please try again.');
     }
   };
 
@@ -226,11 +239,18 @@ export default function Profile() {
                 </div>
                 <div className="flex items-center gap-2 w-full sm:w-auto">
                   <button 
+                    onClick={copyReferralCode}
+                    className="flex-1 sm:flex-none h-10 px-4 bg-gray-100 hover:bg-gray-200 text-gray-900 rounded-xl flex items-center justify-center gap-2 transition-all active-press text-[10px] font-black uppercase tracking-widest"
+                  >
+                    <FontAwesomeIcon icon={faCopy} />
+                    Code
+                  </button>
+                  <button 
                     onClick={copyReferralLink}
                     className="flex-1 sm:flex-none h-10 px-4 bg-gray-100 hover:bg-gray-200 text-gray-900 rounded-xl flex items-center justify-center gap-2 transition-all active-press text-[10px] font-black uppercase tracking-widest"
                   >
                     <FontAwesomeIcon icon={faCopy} />
-                    Copy
+                    Link
                   </button>
                   <button 
                     onClick={shareReferral}
