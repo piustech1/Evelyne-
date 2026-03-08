@@ -3,8 +3,9 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
+import { BrowserRouter as Router, Routes, Route, Navigate, useLocation } from 'react-router-dom';
 import { Toaster } from 'react-hot-toast';
+import { useEffect } from 'react';
 import { useAuth } from './hooks/useAuth';
 import { useNotifications } from './hooks/useNotifications';
 import { useOrderStatusSync } from './hooks/useOrderStatusSync';
@@ -39,6 +40,21 @@ import AdminReports from './pages/admin/Reports';
 import AdminAnnouncements from './pages/admin/Announcements';
 import AdminSettings from './pages/admin/Settings';
 
+function ReferralTracker() {
+  const location = useLocation();
+  
+  useEffect(() => {
+    const params = new URLSearchParams(location.search);
+    const ref = params.get('ref');
+    if (ref) {
+      console.log('Referral detected and stored:', ref);
+      localStorage.setItem('pending_referral', ref);
+    }
+  }, [location]);
+
+  return null;
+}
+
 export default function App() {
   const { user, loading } = useAuth();
   useNotifications();
@@ -54,6 +70,7 @@ export default function App() {
 
   return (
     <Router>
+      <ReferralTracker />
       <Toaster position="top-center" reverseOrder={false} />
       <ScrollToTop />
       <Routes>

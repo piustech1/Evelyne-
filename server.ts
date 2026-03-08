@@ -121,6 +121,7 @@ async function startServer() {
         notification: {
           title,
           body: message,
+          icon: 'https://i.postimg.cc/sxNQyXFG/0x0.png',
         },
         data: {
           url: url || '/notifications'

@@ -7,7 +7,7 @@ import { motion } from 'motion/react';
 import toast from 'react-hot-toast';
 import { auth, db, googleProvider } from '../lib/firebase';
 import { createUserWithEmailAndPassword, signInWithPopup, updateProfile } from 'firebase/auth';
-import { ref, set, get, push, query, orderByChild, equalTo, runTransaction } from 'firebase/database';
+import { ref, set, get, push, query, orderByChild, equalTo, runTransaction, update } from 'firebase/database';
 
 export default function Signup() {
   const [name, setName] = useState('');
@@ -23,6 +23,12 @@ export default function Signup() {
     const refParam = searchParams.get('ref');
     if (refParam) {
       setReferralCode(refParam);
+      localStorage.setItem('pending_referral', refParam);
+    } else {
+      const storedRef = localStorage.getItem('pending_referral');
+      if (storedRef) {
+        setReferralCode(storedRef);
+      }
     }
   }, [searchParams]);
 
@@ -93,6 +99,9 @@ export default function Signup() {
         createdAt: new Date().toISOString(),
       });
       
+      // Clear pending referral
+      localStorage.removeItem('pending_referral');
+      
       toast.success('Account created successfully!', { id: loadingToast });
       navigate('/dashboard');
     } catch (err: any) {
@@ -116,14 +125,48 @@ export default function Signup() {
       if (!snapshot.exists()) {
         // Only create user data if it doesn't exist
         const newReferralCode = generateReferralCode(user.displayName || 'User');
+        
+        // Check for pending referral
+        const referredBy = localStorage.getItem('pending_referral');
+        
         await set(userRef, {
           name: user.displayName || 'User',
           email: user.email,
           balance: 0,
           referralCode: newReferralCode,
+          referredBy: referredBy || null,
           referralCount: 0,
           createdAt: new Date().toISOString(),
         });
+        
+        // If referred, update referrer's count (optional but good for consistency)
+        if (referredBy) {
+          try {
+            const usersRef = ref(db, 'users');
+            const usersSnapshot = await get(usersRef);
+            const allUsers = usersSnapshot.val();
+            if (allUsers) {
+              const referrerId = Object.keys(allUsers).find(uid => allUsers[uid].referralCode === referredBy);
+              if (referrerId) {
+                const referrerRef = ref(db, `users/${referrerId}`);
+                const currentCount = allUsers[referrerId].referralCount || 0;
+                await update(referrerRef, { referralCount: currentCount + 1 });
+                
+                const notificationRef = push(ref(db, `notifications/${referrerId}`));
+                await set(notificationRef, {
+                  message: `Your referral ${user.displayName || 'User'} is active! You will receive your 1K followers soon. Keep referring!`,
+                  type: 'referral',
+                  timestamp: new Date().toISOString(),
+                  read: false
+                });
+              }
+            }
+          } catch (e) {
+            console.error('Error updating referrer for Google signup:', e);
+          }
+        }
+        
+        localStorage.removeItem('pending_referral');
         toast.success('Account created successfully!', { id: loadingToast });
       } else {
         toast.success('Welcome back!', { id: loadingToast });
