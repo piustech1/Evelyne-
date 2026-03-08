@@ -3,7 +3,8 @@ import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { faBullhorn, faPlus, faEdit, faTrashAlt, faClock } from '@fortawesome/free-solid-svg-icons';
 import { motion } from 'motion/react';
 import { db } from '../../lib/firebase';
-import { ref, onValue, set, push, remove, update } from 'firebase/database';
+import { ref, onValue, set, push, remove, update, get } from 'firebase/database';
+import toast from 'react-hot-toast';
 
 export default function AdminAnnouncements() {
   const [announcements, setAnnouncements] = useState<any[]>([]);
@@ -31,6 +32,7 @@ export default function AdminAnnouncements() {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    const loadingToast = toast.loading(editingAnn ? 'Updating announcement...' : 'Posting announcement...');
     try {
       if (editingAnn) {
         await update(ref(db, `announcements/${editingAnn.id}`), {
@@ -43,12 +45,38 @@ export default function AdminAnnouncements() {
           ...formData,
           createdAt: new Date().toISOString()
         });
+
+        // Send FCM notifications to all users
+        try {
+          const tokensSnapshot = await get(ref(db, 'fcm_tokens'));
+          const tokensData = tokensSnapshot.val();
+          if (tokensData) {
+            const tokens = Object.values(tokensData).map((t: any) => t.fcm_token).filter(Boolean);
+            if (tokens.length > 0) {
+              await fetch('/api/admin/send-notification', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                  tokens,
+                  title: formData.title,
+                  message: formData.content,
+                  url: '/notifications'
+                })
+              });
+            }
+          }
+        } catch (fcmErr) {
+          console.error('Failed to send FCM notifications:', fcmErr);
+          // Don't fail the whole submission if FCM fails
+        }
       }
+      toast.success(editingAnn ? 'Announcement updated!' : 'Announcement posted and notifications sent!', { id: loadingToast });
       setIsModalOpen(false);
       setEditingAnn(null);
       setFormData({ title: '', content: '', status: 'Active' });
     } catch (err) {
       console.error('Failed to save announcement', err);
+      toast.error('Failed to save announcement', { id: loadingToast });
     }
   };
 

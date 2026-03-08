@@ -192,9 +192,15 @@ export default function AdminDashboard() {
         return;
       }
 
-      const tokens = Object.values(tokensData).map((t: any) => t.fcm_token);
+      const tokens = Object.values(tokensData)
+        .map((t: any) => t.fcm_token)
+        .filter((token): token is string => typeof token === 'string' && token.length > 0);
       
-      // Call backend to send actual push notifications
+      if (tokens.length === 0) {
+        toast.error('No valid push tokens found', { id: loadingToast });
+        setIsSendingNotif(false);
+        return;
+      }
       try {
         await fetch('/api/admin/send-notification', {
           method: 'POST',

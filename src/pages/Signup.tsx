@@ -109,18 +109,26 @@ export default function Signup() {
       const result = await signInWithPopup(auth, googleProvider);
       const user = result.user;
       
-      // Save user data to database if it doesn't exist
-      const newReferralCode = generateReferralCode(user.displayName || 'User');
-      await set(ref(db, `users/${user.uid}`), {
-        name: user.displayName || 'User',
-        email: user.email,
-        balance: 0,
-        referralCode: newReferralCode,
-        referralCount: 0,
-        createdAt: new Date().toISOString(),
-      });
+      // Check if user already exists in database
+      const userRef = ref(db, `users/${user.uid}`);
+      const snapshot = await get(userRef);
       
-      toast.success('Account created successfully!', { id: loadingToast });
+      if (!snapshot.exists()) {
+        // Only create user data if it doesn't exist
+        const newReferralCode = generateReferralCode(user.displayName || 'User');
+        await set(userRef, {
+          name: user.displayName || 'User',
+          email: user.email,
+          balance: 0,
+          referralCode: newReferralCode,
+          referralCount: 0,
+          createdAt: new Date().toISOString(),
+        });
+        toast.success('Account created successfully!', { id: loadingToast });
+      } else {
+        toast.success('Welcome back!', { id: loadingToast });
+      }
+      
       navigate('/dashboard');
     } catch (err: any) {
       toast.error(err.message || 'Failed to signup with Google', { id: loadingToast });

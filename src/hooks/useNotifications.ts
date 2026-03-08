@@ -14,26 +14,39 @@ export const useNotifications = () => {
 
     const requestPermission = async () => {
       try {
+        console.log('Requesting notification permission...');
         const permission = await Notification.requestPermission();
+        console.log('Notification permission:', permission);
+        
         if (permission === 'granted') {
+          // Register service worker explicitly to be sure
+          const registration = await navigator.serviceWorker.register('/firebase-messaging-sw.js');
+          console.log('Service Worker registered for FCM:', registration);
+
           const token = await getToken(messaging, {
-            vapidKey: 'BBqOoEzbrr3eNmNSVxLHcMsfMixSwueZRv_pCWIwPhHVg9LJyuSH5hxk_0m-Mwx0DksEqqV5aoYmBz92jeRIKig'
+            vapidKey: 'BBqOoEzbrr3eNmNSVxLHcMsfMixSwueZRv_pCWIwPhHVg9LJyuSH5hxk_0m-Mwx0DksEqqV5aoYmBz92jeRIKig',
+            serviceWorkerRegistration: registration
           });
           
           if (token) {
+            console.log('FCM Token generated:', token);
             setFcmToken(token);
             // Store token in database
             await set(ref(db, `fcm_tokens/${user.uid}`), {
               user_id: user.uid,
               fcm_token: token,
               device_type: /iPhone|iPad|iPod|Android/i.test(navigator.userAgent) ? 'mobile' : 'desktop',
-              created_at: serverTimestamp(),
+              last_updated: serverTimestamp(),
               email: user.email
             });
+          } else {
+            console.warn('No FCM token received');
           }
+        } else {
+          console.warn('Notification permission denied');
         }
       } catch (error) {
-        console.error('Notification permission error:', error);
+        console.error('Notification permission/token error:', error);
       }
     };
 

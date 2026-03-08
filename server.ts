@@ -117,13 +117,20 @@ async function startServer() {
         return res.status(400).json({ error: "No tokens provided" });
       }
 
-      const payload = {
+      const payload: any = {
         notification: {
           title,
           body: message,
         },
         data: {
           url: url || '/notifications'
+        },
+        webpush: {
+          notification: {
+            icon: 'https://i.postimg.cc/sxNQyXFG/0x0.png',
+            badge: 'https://i.postimg.cc/sxNQyXFG/0x0.png',
+            click_action: url || '/notifications'
+          }
         },
         tokens: tokens
       };

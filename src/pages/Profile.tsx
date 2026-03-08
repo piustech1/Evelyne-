@@ -16,7 +16,11 @@ export default function Profile() {
   const [isLoading, setIsLoading] = useState(false);
   const [orderStats, setOrderStats] = useState({ total: 0, pending: 0, completed: 0 });
 
-  const referralLink = `${window.location.origin}/register?ref=${userData?.referralCode || ''}`;
+  const getReferralLink = () => {
+    const code = userData?.referralCode;
+    if (!code) return '';
+    return `${window.location.origin}/register?ref=${code}`;
+  };
 
   useEffect(() => {
     if (userData) {
@@ -25,11 +29,12 @@ export default function Profile() {
   }, [userData]);
 
   const copyReferralLink = () => {
-    if (userData?.referralCode) {
-      navigator.clipboard.writeText(referralLink);
+    const link = getReferralLink();
+    if (link) {
+      navigator.clipboard.writeText(link);
       toast.success('Referral link copied successfully!');
     } else {
-      toast.error('Referral code not found. Please try again.');
+      toast.error('Referral code not found. Please wait for your profile to load.');
     }
   };
 
@@ -38,31 +43,34 @@ export default function Profile() {
       navigator.clipboard.writeText(userData.referralCode);
       toast.success('Referral code copied successfully!');
     } else {
-      toast.error('Referral code not found. Please try again.');
+      toast.error('Referral code not found. Please wait for your profile to load.');
     }
   };
 
   const shareReferral = async () => {
-    if (userData?.referralCode) {
-      const text = `Grow your social media using EasyBoost.`;
+    const link = getReferralLink();
+    if (link) {
+      const text = `Grow your social media using EasyBoost. Join now!`;
       
       if (navigator.share) {
         try {
           await navigator.share({
             title: 'Join EasyBoost',
             text: text,
-            url: referralLink,
+            url: link,
           });
         } catch (err) {
           // Fallback to copy if share fails or is cancelled
-          copyReferralLink();
+          if ((err as Error).name !== 'AbortError') {
+            copyReferralLink();
+          }
         }
       } else {
         // Fallback to copy if Web Share API is not supported
         copyReferralLink();
       }
     } else {
-      toast.error('Referral code not found. Please try again.');
+      toast.error('Referral code not found. Please wait for your profile to load.');
     }
   };
 
@@ -235,7 +243,7 @@ export default function Profile() {
               <div className="bg-white p-4 rounded-2xl border border-gray-100 flex flex-col sm:flex-row items-center justify-between gap-4">
                 <div className="text-left w-full overflow-hidden">
                   <p className="text-[8px] font-black text-gray-400 uppercase tracking-widest mb-1">Your Referral Link</p>
-                  <p className="text-xs font-bold text-brand-purple truncate">{referralLink}</p>
+                  <p className="text-xs font-bold text-brand-purple truncate">{getReferralLink() || 'Generating link...'}</p>
                 </div>
                 <div className="flex items-center gap-2 w-full sm:w-auto">
                   <button 
