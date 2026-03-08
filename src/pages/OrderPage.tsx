@@ -96,17 +96,19 @@ export default function OrderPage() {
       });
 
       const text = await apiResponse.text();
-      if (!text) throw new Error('Empty response from server');
+      if (!text || text.trim() === "") {
+        throw new Error('Provider returned an empty response');
+      }
       
       let apiData;
       try {
         apiData = JSON.parse(text);
       } catch (e) {
-        throw new Error('Invalid response from server');
+        throw new Error('Order failed. Provider returned an invalid response.');
       }
 
       if (apiData.error) throw new Error(apiData.error);
-      if (!apiData.order) throw new Error('Failed to place order with provider');
+      if (!apiData.order) throw new Error('Order failed. Provider returned an error.');
 
       const userRef = ref(db, `users/${user.uid}`);
       await runTransaction(userRef, (currentData) => {

@@ -85,29 +85,26 @@ async function startServer() {
       });
       
       const text = await response.text();
-      if (!text) throw new Error("Empty response from provider API");
+      if (!text || text.trim() === "") {
+        return res.json({ error: 'Provider returned an empty response' });
+      }
       
       let data;
       try {
         data = JSON.parse(text);
       } catch (e) {
         console.error("JSON Parse Error (Order):", text);
-        return res.json({ error: 'Service temporarily unavailable. Try again later.' });
+        return res.json({ error: 'Order failed. Provider returned an invalid response.' });
       }
       
-      // Friendly error messages
       if (data.error) {
-        const errorMsg = data.error.toLowerCase();
-        if (errorMsg.includes('insufficient balance') || errorMsg.includes('balance') || errorMsg.includes('funds')) {
-          return res.json({ error: 'Service temporarily unavailable. Please try again later.' });
-        }
-        return res.json({ error: 'Service temporarily unavailable. Try again later.' });
+        return res.json({ error: 'Order failed. Provider returned an error.' });
       }
       
       res.json(data);
     } catch (error: any) {
       console.error("SMM Order Proxy Error:", error);
-      res.status(500).json({ error: 'Service temporarily unavailable. Try again later.' });
+      res.status(500).json({ error: 'Order failed. Provider returned an error.' });
     }
   });
 
