@@ -52,14 +52,14 @@ export const smmService = {
         throw new Error(`Invalid JSON response from ${isGas ? 'GAS' : 'Local'} Proxy`);
       }
     } catch (error: any) {
-      console.error(`[SMM Service] Error (${action}):`, error);
+      console.error(`[SMM Service] Full Error Object (${action}):`, error);
       
       // Provide more helpful error messages for common issues
-      if (error.message === 'Failed to fetch') {
+      if (error.name === 'TypeError' && error.message === 'Failed to fetch') {
         if (isGas) {
-          return { error: "Network error: Failed to connect to Google Apps Script. Please ensure the URL is correct and deployed as 'Anyone'." };
+          return { error: `Network error: Failed to connect to Google Apps Script at ${url}. Please ensure the URL is correct, the script is deployed as 'Anyone', and you have an active internet connection.` };
         } else {
-          return { error: "Network error: Failed to connect to local API. If on Vercel, ensure VITE_SMM_GAS_URL is set." };
+          return { error: `Network error: Failed to connect to local API at ${url}. If you are on a deployed site (like Vercel), you MUST set the VITE_SMM_GAS_URL environment variable because the local proxy only works in the development environment or on a full-stack server.` };
         }
       }
       
