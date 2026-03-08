@@ -16,7 +16,8 @@ import {
   faPaperPlane,
   faTrashAlt,
   faExclamationTriangle,
-  faBell
+  faBell,
+  faTimesCircle
 } from '@fortawesome/free-solid-svg-icons';
 import { motion, AnimatePresence } from 'motion/react';
 import { AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, BarChart, Bar, Cell, PieChart, Pie } from 'recharts';
@@ -44,6 +45,7 @@ export default function AdminDashboard() {
   const [popularServices, setPopularServices] = useState<any[]>([]);
   const [providerBalance, setProviderBalance] = useState({ usd: 0, ugx: 0 });
   const [isLoading, setIsLoading] = useState(true);
+  const [apiConnection, setApiConnection] = useState<{ status: 'checking' | 'connected' | 'error', message?: string }>({ status: 'checking' });
   
   // Notification state
   const [notifTitle, setNotifTitle] = useState('');
@@ -53,8 +55,10 @@ export default function AdminDashboard() {
   // Reset Data state
   const [showResetModal, setShowResetModal] = useState(false);
   const [isResetting, setIsResetting] = useState(false);
+  const [showSetupGuide, setShowSetupGuide] = useState(false);
 
   const fetchProviderBalance = async () => {
+    setApiConnection({ status: 'checking' });
     try {
       const data = await smmService.getBalance();
       if (data.balance) {
@@ -63,9 +67,13 @@ export default function AdminDashboard() {
           usd,
           ugx: Math.round(usd * 3800)
         });
+        setApiConnection({ status: 'connected' });
+      } else if (data.error) {
+        setApiConnection({ status: 'error', message: data.error });
       }
-    } catch (error) {
+    } catch (error: any) {
       console.error('Failed to fetch provider balance', error);
+      setApiConnection({ status: 'error', message: error.message });
     }
   };
 
@@ -278,8 +286,21 @@ export default function AdminDashboard() {
           <p className="text-gray-400 font-black text-[10px] uppercase tracking-[0.2em]">Platform Analytics & Management</p>
         </div>
         <div className="flex items-center space-x-4">
-          <div className="hidden sm:block px-6 py-3 bg-white rounded-2xl border border-gray-100 shadow-sm text-[10px] font-black text-gray-400 uppercase tracking-widest">
-            Last updated: <span className="text-gray-900">Just now</span>
+          <div className={`hidden sm:flex items-center space-x-2 px-6 py-3 rounded-2xl border shadow-sm text-[10px] font-black uppercase tracking-widest ${
+            apiConnection.status === 'connected' ? 'bg-emerald-50 text-emerald-600 border-emerald-100' :
+            apiConnection.status === 'error' ? 'bg-rose-50 text-rose-600 border-rose-100' :
+            'bg-white text-gray-400 border-gray-100'
+          }`}>
+            <div className={`w-2 h-2 rounded-full ${
+              apiConnection.status === 'connected' ? 'bg-emerald-500 animate-pulse' :
+              apiConnection.status === 'error' ? 'bg-rose-500' :
+              'bg-gray-300'
+            }`} />
+            <span>
+              {apiConnection.status === 'connected' ? 'SMM API: Connected' :
+               apiConnection.status === 'error' ? 'SMM API: Connection Error' :
+               'SMM API: Checking...'}
+            </span>
           </div>
           <button 
             onClick={() => {
@@ -312,6 +333,20 @@ export default function AdminDashboard() {
               <p className="text-white/50 text-[10px] font-black uppercase tracking-widest">SMM API Funds Monitor</p>
             </div>
           </div>
+          {apiConnection.status === 'error' && (
+            <div className="flex-grow max-w-md px-4 py-2 bg-rose-500/20 border border-rose-500/30 rounded-xl text-[9px] font-bold text-rose-200 flex items-center justify-between">
+              <div>
+                <FontAwesomeIcon icon={faExclamationTriangle} className="mr-2" />
+                {apiConnection.message}
+              </div>
+              <button 
+                onClick={() => setShowSetupGuide(true)}
+                className="ml-4 px-3 py-1 bg-white/10 hover:bg-white/20 rounded-lg transition-colors whitespace-nowrap"
+              >
+                Setup Guide
+              </button>
+            </div>
+          )}
           <div className="flex items-center gap-8">
             <div className="text-center md:text-right">
               <div className="text-[10px] font-black text-white/40 uppercase tracking-widest mb-1">USD Balance</div>
@@ -586,6 +621,70 @@ export default function AdminDashboard() {
           </div>
         </div>
       </div>
+
+      {/* Setup Guide Modal */}
+      <AnimatePresence>
+        {showSetupGuide && (
+          <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm">
+            <motion.div 
+              initial={{ opacity: 0, scale: 0.9, y: 20 }}
+              animate={{ opacity: 1, scale: 1, y: 0 }}
+              exit={{ opacity: 0, scale: 0.9, y: 20 }}
+              className="max-w-2xl w-full bg-white rounded-[3rem] p-10 space-y-8 shadow-2xl max-h-[90vh] overflow-y-auto"
+            >
+              <div className="flex items-center justify-between">
+                <div className="flex items-center space-x-4">
+                  <div className="w-12 h-12 bg-brand-purple/10 text-brand-purple rounded-2xl flex items-center justify-center text-xl">
+                    <FontAwesomeIcon icon={faSync} />
+                  </div>
+                  <h3 className="text-2xl font-display font-black text-gray-900 tracking-tighter">SMM API Setup Guide</h3>
+                </div>
+                <button onClick={() => setShowSetupGuide(false)} className="text-gray-400 hover:text-gray-600">
+                  <FontAwesomeIcon icon={faTimesCircle} />
+                </button>
+              </div>
+
+              <div className="space-y-6 text-left">
+                <div className="p-6 bg-rose-50 border border-rose-100 rounded-2xl">
+                  <h4 className="text-rose-900 font-black text-xs uppercase tracking-widest mb-2">Why am I seeing a 405 error?</h4>
+                  <p className="text-rose-700 text-xs leading-relaxed">
+                    You are likely using a static hosting provider (like Vercel). These platforms do not support the local API proxy. To fix this, you <strong>must</strong> use the Google Apps Script (GAS) proxy.
+                  </p>
+                </div>
+
+                <div className="space-y-4">
+                  <h4 className="text-gray-900 font-black text-xs uppercase tracking-widest">Step 1: Deploy the Proxy</h4>
+                  <p className="text-gray-500 text-xs leading-relaxed">
+                    1. Go to <a href="https://script.google.com" target="_blank" className="text-brand-purple underline">script.google.com</a>.<br />
+                    2. Create a new project.<br />
+                    3. Copy the code from <code>google_apps_script.js</code> in your project root.<br />
+                    4. Click <strong>Deploy &gt; New Deployment</strong>.<br />
+                    5. Select <strong>Web App</strong>, set "Who has access" to <strong>Anyone</strong>.<br />
+                    6. Copy the <strong>Web App URL</strong>.
+                  </p>
+                </div>
+
+                <div className="space-y-4">
+                  <h4 className="text-gray-900 font-black text-xs uppercase tracking-widest">Step 2: Set Environment Variable</h4>
+                  <p className="text-gray-500 text-xs leading-relaxed">
+                    1. Go to your hosting provider settings (e.g., Vercel Dashboard).<br />
+                    2. Add a new Environment Variable:<br />
+                    <code className="block p-3 bg-gray-100 rounded-lg mt-2 font-mono text-[10px]">VITE_SMM_GAS_URL = [Your GAS URL]</code><br />
+                    3. <strong>Redeploy</strong> your application.
+                  </p>
+                </div>
+              </div>
+
+              <button 
+                onClick={() => setShowSetupGuide(false)}
+                className="w-full py-4 bg-gray-900 text-white font-black uppercase tracking-widest text-[10px] rounded-2xl hover:bg-gray-800 transition-all active:scale-95"
+              >
+                Got it, thanks!
+              </button>
+            </motion.div>
+          </div>
+        )}
+      </AnimatePresence>
 
       {/* Reset Confirmation Modal */}
       <AnimatePresence>

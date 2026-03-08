@@ -19,7 +19,11 @@ export const smmService = {
     const isGas = !!GAS_URL && GAS_URL !== 'undefined' && GAS_URL !== '';
     const url = isGas ? GAS_URL : `/api/smm/${action === 'add' ? 'order' : action}`;
     
-    console.log(`[SMM Service] Action: ${action}, Using GAS: ${isGas}, URL: ${url}`);
+    if (isGas) {
+      console.log(`[SMM Service] Action: ${action}, Using GAS Proxy: ${url}`);
+    } else {
+      console.log(`[SMM Service] Action: ${action}, Using Local Proxy: ${url} (Note: Local proxy only works on full-stack servers, not static hosting like Vercel)`);
+    }
 
     try {
       const fetchOptions: RequestInit = isGas ? {
@@ -39,6 +43,11 @@ export const smmService = {
 
       if (!response.ok) {
         const errorText = await response.text().catch(() => 'No error details');
+        
+        if (response.status === 405) {
+          throw new Error(`Method Not Allowed (405). This usually happens when calling a local API on a static hosting platform (like Vercel). You MUST set the VITE_SMM_GAS_URL environment variable to use the Google Apps Script proxy for production.`);
+        }
+        
         throw new Error(`${isGas ? 'GAS' : 'Local'} Proxy error! Status: ${response.status}. Details: ${errorText}`);
       }
 
