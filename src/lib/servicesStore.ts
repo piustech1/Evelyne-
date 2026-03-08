@@ -110,10 +110,8 @@ export const fetchServices = async (force = false): Promise<Service[]> => {
     const servicesUpdates: Record<string, Service> = {};
     const processedServices: Service[] = apiServices.map((s: any) => {
       const usdRate = parseFloat(s.rate);
-      // Apply profit markup and convert to local currency
-      const profitMultiplier = Number(import.meta.env.VITE_PROFIT_MULTIPLIER) || 3;
-      const exchangeRate = Number(import.meta.env.VITE_EXCHANGE_RATE) || 3800;
-      const finalPrice = usdRate * profitMultiplier * exchangeRate;
+      // Apply 3x markup (PROFIT_MULTIPLIER = 3) and convert to UGX (3800 exchange rate)
+      const finalPrice = usdRate * 3 * 3800;
       
       const platform = detectPlatform(s.name, s.category);
       
