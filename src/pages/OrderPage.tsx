@@ -104,11 +104,16 @@ export default function OrderPage() {
       try {
         apiData = JSON.parse(text);
       } catch (e) {
-        throw new Error('Order failed. Provider returned an invalid response.');
+        throw new Error('Order failed. Server returned an invalid response: ' + text);
       }
 
-      if (apiData.error) throw new Error(apiData.error);
-      if (!apiData.order) throw new Error('Order failed. Provider returned an error.');
+      if (apiData.error) {
+        throw new Error(apiData.error);
+      }
+      
+      if (!apiData.order) {
+        throw new Error('Order failed. Provider response: ' + JSON.stringify(apiData));
+      }
 
       const userRef = ref(db, `users/${user.uid}`);
       await runTransaction(userRef, (currentData) => {

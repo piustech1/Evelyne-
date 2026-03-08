@@ -75,6 +75,8 @@ async function startServer() {
       params.append('link', link);
       params.append('quantity', String(quantity));
 
+      console.log("Sending order request to provider:", params.toString().replace(API_KEY, 'HIDDEN_KEY'));
+
       const response = await fetch(SMM_API_URL, {
         method: 'POST',
         headers: { 
@@ -85,26 +87,28 @@ async function startServer() {
       });
       
       const text = await response.text();
+      console.log("Provider raw response:", text);
+
       if (!text || text.trim() === "") {
         return res.json({ error: 'Provider returned an empty response' });
       }
       
-      let data;
-      try {
-        data = JSON.parse(text);
-      } catch (e) {
-        console.error("JSON Parse Error (Order):", text);
-        return res.json({ error: 'Order failed. Provider returned an invalid response.' });
+      if (text.trim().startsWith("{") || text.trim().startsWith("[")) {
+        try {
+          const data = JSON.parse(text);
+          if (data.error) {
+            return res.json({ error: 'Order failed. Provider returned an error: ' + (typeof data.error === 'string' ? data.error : JSON.stringify(data.error)) });
+          }
+          return res.json(data);
+        } catch (e) {
+          return res.json({ error: 'Provider did not return valid JSON: ' + text });
+        }
+      } else {
+        return res.json({ error: 'Provider did not return JSON: ' + text });
       }
-      
-      if (data.error) {
-        return res.json({ error: 'Order failed. Provider returned an error.' });
-      }
-      
-      res.json(data);
     } catch (error: any) {
       console.error("SMM Order Proxy Error:", error);
-      res.status(500).json({ error: 'Order failed. Provider returned an error.' });
+      res.status(500).json({ error: 'Order failed. Provider returned an error: ' + error.message });
     }
   });
 
