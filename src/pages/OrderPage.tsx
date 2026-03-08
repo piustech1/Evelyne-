@@ -71,6 +71,10 @@ export default function OrderPage() {
       toast.error(`Minimum quantity is ${service.min || 100}`);
       return;
     }
+    if (quantity > (service.max || 1000000)) {
+      toast.error(`Maximum quantity is ${service.max || 1000000}`);
+      return;
+    }
     
     if (hasInsufficientBalance) {
       toast.error('Insufficient balance. Please top up to continue.');
@@ -91,7 +95,16 @@ export default function OrderPage() {
         })
       });
 
-      const apiData = await apiResponse.json();
+      const text = await apiResponse.text();
+      if (!text) throw new Error('Empty response from server');
+      
+      let apiData;
+      try {
+        apiData = JSON.parse(text);
+      } catch (e) {
+        throw new Error('Invalid response from server');
+      }
+
       if (apiData.error) throw new Error(apiData.error);
       if (!apiData.order) throw new Error('Failed to place order with provider');
 
@@ -123,7 +136,7 @@ export default function OrderPage() {
         price: totalPrice,
         originalCost,
         profit,
-        status: 'Pending',
+        status: 'Processing',
         createdAt: new Date().toISOString(),
       });
 

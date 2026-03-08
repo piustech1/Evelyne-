@@ -36,16 +36,29 @@ async function startServer() {
 
   app.post('/api/smm/services', async (req, res) => {
     try {
+      const params = new URLSearchParams();
+      params.append('key', API_KEY);
+      params.append('action', 'services');
+
       const response = await fetch(SMM_API_URL, {
         method: 'POST',
         headers: { 
           'Content-Type': 'application/x-www-form-urlencoded',
           'User-Agent': 'Mozilla/5.0'
         },
-        body: `key=${API_KEY}&action=services`
+        body: params.toString()
       });
-      const services = await response.json();
-      res.json(services);
+      
+      const text = await response.text();
+      if (!text) throw new Error("Empty response from provider API");
+      
+      try {
+        const services = JSON.parse(text);
+        res.json(services);
+      } catch (e) {
+        console.error("JSON Parse Error (Services):", text);
+        throw new Error("Invalid JSON response from provider API");
+      }
     } catch (error: any) {
       res.status(500).json({ error: error.message });
     }
@@ -54,37 +67,75 @@ async function startServer() {
   app.post('/api/smm/order', async (req, res) => {
     try {
       const { service, link, quantity } = req.body;
+      
+      const params = new URLSearchParams();
+      params.append('key', API_KEY);
+      params.append('action', 'add');
+      params.append('service', String(service));
+      params.append('link', link);
+      params.append('quantity', String(quantity));
+
       const response = await fetch(SMM_API_URL, {
         method: 'POST',
-        headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
-        body: `key=${API_KEY}&action=add&service=${encodeURIComponent(service)}&link=${encodeURIComponent(link)}&quantity=${encodeURIComponent(quantity)}`
+        headers: { 
+          'Content-Type': 'application/x-www-form-urlencoded',
+          'User-Agent': 'Mozilla/5.0'
+        },
+        body: params.toString()
       });
-      const data = await response.json();
+      
+      const text = await response.text();
+      if (!text) throw new Error("Empty response from provider API");
+      
+      let data;
+      try {
+        data = JSON.parse(text);
+      } catch (e) {
+        console.error("JSON Parse Error (Order):", text);
+        return res.json({ error: 'Service temporarily unavailable. Try again later.' });
+      }
       
       // Friendly error messages
       if (data.error) {
         const errorMsg = data.error.toLowerCase();
-        if (errorMsg.includes('insufficient balance') || errorMsg.includes('balance')) {
-          return res.json({ error: 'Server processing request. Please try again later.' });
+        if (errorMsg.includes('insufficient balance') || errorMsg.includes('balance') || errorMsg.includes('funds')) {
+          return res.json({ error: 'Service temporarily unavailable. Please try again later.' });
         }
         return res.json({ error: 'Service temporarily unavailable. Try again later.' });
       }
       
       res.json(data);
     } catch (error: any) {
+      console.error("SMM Order Proxy Error:", error);
       res.status(500).json({ error: 'Service temporarily unavailable. Try again later.' });
     }
   });
 
   app.post('/api/smm/balance', async (req, res) => {
     try {
+      const params = new URLSearchParams();
+      params.append('key', API_KEY);
+      params.append('action', 'balance');
+
       const response = await fetch(SMM_API_URL, {
         method: 'POST',
-        headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
-        body: `key=${API_KEY}&action=balance`
+        headers: { 
+          'Content-Type': 'application/x-www-form-urlencoded',
+          'User-Agent': 'Mozilla/5.0'
+        },
+        body: params.toString()
       });
-      const data = await response.json();
-      res.json(data);
+      
+      const text = await response.text();
+      if (!text) throw new Error("Empty response from provider API");
+      
+      try {
+        const data = JSON.parse(text);
+        res.json(data);
+      } catch (e) {
+        console.error("JSON Parse Error (Balance):", text);
+        throw new Error("Invalid JSON response from provider API");
+      }
     } catch (error: any) {
       res.status(500).json({ error: error.message });
     }
@@ -93,13 +144,31 @@ async function startServer() {
   app.post('/api/smm/status', async (req, res) => {
     try {
       const { orderId } = req.body;
+      
+      const params = new URLSearchParams();
+      params.append('key', API_KEY);
+      params.append('action', 'status');
+      params.append('order', String(orderId));
+
       const response = await fetch(SMM_API_URL, {
         method: 'POST',
-        headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
-        body: `key=${API_KEY}&action=status&order=${encodeURIComponent(orderId)}`
+        headers: { 
+          'Content-Type': 'application/x-www-form-urlencoded',
+          'User-Agent': 'Mozilla/5.0'
+        },
+        body: params.toString()
       });
-      const data = await response.json();
-      res.json(data);
+      
+      const text = await response.text();
+      if (!text) throw new Error("Empty response from provider API");
+      
+      try {
+        const data = JSON.parse(text);
+        res.json(data);
+      } catch (e) {
+        console.error("JSON Parse Error (Status):", text);
+        throw new Error("Invalid JSON response from provider API");
+      }
     } catch (error: any) {
       res.status(500).json({ error: error.message });
     }
