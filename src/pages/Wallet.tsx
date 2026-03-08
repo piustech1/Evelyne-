@@ -86,7 +86,7 @@ export default function Wallet() {
     setPaymentStatus('processing');
 
     try {
-      const GAS_URL = 'https://script.google.com/macros/s/AKfycbx3R9hK-5O-ROqvY3XVkBaqOgSE1XXolFg35xD73p__aY274FHPNZN3qeNE1dnZMjmy/exec';
+      const GAS_URL = import.meta.env.VITE_PAYMENT_GATEWAY_URL || 'https://script.google.com/macros/s/AKfycbx3R9hK-5O-ROqvY3XVkBaqOgSE1XXolFg35xD73p__aY274FHPNZN3qeNE1dnZMjmy/exec';
       
       const response = await fetch(GAS_URL, {
         method: 'POST',

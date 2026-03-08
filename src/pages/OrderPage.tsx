@@ -124,7 +124,8 @@ export default function OrderPage() {
         return currentData;
       });
 
-      const originalCost = (service.rate * 3800 * quantity) / 1000;
+      const exchangeRate = Number(import.meta.env.VITE_EXCHANGE_RATE) || 3800;
+      const originalCost = (service.rate * exchangeRate * quantity) / 1000;
       const profit = totalPrice - originalCost;
 
       const ordersRef = ref(db, 'orders');
