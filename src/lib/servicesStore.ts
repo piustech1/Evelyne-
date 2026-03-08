@@ -1,5 +1,6 @@
 import { db } from './firebase';
 import { ref, get, set } from 'firebase/database';
+import { smmService } from '../services/smmService';
 
 export interface Service {
   service: string;
@@ -91,19 +92,8 @@ export const fetchServices = async (force = false): Promise<Service[]> => {
     const settingsSnap = await get(ref(db, 'settings'));
     const profit = settingsSnap.val()?.profitPercentage || 20;
 
-    const response = await fetch('/api/smm/services', { 
-      method: 'POST',
-      signal: AbortSignal.timeout(10000) // 10s timeout
-    });
+    const apiServices = await smmService.getServices();
     
-    if (!response.ok) throw new Error(`HTTP error! status: ${response.status}`);
-    
-    const text = await response.text();
-    if (!text || (!text.startsWith("[") && !text.startsWith("{"))) {
-      throw new Error("Invalid response format from API");
-    }
-
-    const apiServices = JSON.parse(text);
     if (apiServices.error) throw new Error(apiServices.error);
     if (!Array.isArray(apiServices)) throw new Error("API returned non-array data");
 

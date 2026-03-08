@@ -13,6 +13,7 @@ import {
 import { motion } from 'motion/react';
 import { db } from '../../lib/firebase';
 import { ref, onValue, update } from 'firebase/database';
+import { smmService } from '../../services/smmService';
 
 const statusStyles: any = {
   'Completed': 'bg-emerald-500/10 text-emerald-500 border-emerald-500/20',
@@ -80,12 +81,7 @@ export default function AdminOrders() {
     }
 
     try {
-      const response = await fetch('/api/smm/status', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ orderId: order.apiOrderId })
-      });
-      const data = await response.json();
+      const data = await smmService.getStatus(order.apiOrderId);
 
       if (data.status) {
         await update(ref(db, `orders/${order.id}`), { 

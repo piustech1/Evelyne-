@@ -9,6 +9,7 @@ import { db } from '../lib/firebase';
 import { ref, push, set, runTransaction } from 'firebase/database';
 import { fetchServices, Service } from '../lib/servicesStore';
 import { platformIcons, platformColors } from '../utils/platformData';
+import { smmService } from '../services/smmService';
 
 export default function OrderPage() {
   const [searchParams] = useSearchParams();
@@ -85,27 +86,7 @@ export default function OrderPage() {
     const loadingToast = toast.loading('Processing your order...');
 
     try {
-      const apiResponse = await fetch('/api/smm/order', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          service: service.service,
-          link,
-          quantity
-        })
-      });
-
-      const text = await apiResponse.text();
-      if (!text || text.trim() === "") {
-        throw new Error('Provider returned an empty response');
-      }
-      
-      let apiData;
-      try {
-        apiData = JSON.parse(text);
-      } catch (e) {
-        throw new Error('Order failed. Server returned an invalid response: ' + text);
-      }
+      const apiData = await smmService.placeOrder(service.service, link, quantity);
 
       if (apiData.error) {
         throw new Error(apiData.error);

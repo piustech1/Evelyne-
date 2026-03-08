@@ -2,6 +2,7 @@ import { useEffect } from 'react';
 import { db } from '../lib/firebase';
 import { ref, onValue, update, push, set, get } from 'firebase/database';
 import { useAuth } from './useAuth';
+import { smmService } from '../services/smmService';
 
 export function useOrderStatusSync() {
   const { user } = useAuth();
@@ -25,13 +26,7 @@ export function useOrderStatusSync() {
 
       for (const [id, order] of activeOrders as [string, any][]) {
         try {
-          const response = await fetch('/api/smm/status', {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ orderId: order.smmOrderId })
-          });
-          
-          const statusData = await response.json();
+          const statusData = await smmService.getStatus(order.smmOrderId);
           
           if (statusData.status && statusData.status !== order.status) {
             // Status changed!

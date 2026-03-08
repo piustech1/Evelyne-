@@ -23,6 +23,7 @@ import { AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContai
 import { db } from '../../lib/firebase';
 import { ref, onValue, query, limitToLast, remove, get, push, set, serverTimestamp } from 'firebase/database';
 import toast from 'react-hot-toast';
+import { smmService } from '../../services/smmService';
 
 export default function AdminDashboard() {
   const [stats, setStats] = useState([
@@ -55,8 +56,7 @@ export default function AdminDashboard() {
 
   const fetchProviderBalance = async () => {
     try {
-      const response = await fetch('/api/smm/balance', { method: 'POST' });
-      const data = await response.json();
+      const data = await smmService.getBalance();
       if (data.balance) {
         const usd = parseFloat(data.balance);
         setProviderBalance({

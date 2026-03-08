@@ -32,7 +32,11 @@ async function startServer() {
 
   // SMM API Proxy Routes
   const SMM_API_URL = 'https://smmtrustpanel.com/api/v2';
-  const API_KEY = '83d97dd9b3b61589318f4f50b1b90d1a';
+  const API_KEY = process.env.SMM_API_KEY || '';
+
+  if (!API_KEY && !process.env.VITE_SMM_GAS_URL) {
+    console.warn("WARNING: SMM_API_KEY is not set and VITE_SMM_GAS_URL is not set. SMM features will not work.");
+  }
 
   app.post('/api/smm/services', async (req, res) => {
     try {
