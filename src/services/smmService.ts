@@ -16,45 +16,53 @@ export const smmService = {
    * Generic call to SMM API (via GAS or local proxy)
    */
   async call(action: string, params: any = {}): Promise<SMMResponse> {
+    const isGas = !!GAS_URL && GAS_URL !== 'undefined' && GAS_URL !== '';
+    const url = isGas ? GAS_URL : `/api/smm/${action === 'add' ? 'order' : action}`;
+    
+    console.log(`[SMM Service] Action: ${action}, Using GAS: ${isGas}, URL: ${url}`);
+
     try {
-      if (GAS_URL) {
-        // Direct call to Google Apps Script
-        const response = await fetch(GAS_URL, {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'text/plain;charset=utf-8', // GAS doPost requires this for simple CORS
-          },
-          body: JSON.stringify({ action, ...params }),
-        });
+      const fetchOptions: RequestInit = isGas ? {
+        method: 'POST',
+        mode: 'cors',
+        headers: {
+          'Content-Type': 'text/plain;charset=utf-8',
+        },
+        body: JSON.stringify({ action, ...params }),
+      } : {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(params),
+      };
 
-        if (!response.ok) {
-          throw new Error(`GAS Proxy error! status: ${response.status}`);
-        }
+      const response = await fetch(url, fetchOptions);
 
-        const text = await response.text();
-        if (!text) throw new Error("Empty response from GAS Proxy");
-        
+      if (!response.ok) {
+        const errorText = await response.text().catch(() => 'No error details');
+        throw new Error(`${isGas ? 'GAS' : 'Local'} Proxy error! Status: ${response.status}. Details: ${errorText}`);
+      }
+
+      const text = await response.text();
+      if (!text) throw new Error(`Empty response from ${isGas ? 'GAS' : 'Local'} Proxy`);
+      
+      try {
         return JSON.parse(text);
-      } else {
-        // Fallback to local server proxy
-        const endpoint = action === 'add' ? 'order' : action;
-        const response = await fetch(`/api/smm/${endpoint}`, {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify(params),
-        });
-
-        if (!response.ok) {
-          throw new Error(`Local Proxy error! status: ${response.status}`);
-        }
-
-        const text = await response.text();
-        if (!text) throw new Error("Empty response from local proxy");
-        
-        return JSON.parse(text);
+      } catch (parseError) {
+        console.error(`[SMM Service] JSON Parse Error. Raw text:`, text);
+        throw new Error(`Invalid JSON response from ${isGas ? 'GAS' : 'Local'} Proxy`);
       }
     } catch (error: any) {
-      console.error(`SMM Service Error (${action}):`, error);
+      console.error(`[SMM Service] Error (${action}):`, error);
+      
+      // Provide more helpful error messages for common issues
+      if (error.message === 'Failed to fetch') {
+        if (isGas) {
+          return { error: "Network error: Failed to connect to Google Apps Script. Please ensure the URL is correct and deployed as 'Anyone'." };
+        } else {
+          return { error: "Network error: Failed to connect to local API. If on Vercel, ensure VITE_SMM_GAS_URL is set." };
+        }
+      }
+      
       return { error: error.message || "Unknown error occurred" };
     }
   },
