@@ -35,6 +35,7 @@ export const useNotifications = () => {
             await set(ref(db, `fcm_tokens/${user.uid}`), {
               user_id: user.uid,
               fcm_token: token,
+              created_at: serverTimestamp(),
               device_type: /iPhone|iPad|iPod|Android/i.test(navigator.userAgent) ? 'mobile' : 'desktop',
               last_updated: serverTimestamp(),
               email: user.email

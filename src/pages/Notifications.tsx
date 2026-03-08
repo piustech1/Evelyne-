@@ -8,6 +8,7 @@ import { ref, onValue, set, remove } from 'firebase/database';
 
 interface Notification {
   id: string;
+  title?: string;
   message: string;
   type: 'deposit' | 'referral' | 'system';
   timestamp: string;
@@ -136,6 +137,11 @@ export default function Notifications() {
                   </div>
                   
                   <div className="flex-grow space-y-1">
+                    {notif.title && (
+                      <h4 className={`text-sm font-black tracking-tight ${notif.read ? 'text-gray-900' : 'text-blue-600'}`}>
+                        {notif.title}
+                      </h4>
+                    )}
                     <p className={`text-sm leading-relaxed ${notif.read ? 'text-gray-600' : 'text-gray-900 font-bold'}`}>
                       {notif.message}
                     </p>
