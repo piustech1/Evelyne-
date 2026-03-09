@@ -59,12 +59,13 @@ async function syncOrderStatuses() {
           let newStatus = order.status;
           const providerStatus = statusData.status.toLowerCase();
           
-          if (providerStatus === 'completed') newStatus = 'Delivered';
+          if (providerStatus === 'completed') newStatus = 'Completed';
           else if (providerStatus === 'processing') newStatus = 'Processing';
+          else if (providerStatus === 'pending') newStatus = 'Pending';
           else if (providerStatus === 'in progress') newStatus = 'In progress';
           else if (providerStatus === 'partial') newStatus = 'Partial';
-          else if (providerStatus === 'canceled' || providerStatus === 'cancelled') newStatus = 'Cancelled';
-          else if (providerStatus === 'refunded') newStatus = 'Cancelled';
+          else if (providerStatus === 'canceled' || providerStatus === 'cancelled') newStatus = 'Canceled';
+          else if (providerStatus === 'refunded') newStatus = 'Canceled';
 
           if (newStatus !== order.status) {
             console.log(`[Sync] Order ${id} status changed: ${order.status} -> ${newStatus}`);
@@ -293,8 +294,36 @@ async function startServer() {
   });
 
   app.get('/api/admin/check-push-config', (req, res) => {
-    const configured = !!process.env.FIREBASE_SERVICE_ACCOUNT;
+    const configured = admin.apps.length > 0;
     res.json({ configured });
+  });
+
+  app.post('/api/admin/recalculate-prices', async (req, res) => {
+    try {
+      const db = admin.database();
+      const servicesRef = db.ref('services');
+      const snapshot = await servicesRef.get();
+      const services = snapshot.val();
+
+      if (!services) {
+        return res.json({ success: true, message: "No services to recalculate" });
+      }
+
+      const updates: Record<string, any> = {};
+      Object.entries(services).forEach(([id, service]: [string, any]) => {
+        const usdRate = parseFloat(service.rate);
+        if (!isNaN(usdRate)) {
+          const newPrice = Math.round(usdRate * 1.51 * 3800);
+          updates[`${id}/price`] = newPrice;
+          updates[`${id}/updatedAt`] = new Date().toISOString();
+        }
+      });
+
+      await servicesRef.update(updates);
+      res.json({ success: true, count: Object.keys(updates).length / 2 });
+    } catch (error: any) {
+      res.status(500).json({ error: error.message });
+    }
   });
 
   if (process.env.NODE_ENV !== 'production') {

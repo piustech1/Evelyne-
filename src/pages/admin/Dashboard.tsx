@@ -71,19 +71,19 @@ export default function AdminDashboard() {
   const [simulator, setSimulator] = useState({
     depositUgx: 500000,
     exchangeRate: 3800,
-    markupPercent: 30
+    markupPercent: 51
   });
 
   const simResults = useMemo(() => {
-    const providerBalance = simulator.depositUgx / simulator.exchangeRate;
-    const estimatedRevenue = providerBalance * (1 + (simulator.markupPercent / 100));
-    const estimatedProfit = estimatedRevenue - providerBalance;
-    const estimatedOrders = Math.floor(providerBalance / 0.5); // Assuming avg order is $0.5
+    const providerBalanceUsd = simulator.depositUgx / simulator.exchangeRate;
+    const estimatedRevenueUgx = simulator.depositUgx * (1 + (simulator.markupPercent / 100));
+    const estimatedProfitUgx = estimatedRevenueUgx - simulator.depositUgx;
+    const estimatedOrders = Math.floor(providerBalanceUsd / 0.5); // Assuming avg order is $0.5
     
     return {
-      providerBalance,
-      estimatedRevenue,
-      estimatedProfit,
+      providerBalanceUsd,
+      estimatedRevenueUgx,
+      estimatedProfitUgx,
       estimatedOrders
     };
   }, [simulator]);
@@ -155,7 +155,7 @@ export default function AdminDashboard() {
         const ordersArray = Object.entries(orders).map(([id, val]: [string, any]) => ({ id, ...val }));
         const orderCount = ordersArray.length;
         const totalProfit = ordersArray.reduce((acc, curr) => acc + (curr.profit || 0), 0);
-        const totalCost = ordersArray.reduce((acc, curr) => acc + (curr.originalCost || 0), 0);
+        const totalCost = ordersArray.reduce((acc, curr) => acc + (curr.provider_cost || 0), 0);
 
         // Profit Analytics
         const today = new Date().toISOString().split('T')[0];
@@ -598,7 +598,7 @@ export default function AdminDashboard() {
                 <span className="text-[9px] font-black uppercase tracking-widest">Provider Balance</span>
               </div>
               <div className="text-2xl font-display font-black text-gray-900 tracking-tighter">
-                ${simResults.providerBalance.toFixed(2)}
+                ${simResults.providerBalanceUsd.toFixed(2)}
               </div>
               <p className="text-[9px] text-gray-400 font-bold uppercase tracking-widest">Estimated USD in SMM Panel</p>
             </div>
@@ -609,9 +609,9 @@ export default function AdminDashboard() {
                 <span className="text-[9px] font-black uppercase tracking-widest">Estimated Revenue</span>
               </div>
               <div className="text-2xl font-display font-black text-gray-900 tracking-tighter">
-                ${simResults.estimatedRevenue.toFixed(2)}
+                UGX {Math.round(simResults.estimatedRevenueUgx).toLocaleString()}
               </div>
-              <p className="text-[9px] text-gray-400 font-bold uppercase tracking-widest">Total sales value in USD</p>
+              <p className="text-[9px] text-gray-400 font-bold uppercase tracking-widest">Total sales value in UGX</p>
             </div>
 
             <div className="bg-emerald-500 p-6 rounded-3xl shadow-lg shadow-emerald-500/20 space-y-4">
@@ -620,7 +620,7 @@ export default function AdminDashboard() {
                 <span className="text-[9px] font-black uppercase tracking-widest">Estimated Profit</span>
               </div>
               <div className="text-2xl font-display font-black text-white tracking-tighter">
-                ${simResults.estimatedProfit.toFixed(2)}
+                UGX {Math.round(simResults.estimatedProfitUgx).toLocaleString()}
               </div>
               <p className="text-[9px] text-white/50 font-bold uppercase tracking-widest">Net gain after markup</p>
             </div>
