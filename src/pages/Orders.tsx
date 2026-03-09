@@ -2,7 +2,7 @@ import { useState, useEffect } from 'react';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { faSearch, faFilter, faHistory, faCheckCircle, faClock, faTimesCircle, faSpinner, faRocket } from '@fortawesome/free-solid-svg-icons';
 import { motion } from 'motion/react';
-import { Link } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
 import { useAuth } from '../hooks/useAuth';
 import { db } from '../lib/firebase';
 import { ref, onValue, query, orderByChild, equalTo } from 'firebase/database';
@@ -36,6 +36,7 @@ const OrderSkeleton = () => (
 
 export default function Orders() {
   const { user } = useAuth();
+  const navigate = useNavigate();
   const [orders, setOrders] = useState<any[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState('');
@@ -128,6 +129,7 @@ export default function Orders() {
                     initial={{ opacity: 0, x: -10 }}
                     animate={{ opacity: 1, x: 0 }}
                     transition={{ delay: idx * 0.05 }}
+                    onClick={() => navigate(`/orders/${order.id}`)}
                     className="hover:bg-gray-50 transition-colors group cursor-pointer"
                   >
                     <td className="px-8 py-5 text-[10px] font-black text-gray-900 group-hover:text-brand-purple transition-colors truncate max-w-[100px]">#{order.id.slice(-6)}</td>
@@ -141,7 +143,14 @@ export default function Orders() {
                         {order.status}
                       </span>
                     </td>
-                    <td className="px-8 py-5 text-[10px] text-gray-400 font-bold uppercase tracking-wider">{new Date(order.createdAt).toLocaleDateString()}</td>
+                    <td className="px-8 py-5">
+                      <Link 
+                        to={`/orders/${order.id}`}
+                        className="px-4 py-2 bg-brand-purple/10 text-brand-purple rounded-xl text-[8px] font-black uppercase tracking-widest hover:bg-brand-purple hover:text-white transition-all"
+                      >
+                        Track
+                      </Link>
+                    </td>
                   </motion.tr>
                 ))}
               </tbody>

@@ -292,6 +292,11 @@ async function startServer() {
     }
   });
 
+  app.get('/api/admin/check-push-config', (req, res) => {
+    const configured = !!process.env.FIREBASE_SERVICE_ACCOUNT;
+    res.json({ configured });
+  });
+
   if (process.env.NODE_ENV !== 'production') {
     const vite = await createViteServer({
       server: { middlewareMode: true },

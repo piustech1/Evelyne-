@@ -1,12 +1,13 @@
 import { useState, useEffect } from 'react';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
-import { faCog, faShieldAlt, faMoneyBillWave, faGlobe, faEnvelope, faKey, faSave, faCheckCircle } from '@fortawesome/free-solid-svg-icons';
+import { faCog, faShieldAlt, faMoneyBillWave, faGlobe, faEnvelope, faKey, faSave, faCheckCircle, faBell, faExclamationCircle } from '@fortawesome/free-solid-svg-icons';
 import { motion } from 'motion/react';
 import { db } from '../../lib/firebase';
 import { ref, onValue, set, update } from 'firebase/database';
 
 export default function AdminSettings() {
   const [activeTab, setActiveTab] = useState('General');
+  const [pushConfigured, setPushConfigured] = useState<boolean | null>(null);
   const [settings, setSettings] = useState<any>({
     siteName: 'EasyBoost',
     currency: 'UGX',
@@ -30,6 +31,19 @@ export default function AdminSettings() {
         setSettings(data);
       }
     });
+
+    // Check if push notifications are configured
+    const checkPushConfig = async () => {
+      try {
+        const response = await fetch('/api/admin/check-push-config');
+        const data = await response.json();
+        setPushConfigured(data.configured);
+      } catch (err) {
+        console.error('Failed to check push config', err);
+        setPushConfigured(false);
+      }
+    };
+    checkPushConfig();
   }, []);
 
   const handleSave = async () => {
@@ -68,7 +82,7 @@ export default function AdminSettings() {
 
       <div className="grid grid-cols-1 lg:grid-cols-12 gap-10">
         <div className="lg:col-span-4 flex md:flex-col overflow-x-auto md:overflow-x-visible pb-4 md:pb-0 gap-4">
-          {['General', 'Payments', 'Security'].map((tab) => (
+          {['General', 'Payments', 'Notifications', 'Security'].map((tab) => (
             <button
               key={tab}
               onClick={() => setActiveTab(tab)}
@@ -184,6 +198,73 @@ export default function AdminSettings() {
                       </div>
                     </div>
                     <p className="text-[9px] text-gray-400 font-black uppercase tracking-widest ml-1">Added to original service rate</p>
+                  </div>
+                </div>
+              </div>
+            )}
+
+            {activeTab === 'Notifications' && (
+              <div className="space-y-10">
+                <h3 className="text-2xl font-display font-black text-gray-900 tracking-tighter flex items-center space-x-4">
+                  <div className="w-10 h-10 bg-brand-purple/10 rounded-xl flex items-center justify-center text-brand-purple text-lg border border-brand-purple/20">
+                    <FontAwesomeIcon icon={faBell} />
+                  </div>
+                  <span>Push Notifications</span>
+                </h3>
+
+                <div className="p-8 rounded-[2.5rem] bg-gray-50 border border-gray-100 space-y-6">
+                  <div className="flex items-center justify-between">
+                    <div>
+                      <div className="text-sm font-black text-gray-900">Configuration Status</div>
+                      <div className="text-[10px] font-bold text-gray-400 uppercase tracking-widest">Firebase Cloud Messaging (FCM)</div>
+                    </div>
+                    {pushConfigured === null ? (
+                      <div className="flex items-center space-x-2 text-gray-400">
+                        <div className="w-2 h-2 bg-gray-300 rounded-full animate-pulse" />
+                        <span className="text-[10px] font-black uppercase tracking-widest">Checking...</span>
+                      </div>
+                    ) : pushConfigured ? (
+                      <div className="flex items-center space-x-2 text-emerald-500 bg-emerald-50 px-4 py-2 rounded-xl border border-emerald-100">
+                        <FontAwesomeIcon icon={faCheckCircle} className="text-[10px]" />
+                        <span className="text-[10px] font-black uppercase tracking-widest">Configured</span>
+                      </div>
+                    ) : (
+                      <div className="flex items-center space-x-2 text-rose-500 bg-rose-50 px-4 py-2 rounded-xl border border-rose-100">
+                        <FontAwesomeIcon icon={faExclamationCircle} className="text-[10px]" />
+                        <span className="text-[10px] font-black uppercase tracking-widest">Not Configured</span>
+                      </div>
+                    )}
+                  </div>
+
+                  {!pushConfigured && pushConfigured !== null && (
+                    <div className="p-6 bg-rose-500/5 border border-rose-500/10 rounded-2xl space-y-3">
+                      <p className="text-[10px] font-bold text-rose-600 leading-relaxed">
+                        Push notifications require a valid Firebase Service Account key. Please ensure <code>FIREBASE_SERVICE_ACCOUNT</code> is set in your environment variables.
+                      </p>
+                      <a 
+                        href="https://console.firebase.google.com/project/_/settings/serviceaccounts/adminsdk" 
+                        target="_blank" 
+                        rel="noreferrer"
+                        className="inline-block text-[9px] font-black text-rose-500 uppercase tracking-widest hover:underline"
+                      >
+                        Get Service Account Key →
+                      </a>
+                    </div>
+                  )}
+
+                  <div className="space-y-4 pt-6 border-t border-gray-100">
+                    <div className="flex items-center justify-between">
+                      <div>
+                        <div className="text-sm font-black text-gray-900">Enable Push Notifications</div>
+                        <div className="text-[10px] font-bold text-gray-400 uppercase tracking-widest">Allow platform to send broadcast alerts</div>
+                      </div>
+                      <button 
+                        onClick={() => handleChange('pushEnabled', !settings.pushEnabled)}
+                        className={`w-14 h-8 rounded-full relative transition-all ${settings.pushEnabled ? 'bg-brand-purple' : 'bg-gray-200'}`}
+                      >
+                        <div className={`absolute top-1 w-6 h-6 bg-white rounded-full shadow-md transition-all ${settings.pushEnabled ? 'right-1' : 'left-1'}`} />
+                      </button>
+                    </div>
                   </div>
                 </div>
               </div>

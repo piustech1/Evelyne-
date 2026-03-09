@@ -11,6 +11,7 @@ import {
   faSyncAlt
 } from '@fortawesome/free-solid-svg-icons';
 import { motion } from 'motion/react';
+import { useNavigate } from 'react-router-dom';
 import { db } from '../../lib/firebase';
 import { ref, onValue, update } from 'firebase/database';
 import { smmService } from '../../services/smmService';
@@ -26,6 +27,7 @@ const statusStyles: any = {
 };
 
 export default function AdminOrders() {
+  const navigate = useNavigate();
   const [orders, setOrders] = useState<any[]>([]);
   const [filteredOrders, setFilteredOrders] = useState<any[]>([]);
   const [searchTerm, setSearchTerm] = useState('');
@@ -186,6 +188,13 @@ export default function AdminOrders() {
                   </td>
                   <td className="py-6 px-4 text-right">
                     <div className="flex items-center justify-end space-x-2">
+                      <button 
+                        onClick={() => navigate(`/orders/${order.id}`)}
+                        className="w-10 h-10 rounded-xl bg-gray-100 text-gray-500 hover:bg-brand-purple hover:text-white transition-all flex items-center justify-center border border-gray-200"
+                        title="Track Order"
+                      >
+                        <FontAwesomeIcon icon={faEye} className="text-xs" />
+                      </button>
                       {order.apiOrderId && (
                         <button 
                           onClick={() => handleCheckStatus(order)}

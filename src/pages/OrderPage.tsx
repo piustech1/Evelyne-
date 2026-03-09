@@ -105,8 +105,9 @@ export default function OrderPage() {
         return currentData;
       });
 
-      const originalCost = (service.rate * 3800 * quantity) / 1000;
-      const profit = totalPrice - originalCost;
+      const provider_cost = (service.rate * 3800 * quantity) / 1000;
+      const selling_price = totalPrice;
+      const profit = selling_price - provider_cost;
 
       const ordersRef = ref(db, 'orders');
       const newOrderRef = push(ordersRef);
@@ -122,7 +123,8 @@ export default function OrderPage() {
         link,
         quantity,
         price: totalPrice,
-        originalCost,
+        selling_price,
+        provider_cost,
         profit,
         status: 'Processing',
         createdAt: new Date().toISOString(),

@@ -19,6 +19,7 @@ import PlatformPage from './pages/PlatformPage';
 import Boost from './pages/Boost';
 import OrderPage from './pages/OrderPage';
 import Orders from './pages/Orders';
+import OrderDetail from './pages/OrderDetail';
 import Wallet from './pages/Wallet';
 import Profile from './pages/Profile';
 import Notifications from './pages/Notifications';
@@ -112,6 +113,7 @@ export default function App() {
                   <Route path="/boost" element={user ? <Boost /> : <Navigate to="/login" />} />
                   <Route path="/order" element={user ? <OrderPage /> : <Navigate to="/login" />} />
                   <Route path="/orders" element={user ? <Orders /> : <Navigate to="/login" />} />
+                  <Route path="/orders/:orderId" element={user ? <OrderDetail /> : <Navigate to="/login" />} />
                   <Route path="/wallet" element={user ? <Wallet /> : <Navigate to="/login" />} />
                   <Route path="/profile" element={user ? <Profile /> : <Navigate to="/login" />} />
                   <Route path="/notifications" element={user ? <Notifications /> : <Navigate to="/login" />} />

@@ -37,6 +37,13 @@ export default function AdminDashboard() {
     { title: 'Total Profit', value: 'UGX 0', icon: faChartPie, color: 'text-blue-500', bg: 'bg-blue-500/10', trend: '0%', isUp: true },
   ]);
 
+  const [profitStats, setProfitStats] = useState([
+    { title: 'Profit Today', value: 'UGX 0', icon: faChartLine, color: 'text-emerald-500', bg: 'bg-emerald-500/10' },
+    { title: 'Profit This Month', value: 'UGX 0', icon: faChartPie, color: 'text-brand-purple', bg: 'bg-brand-purple/10' },
+    { title: 'Orders Today', value: '0', icon: faShoppingCart, color: 'text-brand-blue', bg: 'bg-brand-blue/10' },
+    { title: 'Avg Profit/Order', value: 'UGX 0', icon: faCoins, color: 'text-amber-500', bg: 'bg-amber-500/10' },
+  ]);
+
   const [secondaryStats, setSecondaryStats] = useState([
     { title: 'Successful Payments', value: '0', icon: faCheckCircle, color: 'text-emerald-500' },
     { title: 'Pending Payments', value: '0', icon: faClock, color: 'text-amber-500' },
@@ -150,11 +157,30 @@ export default function AdminDashboard() {
         const totalProfit = ordersArray.reduce((acc, curr) => acc + (curr.profit || 0), 0);
         const totalCost = ordersArray.reduce((acc, curr) => acc + (curr.originalCost || 0), 0);
 
+        // Profit Analytics
+        const today = new Date().toISOString().split('T')[0];
+        const thisMonth = new Date().toISOString().slice(0, 7);
+        
+        const ordersToday = ordersArray.filter(o => o.createdAt.startsWith(today));
+        const profitToday = ordersToday.reduce((acc, curr) => acc + (curr.profit || 0), 0);
+        
+        const ordersThisMonth = ordersArray.filter(o => o.createdAt.startsWith(thisMonth));
+        const profitThisMonth = ordersThisMonth.reduce((acc, curr) => acc + (curr.profit || 0), 0);
+        
+        const avgProfitPerOrder = orderCount > 0 ? totalProfit / orderCount : 0;
+
         setStats(prev => prev.map(s => {
           if (s.title === 'Total Orders') return { ...s, value: orderCount.toLocaleString() };
           if (s.title === 'Total Profit') return { ...s, value: `UGX ${Math.round(totalProfit).toLocaleString()}` };
           return s;
         }));
+
+        setProfitStats([
+          { title: 'Profit Today', value: `UGX ${Math.round(profitToday).toLocaleString()}`, icon: faChartLine, color: 'text-emerald-500', bg: 'bg-emerald-500/10' },
+          { title: 'Profit This Month', value: `UGX ${Math.round(profitThisMonth).toLocaleString()}`, icon: faChartPie, color: 'text-brand-purple', bg: 'bg-brand-purple/10' },
+          { title: 'Orders Today', value: ordersToday.length.toLocaleString(), icon: faShoppingCart, color: 'text-brand-blue', bg: 'bg-brand-blue/10' },
+          { title: 'Avg Profit/Order', value: `UGX ${Math.round(avgProfitPerOrder).toLocaleString()}`, icon: faCoins, color: 'text-amber-500', bg: 'bg-amber-500/10' },
+        ]);
 
         setSecondaryStats(prev => prev.map(s => s.title === 'API Cost' ? { ...s, value: `UGX ${Math.round(totalCost).toLocaleString()}` } : s));
 
@@ -406,6 +432,29 @@ export default function AdminDashboard() {
               <div className={`flex items-center space-x-1 text-[10px] font-black uppercase tracking-widest ${stat.isUp ? 'text-emerald-500' : 'text-rose-500'}`}>
                 <FontAwesomeIcon icon={stat.isUp ? faArrowUp : faArrowDown} />
                 <span>{stat.trend}</span>
+              </div>
+            </div>
+            <div className="space-y-1">
+              <div className="text-2xl font-display font-black text-gray-900 tracking-tighter">{stat.value}</div>
+              <div className="text-[10px] font-black text-gray-400 uppercase tracking-[0.2em]">{stat.title}</div>
+            </div>
+          </motion.div>
+        ))}
+      </div>
+
+      {/* Profit Analytics Widgets */}
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
+        {profitStats.map((stat, idx) => (
+          <motion.div
+            key={idx}
+            initial={{ opacity: 0, scale: 0.95 }}
+            animate={{ opacity: 1, scale: 1 }}
+            transition={{ delay: idx * 0.05 + 0.2 }}
+            className="bg-white p-8 rounded-[2.5rem] shadow-sm border border-gray-100 hover:border-brand-purple/30 transition-all group"
+          >
+            <div className="flex items-center justify-between mb-6">
+              <div className={`w-14 h-14 ${stat.bg} ${stat.color} rounded-2xl flex items-center justify-center text-2xl transition-transform group-hover:scale-110 shadow-sm border border-gray-50`}>
+                <FontAwesomeIcon icon={stat.icon} />
               </div>
             </div>
             <div className="space-y-1">
