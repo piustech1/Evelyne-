@@ -7,7 +7,7 @@ import { ref, onValue, set, update } from 'firebase/database';
 
 export default function AdminSettings() {
   const [activeTab, setActiveTab] = useState('General');
-  const [pushConfigured, setPushConfigured] = useState<boolean | null>(null);
+  const [pushConfig, setPushConfig] = useState<any>(null);
   const [settings, setSettings] = useState<any>({
     siteName: 'EasyBoost',
     currency: 'UGX',
@@ -37,10 +37,10 @@ export default function AdminSettings() {
       try {
         const response = await fetch('/api/admin/check-push-config');
         const data = await response.json();
-        setPushConfigured(data.configured);
+        setPushConfig(data);
       } catch (err) {
         console.error('Failed to check push config', err);
-        setPushConfigured(false);
+        setPushConfig({ configured: false, error: true });
       }
     };
     checkPushConfig();
@@ -218,12 +218,12 @@ export default function AdminSettings() {
                       <div className="text-sm font-black text-gray-900">Configuration Status</div>
                       <div className="text-[10px] font-bold text-gray-400 uppercase tracking-widest">Firebase Cloud Messaging (FCM)</div>
                     </div>
-                    {pushConfigured === null ? (
+                    {pushConfig === null ? (
                       <div className="flex items-center space-x-2 text-gray-400">
                         <div className="w-2 h-2 bg-gray-300 rounded-full animate-pulse" />
                         <span className="text-[10px] font-black uppercase tracking-widest">Checking...</span>
                       </div>
-                    ) : pushConfigured ? (
+                    ) : pushConfig.configured ? (
                       <div className="flex items-center space-x-2 text-emerald-500 bg-emerald-50 px-4 py-2 rounded-xl border border-emerald-100">
                         <FontAwesomeIcon icon={faCheckCircle} className="text-[10px]" />
                         <span className="text-[10px] font-black uppercase tracking-widest">Configured</span>
@@ -236,11 +236,31 @@ export default function AdminSettings() {
                     )}
                   </div>
 
-                  {!pushConfigured && pushConfigured !== null && (
+                  {!pushConfig?.configured && pushConfig !== null && (
                     <div className="p-6 bg-rose-500/5 border border-rose-500/10 rounded-2xl space-y-3">
-                      <p className="text-[10px] font-bold text-rose-600 leading-relaxed">
-                        Push notifications require a valid Firebase Service Account key. Please ensure <code>FIREBASE_SERVICE_ACCOUNT</code> is set in your environment variables.
-                      </p>
+                      <div className="text-[10px] font-bold text-rose-600 leading-relaxed space-y-2">
+                        <p>Push notifications require a valid Firebase Service Account key.</p>
+                        <div className="grid grid-cols-2 gap-4 mt-4">
+                          <div className="p-3 bg-white/50 rounded-xl border border-rose-100">
+                            <div className="text-[8px] text-gray-400 uppercase mb-1">Env Variable</div>
+                            <div className="font-black">{pushConfig.hasEnv ? '✅ DETECTED' : '❌ MISSING'}</div>
+                          </div>
+                          <div className="p-3 bg-white/50 rounded-xl border border-rose-100">
+                            <div className="text-[8px] text-gray-400 uppercase mb-1">Initialization</div>
+                            <div className="font-black">{pushConfig.appCount > 0 ? '✅ ACTIVE' : '❌ FAILED'}</div>
+                          </div>
+                        </div>
+                        {pushConfig.hasEnv && pushConfig.appCount === 0 && (
+                          <p className="mt-4 p-3 bg-rose-100/50 rounded-xl border border-rose-200">
+                            <strong>Note:</strong> The environment variable was detected but initialization failed. This usually means the JSON string is invalid or the credentials are incorrect.
+                          </p>
+                        )}
+                        {!pushConfig.hasEnv && (
+                          <p className="mt-4 p-3 bg-rose-100/50 rounded-xl border border-rose-200">
+                            <strong>Note:</strong> Please ensure <code>FIREBASE_SERVICE_ACCOUNT</code> is set in your environment variables.
+                          </p>
+                        )}
+                      </div>
                       <a 
                         href="https://console.firebase.google.com/project/_/settings/serviceaccounts/adminsdk" 
                         target="_blank" 

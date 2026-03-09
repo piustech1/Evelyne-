@@ -8,19 +8,31 @@ import admin from 'firebase-admin';
 dotenv.config();
 
 // Initialize Firebase Admin
+console.log("Checking for FIREBASE_SERVICE_ACCOUNT...");
 if (process.env.FIREBASE_SERVICE_ACCOUNT) {
   try {
-    const serviceAccount = JSON.parse(process.env.FIREBASE_SERVICE_ACCOUNT);
+    let envValue = process.env.FIREBASE_SERVICE_ACCOUNT.trim();
+    // Handle cases where the value might be wrapped in quotes
+    if (envValue.startsWith("'") && envValue.endsWith("'")) {
+      envValue = envValue.slice(1, -1);
+    } else if (envValue.startsWith('"') && envValue.endsWith('"')) {
+      envValue = envValue.slice(1, -1);
+    }
+    const serviceAccount = JSON.parse(envValue);
     if (!admin.apps.length) {
       admin.initializeApp({
         credential: admin.credential.cert(serviceAccount),
         databaseURL: process.env.VITE_FIREBASE_DATABASE_URL || `https://${serviceAccount.project_id}-default-rtdb.firebaseio.com/`
       });
-      console.log("Firebase Admin initialized with Database support");
+      console.log("Firebase Admin successfully initialized");
+    } else {
+      console.log("Firebase Admin already initialized");
     }
   } catch (error) {
     console.error("Failed to initialize Firebase Admin:", error);
   }
+} else {
+  console.warn("FIREBASE_SERVICE_ACCOUNT environment variable is missing");
 }
 
 // Background job for syncing order statuses
@@ -294,8 +306,14 @@ async function startServer() {
   });
 
   app.get('/api/admin/check-push-config', (req, res) => {
-    const configured = admin.apps.length > 0;
-    res.json({ configured });
+    const hasEnv = !!process.env.FIREBASE_SERVICE_ACCOUNT;
+    const appCount = admin.apps.length;
+    res.json({ 
+      configured: appCount > 0,
+      hasEnv,
+      appCount,
+      envLength: process.env.FIREBASE_SERVICE_ACCOUNT?.length || 0
+    });
   });
 
   app.post('/api/admin/recalculate-prices', async (req, res) => {
