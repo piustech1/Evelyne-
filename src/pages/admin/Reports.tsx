@@ -57,7 +57,10 @@ export default function AdminReports() {
 
     const chartData = last7Days.map(date => {
       const dailyRevenue = data
-        .filter(p => p.status === 'Approved' && p.createdAt.startsWith(date))
+        .filter(p => 
+          ['approved', 'success', 'completed', 'paid', 'successful'].includes(String(p.status).toLowerCase()) && 
+          p.createdAt.startsWith(date)
+        )
         .reduce((sum, p) => sum + (p.amount || 0), 0);
       
       return {

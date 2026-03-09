@@ -13,12 +13,86 @@ if (process.env.FIREBASE_SERVICE_ACCOUNT) {
     const serviceAccount = JSON.parse(process.env.FIREBASE_SERVICE_ACCOUNT);
     if (!admin.apps.length) {
       admin.initializeApp({
-        credential: admin.credential.cert(serviceAccount)
+        credential: admin.credential.cert(serviceAccount),
+        databaseURL: process.env.VITE_FIREBASE_DATABASE_URL || `https://${serviceAccount.project_id}-default-rtdb.firebaseio.com/`
       });
-      console.log("Firebase Admin initialized");
+      console.log("Firebase Admin initialized with Database support");
     }
   } catch (error) {
     console.error("Failed to initialize Firebase Admin:", error);
+  }
+}
+
+// Background job for syncing order statuses
+async function syncOrderStatuses() {
+  const GAS_URL = process.env.VITE_SMM_GAS_URL;
+  if (!GAS_URL) return;
+
+  try {
+    const db = admin.database();
+    const ordersRef = db.ref('orders');
+    const snapshot = await ordersRef.get();
+    const orders = snapshot.val();
+
+    if (!orders) return;
+
+    const activeOrders = Object.entries(orders).filter(([_, order]: [string, any]) => 
+      ['Pending', 'Processing', 'In progress', 'Partial'].includes(order.status) &&
+      order.smmOrderId
+    );
+
+    if (activeOrders.length === 0) return;
+
+    console.log(`[Sync] Checking status for ${activeOrders.length} active orders...`);
+
+    for (const [id, order] of activeOrders as [string, any][]) {
+      try {
+        const response = await fetch(GAS_URL, {
+          method: 'POST',
+          headers: { 'Content-Type': 'text/plain;charset=utf-8' },
+          body: JSON.stringify({ action: 'status', orderId: order.smmOrderId })
+        });
+
+        const statusData: any = await response.json();
+        
+        if (statusData.status) {
+          let newStatus = order.status;
+          const providerStatus = statusData.status.toLowerCase();
+          
+          if (providerStatus === 'completed') newStatus = 'Delivered';
+          else if (providerStatus === 'processing') newStatus = 'Processing';
+          else if (providerStatus === 'in progress') newStatus = 'In progress';
+          else if (providerStatus === 'partial') newStatus = 'Partial';
+          else if (providerStatus === 'canceled' || providerStatus === 'cancelled') newStatus = 'Cancelled';
+          else if (providerStatus === 'refunded') newStatus = 'Cancelled';
+
+          if (newStatus !== order.status) {
+            console.log(`[Sync] Order ${id} status changed: ${order.status} -> ${newStatus}`);
+            await ordersRef.child(id).update({
+              status: newStatus,
+              remains: statusData.remains || 0,
+              start_count: statusData.start_count || 0,
+              updatedAt: new Date().toISOString()
+            });
+
+            // Send in-app notification
+            const notifRef = db.ref(`notifications/${order.userId}`).push();
+            await notifRef.set({
+              title: `Order Update`,
+              message: `Your order for ${order.service} is now ${newStatus}.`,
+              timestamp: new Date().toISOString(),
+              read: false,
+              type: 'order',
+              orderId: id
+            });
+          }
+        }
+      } catch (err) {
+        console.error(`[Sync] Failed to sync order ${id}:`, err);
+      }
+    }
+  } catch (error) {
+    console.error("[Sync] Error in background sync job:", error);
   }
 }
 
@@ -231,6 +305,11 @@ async function startServer() {
 
   app.listen(PORT, '0.0.0.0', () => {
     console.log(`Server live on http://localhost:${PORT}`);
+    
+    // Start background sync every 5 minutes
+    setInterval(syncOrderStatuses, 5 * 60 * 1000);
+    // Initial run after 30 seconds
+    setTimeout(syncOrderStatuses, 30 * 1000);
   });
 }
 

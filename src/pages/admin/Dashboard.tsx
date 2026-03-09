@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useMemo } from 'react';
 import { Link } from 'react-router-dom';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { 
@@ -17,7 +17,10 @@ import {
   faTrashAlt,
   faExclamationTriangle,
   faBell,
-  faTimesCircle
+  faTimesCircle,
+  faCalculator,
+  faCoins,
+  faChartLine
 } from '@fortawesome/free-solid-svg-icons';
 import { motion, AnimatePresence } from 'motion/react';
 import { AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, BarChart, Bar, Cell, PieChart, Pie } from 'recharts';
@@ -57,6 +60,27 @@ export default function AdminDashboard() {
   const [isResetting, setIsResetting] = useState(false);
   const [showSetupGuide, setShowSetupGuide] = useState(false);
 
+  // Profit Simulator state
+  const [simulator, setSimulator] = useState({
+    depositUgx: 500000,
+    exchangeRate: 3800,
+    markupPercent: 30
+  });
+
+  const simResults = useMemo(() => {
+    const providerBalance = simulator.depositUgx / simulator.exchangeRate;
+    const estimatedRevenue = providerBalance * (1 + (simulator.markupPercent / 100));
+    const estimatedProfit = estimatedRevenue - providerBalance;
+    const estimatedOrders = Math.floor(providerBalance / 0.5); // Assuming avg order is $0.5
+    
+    return {
+      providerBalance,
+      estimatedRevenue,
+      estimatedProfit,
+      estimatedOrders
+    };
+  }, [simulator]);
+
   const fetchProviderBalance = async () => {
     setApiConnection({ status: 'checking' });
     try {
@@ -93,8 +117,12 @@ export default function AdminDashboard() {
       const payments = snapshot.val();
       if (payments) {
         const paymentsArray = Object.values(payments) as any[];
-        const approvedPayments = paymentsArray.filter(p => p.status === 'Approved' || p.status === 'completed' || p.status === 'Successful');
-        const pendingPayments = paymentsArray.filter(p => p.status === 'Pending' || p.status === 'pending');
+        const approvedPayments = paymentsArray.filter(p => 
+          ['approved', 'success', 'completed', 'paid', 'successful'].includes(String(p.status).toLowerCase())
+        );
+        const pendingPayments = paymentsArray.filter(p => 
+          ['pending'].includes(String(p.status).toLowerCase())
+        );
         
         const totalRevenue = approvedPayments.reduce((acc, curr) => acc + (curr.amount || 0), 0);
         
@@ -455,6 +483,112 @@ export default function AdminDashboard() {
           </div>
         </div>
       </div>
+
+      {/* Profit Simulator Section */}
+      <motion.div 
+        initial={{ opacity: 0, y: 20 }}
+        animate={{ opacity: 1, y: 0 }}
+        className="bg-white p-8 md:p-12 rounded-[3.5rem] shadow-sm border border-gray-100"
+      >
+        <div className="flex items-center space-x-4 mb-10">
+          <div className="w-14 h-14 bg-emerald-500/10 text-emerald-500 rounded-2xl flex items-center justify-center text-2xl border border-emerald-500/20">
+            <FontAwesomeIcon icon={faCalculator} />
+          </div>
+          <div>
+            <h2 className="text-2xl font-display font-black text-gray-900 tracking-tighter">Profit Simulator</h2>
+            <p className="text-gray-400 text-[10px] font-black uppercase tracking-widest">Estimate earnings from SMM deposits</p>
+          </div>
+        </div>
+
+        <div className="grid grid-cols-1 lg:grid-cols-12 gap-10">
+          {/* Inputs */}
+          <div className="lg:col-span-5 space-y-6">
+            <div className="space-y-2">
+              <label className="text-[10px] font-black text-gray-400 uppercase tracking-widest ml-1">Deposit Amount (UGX)</label>
+              <div className="relative">
+                <input 
+                  type="number"
+                  value={simulator.depositUgx}
+                  onChange={(e) => setSimulator(prev => ({ ...prev, depositUgx: Number(e.target.value) }))}
+                  className="w-full px-6 py-4 bg-gray-50 border border-gray-100 rounded-2xl text-gray-900 focus:outline-none focus:ring-2 focus:ring-brand-purple/20 focus:border-brand-purple transition-all font-bold text-sm"
+                />
+                <div className="absolute right-6 top-1/2 -translate-y-1/2 text-[10px] font-black text-gray-400 uppercase">UGX</div>
+              </div>
+            </div>
+
+            <div className="grid grid-cols-2 gap-4">
+              <div className="space-y-2">
+                <label className="text-[10px] font-black text-gray-400 uppercase tracking-widest ml-1">Exchange Rate</label>
+                <input 
+                  type="number"
+                  value={simulator.exchangeRate}
+                  onChange={(e) => setSimulator(prev => ({ ...prev, exchangeRate: Number(e.target.value) }))}
+                  className="w-full px-6 py-4 bg-gray-50 border border-gray-100 rounded-2xl text-gray-900 focus:outline-none focus:ring-2 focus:ring-brand-purple/20 focus:border-brand-purple transition-all font-bold text-sm"
+                />
+              </div>
+              <div className="space-y-2">
+                <label className="text-[10px] font-black text-gray-400 uppercase tracking-widest ml-1">Markup %</label>
+                <div className="relative">
+                  <input 
+                    type="number"
+                    value={simulator.markupPercent}
+                    onChange={(e) => setSimulator(prev => ({ ...prev, markupPercent: Number(e.target.value) }))}
+                    className="w-full px-6 py-4 bg-gray-50 border border-gray-100 rounded-2xl text-gray-900 focus:outline-none focus:ring-2 focus:ring-brand-purple/20 focus:border-brand-purple transition-all font-bold text-sm"
+                  />
+                  <div className="absolute right-6 top-1/2 -translate-y-1/2 text-[10px] font-black text-gray-400 uppercase">%</div>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          {/* Results */}
+          <div className="lg:col-span-7 grid grid-cols-1 sm:grid-cols-2 gap-6">
+            <div className="bg-gray-50 p-6 rounded-3xl border border-gray-100 space-y-4">
+              <div className="flex items-center space-x-3 text-brand-purple">
+                <FontAwesomeIcon icon={faWallet} className="text-xs" />
+                <span className="text-[9px] font-black uppercase tracking-widest">Provider Balance</span>
+              </div>
+              <div className="text-2xl font-display font-black text-gray-900 tracking-tighter">
+                ${simResults.providerBalance.toFixed(2)}
+              </div>
+              <p className="text-[9px] text-gray-400 font-bold uppercase tracking-widest">Estimated USD in SMM Panel</p>
+            </div>
+
+            <div className="bg-gray-50 p-6 rounded-3xl border border-gray-100 space-y-4">
+              <div className="flex items-center space-x-3 text-blue-500">
+                <FontAwesomeIcon icon={faCoins} className="text-xs" />
+                <span className="text-[9px] font-black uppercase tracking-widest">Estimated Revenue</span>
+              </div>
+              <div className="text-2xl font-display font-black text-gray-900 tracking-tighter">
+                ${simResults.estimatedRevenue.toFixed(2)}
+              </div>
+              <p className="text-[9px] text-gray-400 font-bold uppercase tracking-widest">Total sales value in USD</p>
+            </div>
+
+            <div className="bg-emerald-500 p-6 rounded-3xl shadow-lg shadow-emerald-500/20 space-y-4">
+              <div className="flex items-center space-x-3 text-white/70">
+                <FontAwesomeIcon icon={faChartLine} className="text-xs" />
+                <span className="text-[9px] font-black uppercase tracking-widest">Estimated Profit</span>
+              </div>
+              <div className="text-2xl font-display font-black text-white tracking-tighter">
+                ${simResults.estimatedProfit.toFixed(2)}
+              </div>
+              <p className="text-[9px] text-white/50 font-bold uppercase tracking-widest">Net gain after markup</p>
+            </div>
+
+            <div className="bg-gray-900 p-6 rounded-3xl shadow-xl space-y-4">
+              <div className="flex items-center space-x-3 text-brand-purple">
+                <FontAwesomeIcon icon={faShoppingCart} className="text-xs" />
+                <span className="text-[9px] font-black uppercase tracking-widest">Orders Possible</span>
+              </div>
+              <div className="text-2xl font-display font-black text-white tracking-tighter">
+                ~{simResults.estimatedOrders.toLocaleString()}
+              </div>
+              <p className="text-[9px] text-white/40 font-bold uppercase tracking-widest">Based on $0.50 avg cost</p>
+            </div>
+          </div>
+        </div>
+      </motion.div>
 
       <div className="grid grid-cols-1 lg:grid-cols-12 gap-10">
         {/* Recent Orders */}
