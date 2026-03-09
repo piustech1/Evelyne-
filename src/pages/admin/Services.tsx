@@ -12,7 +12,6 @@ export default function AdminServices() {
   const [searchTerm, setSearchTerm] = useState('');
   const [isLoading, setIsLoading] = useState(true);
   const [isSyncing, setIsSyncing] = useState(false);
-  const [isRecalculating, setIsRecalculating] = useState(false);
 
   useEffect(() => {
     const servicesRef = ref(db, 'services');
@@ -45,26 +44,6 @@ export default function AdminServices() {
     }
   };
 
-  const handleRecalculate = async () => {
-    setIsRecalculating(true);
-    const loadingToast = toast.loading('Recalculating all prices (51% markup)...');
-    try {
-      const response = await fetch('/api/admin/recalculate-prices', {
-        method: 'POST'
-      });
-      const data = await response.json();
-      if (data.success) {
-        toast.success(`Successfully recalculated ${data.count} services!`, { id: loadingToast });
-      } else {
-        throw new Error(data.error || 'Recalculation failed');
-      }
-    } catch (err: any) {
-      toast.error(err.message, { id: loadingToast });
-    } finally {
-      setIsRecalculating(false);
-    }
-  };
-
   const filteredServices = services.filter(s => 
     s.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
     s.categoryName?.toLowerCase().includes(searchTerm.toLowerCase())
@@ -77,14 +56,6 @@ export default function AdminServices() {
           <h1 className="text-4xl md:text-5xl font-display font-black text-gray-900 tracking-tighter mb-2">Services</h1>
           <p className="text-gray-400 font-black text-[10px] uppercase tracking-[0.2em]">Manage your SMM services and pricing</p>
         </div>
-        <button
-          onClick={handleRecalculate}
-          disabled={isRecalculating}
-          className="px-8 py-4 bg-gray-900 text-white font-black uppercase tracking-widest text-[10px] rounded-2xl shadow-xl hover:bg-brand-purple transition-all active:scale-95 flex items-center gap-2 disabled:opacity-50"
-        >
-          <FontAwesomeIcon icon={faSync} className={isRecalculating ? 'animate-spin' : ''} />
-          <span>Recalculate Prices (51%)</span>
-        </button>
       </div>
 
       <div className="bg-white p-8 md:p-12 rounded-[3.5rem] shadow-xl border border-gray-100">

@@ -82,7 +82,11 @@ export const fetchServices = async (force = false): Promise<Service[]> => {
     const data = snapshot.val();
 
     if (data && !force) {
-      const services = Object.values(data) as Service[];
+      const services = (Object.values(data) as Service[]).map(s => ({
+        ...s,
+        // Always ensure 51% markup on load
+        price: Math.round(parseFloat(s.rate as any) * 1.51 * 3800)
+      }));
       cachedServices = services;
       lastFetchTime = now;
       return services;
