@@ -82,6 +82,11 @@ export default function OrderPage() {
       return;
     }
 
+    if (totalPrice < 1000) {
+      toast.error('Minimum order amount is UGX 1,000');
+      return;
+    }
+
     setIsOrdering(true);
     const loadingToast = toast.loading('Processing your order...');
 
@@ -265,6 +270,11 @@ export default function OrderPage() {
                 <div>
                   <div className="text-[10px] font-black text-white/40 uppercase tracking-widest mb-1">Total Amount</div>
                   <div className="text-3xl font-display font-black text-white tracking-tighter">UGX {totalPrice.toLocaleString()}</div>
+                  {totalPrice < 1000 && (
+                    <div className="text-[9px] font-bold text-rose-400 uppercase tracking-widest mt-1">
+                      Min order: UGX 1,000
+                    </div>
+                  )}
                 </div>
                 <div className="text-right">
                   <div className="text-[10px] font-black text-white/40 uppercase tracking-widest mb-1">Wallet Balance</div>

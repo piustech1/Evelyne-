@@ -42,7 +42,8 @@ export default function PlatformPage() {
   }, [platform]);
 
   const filteredServices = services.filter(s => {
-    const matchesSearch = s.name.toLowerCase().includes(searchTerm.toLowerCase());
+    const matchesSearch = s.name.toLowerCase().includes(searchTerm.toLowerCase()) || 
+                         String(s.service).includes(searchTerm);
     if (activeFilter === 'All') return matchesSearch;
     if (activeFilter === 'Other') {
       const knownFilters = ['Followers', 'Likes', 'Views', 'Comments', 'Shares'];

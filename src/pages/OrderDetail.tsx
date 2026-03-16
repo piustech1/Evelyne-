@@ -4,12 +4,14 @@ import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { 
   faArrowLeft, faCheckCircle, faClock, faTimesCircle, faSpinner, 
   faRocket, faLink, faHashtag, faCalendarAlt, faSyncAlt, 
-  faChartLine, faMoneyBillWave, faCoins, faInfoCircle
+  faChartLine, faMoneyBillWave, faCoins, faInfoCircle, faSync
 } from '@fortawesome/free-solid-svg-icons';
 import { motion } from 'motion/react';
 import { db } from '../lib/firebase';
-import { ref, onValue } from 'firebase/database';
+import { ref, onValue, update } from 'firebase/database';
 import { useAuth } from '../hooks/useAuth';
+import { smmService } from '../services/smmService';
+import toast from 'react-hot-toast';
 
 const statusStyles: Record<string, any> = {
   'Completed': { bg: 'bg-emerald-500', text: 'text-white', icon: faCheckCircle, label: 'Delivered' },
@@ -29,6 +31,35 @@ export default function OrderDetail() {
   const { userData } = useAuth();
   const [order, setOrder] = useState<any>(null);
   const [isLoading, setIsLoading] = useState(true);
+  const [isRefreshing, setIsRefreshing] = useState(false);
+
+  const handleRefresh = async () => {
+    if (!order || !order.apiOrderId) {
+      toast.error('No provider ID found for this order');
+      return;
+    }
+
+    setIsRefreshing(true);
+    const loadingToast = toast.loading('Refreshing status...');
+    try {
+      const statusData = await smmService.getStatus(order.apiOrderId);
+      if (statusData.status) {
+        await update(ref(db, `orders/${orderId}`), {
+          status: statusData.status,
+          remains: statusData.remains || 0,
+          start_count: statusData.start_count || 0,
+          updatedAt: new Date().toISOString()
+        });
+        toast.success('Status updated!', { id: loadingToast });
+      } else {
+        throw new Error('Failed to get status from provider');
+      }
+    } catch (err: any) {
+      toast.error(err.message || 'Failed to refresh status', { id: loadingToast });
+    } finally {
+      setIsRefreshing(false);
+    }
+  };
 
   useEffect(() => {
     if (orderId) {
@@ -95,9 +126,19 @@ export default function OrderDetail() {
                 {order.service}
               </h1>
             </div>
-            <div className={`self-start md:self-center px-6 py-3 rounded-2xl ${status.bg} ${status.text} shadow-xl flex items-center space-x-3 border border-white/20`}>
-              <FontAwesomeIcon icon={status.icon} className={order.status === 'Processing' ? 'animate-spin' : ''} />
-              <span className="text-xs font-black uppercase tracking-widest">{status.label}</span>
+            <div className="flex flex-col md:flex-row md:items-center gap-4 self-start md:self-center">
+              <button 
+                onClick={handleRefresh}
+                disabled={isRefreshing}
+                className="px-6 py-3 rounded-2xl bg-white/10 hover:bg-white/20 text-white border border-white/20 transition-all flex items-center space-x-2 active-press disabled:opacity-50"
+              >
+                <FontAwesomeIcon icon={faSync} className={isRefreshing ? 'animate-spin' : ''} />
+                <span className="text-[10px] font-black uppercase tracking-widest">Refresh Status</span>
+              </button>
+              <div className={`px-6 py-3 rounded-2xl ${status.bg} ${status.text} shadow-xl flex items-center space-x-3 border border-white/20`}>
+                <FontAwesomeIcon icon={status.icon} className={order.status === 'Processing' ? 'animate-spin' : ''} />
+                <span className="text-xs font-black uppercase tracking-widest">{status.label}</span>
+              </div>
             </div>
           </div>
         </div>

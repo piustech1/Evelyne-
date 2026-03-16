@@ -61,7 +61,12 @@ export const ServiceCard = ({ service, onBoost, index = 0 }: ServiceCardProps) =
             <FontAwesomeIcon icon={icon} />
           </div>
           <div className="space-y-1 pt-1">
-            <div className="text-[8px] font-black text-brand-purple uppercase tracking-[0.2em]">{service.category}</div>
+            <div className="flex items-center gap-2">
+              <div className="text-[8px] font-black text-brand-purple uppercase tracking-[0.2em]">{service.category}</div>
+              <div className="px-1.5 py-0.5 bg-gray-100 text-gray-500 text-[7px] font-black rounded uppercase tracking-widest border border-gray-200">
+                ID: {service.service}
+              </div>
+            </div>
             <h4 className="text-xs font-black text-gray-900 leading-tight group-hover:text-brand-purple transition-colors line-clamp-2">
               {service.name}
             </h4>

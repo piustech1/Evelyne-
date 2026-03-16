@@ -56,7 +56,8 @@ export default function Services() {
 
   const filteredServices = services.filter(s => 
     s.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    s.category?.toLowerCase().includes(searchTerm.toLowerCase())
+    s.category?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+    String(s.service).includes(searchTerm)
   );
 
   const groupedServices = filteredServices.reduce((acc: Record<string, Service[]>, service) => {

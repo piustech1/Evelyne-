@@ -38,7 +38,10 @@ if (process.env.FIREBASE_SERVICE_ACCOUNT) {
 // Background job for syncing order statuses
 async function syncOrderStatuses() {
   const GAS_URL = process.env.VITE_SMM_GAS_URL;
-  if (!GAS_URL) return;
+  const API_KEY = process.env.SMM_API_KEY || '';
+  const SMM_API_URL = 'https://smmtrustpanel.com/api/v2';
+
+  if (!GAS_URL && !API_KEY) return;
 
   try {
     const db = admin.database();
@@ -50,7 +53,7 @@ async function syncOrderStatuses() {
 
     const activeOrders = Object.entries(orders).filter(([_, order]: [string, any]) => 
       ['Pending', 'Processing', 'In progress', 'Partial'].includes(order.status) &&
-      order.smmOrderId
+      (order.apiOrderId || order.smmOrderId)
     );
 
     if (activeOrders.length === 0) return;
@@ -59,15 +62,35 @@ async function syncOrderStatuses() {
 
     for (const [id, order] of activeOrders as [string, any][]) {
       try {
-        const response = await fetch(GAS_URL, {
-          method: 'POST',
-          headers: { 'Content-Type': 'text/plain;charset=utf-8' },
-          body: JSON.stringify({ action: 'status', orderId: order.smmOrderId })
-        });
+        const orderId = order.apiOrderId || order.smmOrderId;
+        let statusData: any = null;
 
-        const statusData: any = await response.json();
+        if (GAS_URL) {
+          const response = await fetch(GAS_URL, {
+            method: 'POST',
+            headers: { 'Content-Type': 'text/plain;charset=utf-8' },
+            body: JSON.stringify({ action: 'status', orderId })
+          });
+          statusData = await response.json();
+        } else {
+          const params = new URLSearchParams();
+          params.append('key', API_KEY);
+          params.append('action', 'status');
+          params.append('order', String(orderId));
+
+          const response = await fetch(SMM_API_URL, {
+            method: 'POST',
+            headers: { 
+              'Content-Type': 'application/x-www-form-urlencoded',
+              'User-Agent': 'Mozilla/5.0'
+            },
+            body: params.toString()
+          });
+          const text = await response.text();
+          statusData = JSON.parse(text);
+        }
         
-        if (statusData.status) {
+        if (statusData && statusData.status) {
           let newStatus = order.status;
           const providerStatus = statusData.status.toLowerCase();
           

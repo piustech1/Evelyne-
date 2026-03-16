@@ -1,6 +1,6 @@
 import { useState, useEffect, FormEvent } from 'react';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
-import { faWallet, faPlus, faHistory, faArrowUp, faArrowDown, faCheckCircle, faMobileAlt, faInfoCircle, faSpinner, faCheck } from '@fortawesome/free-solid-svg-icons';
+import { faWallet, faPlus, faHistory, faArrowUp, faArrowDown, faCheckCircle, faMobileAlt, faInfoCircle, faSpinner, faCheck, faCreditCard } from '@fortawesome/free-solid-svg-icons';
 import { motion, AnimatePresence } from 'motion/react';
 import toast from 'react-hot-toast';
 import { useAuth } from '../hooks/useAuth';
@@ -8,11 +8,13 @@ import { db } from '../lib/firebase';
 import { ref, onValue, push, set, query, orderByChild, equalTo } from 'firebase/database';
 import WhatsAppCommunity from '../components/WhatsAppCommunity';
 
+const USD_RATE = 3800;
+
 export default function Wallet() {
   const { user, userData } = useAuth();
   const [amount, setAmount] = useState('');
   const [phoneNumber, setPhoneNumber] = useState('');
-  const [paymentMethod, setPaymentMethod] = useState<'mtn' | 'airtel'>('mtn');
+  const [paymentMethod, setPaymentMethod] = useState<'mtn' | 'airtel' | 'card'>('mtn');
   const [isLoading, setIsLoading] = useState(false);
   const [isDataLoading, setIsDataLoading] = useState(true);
   const [transactions, setTransactions] = useState<any[]>([]);
@@ -74,34 +76,41 @@ export default function Wallet() {
       toast.error('Minimum deposit is UGX 1,000');
       return;
     }
-    if (!phoneNumber) {
+    if (paymentMethod !== 'card' && !phoneNumber) {
       toast.error('Please provide a phone number');
       return;
     }
 
-    const formattedPhone = formatPhoneNumber(phoneNumber);
+    const formattedPhone = paymentMethod !== 'card' ? formatPhoneNumber(phoneNumber) : null;
     
     setIsLoading(true);
-    setShowPaymentModal(true);
-    setPaymentStatus('processing');
+    if (paymentMethod !== 'card') {
+      setShowPaymentModal(true);
+      setPaymentStatus('processing');
+    }
 
     try {
-      const GAS_URL = import.meta.env.VITE_PAYMENT_GATEWAY_URL || 'https://script.google.com/macros/s/AKfycbx3R9hK-5O-ROqvY3XVkBaqOgSE1XXolFg35xD73p__aY274FHPNZN3qeNE1dnZMjmy/exec';
-      
-      const response = await fetch(GAS_URL, {
+      const response = await fetch('/api/payments/collect', {
         method: 'POST',
-        headers: { 'Content-Type': 'text/plain;charset=utf-8' },
+        headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           userId: user.uid,
           username: userData.name,
           userEmail: user.email,
           phone: formattedPhone,
-          amount: Number(amount)
+          amount: Number(amount),
+          method: paymentMethod
         })
       });
 
       const data = await response.json();
       if (!data.success) throw new Error(data.message || 'Payment initiation failed');
+
+      if (paymentMethod === 'card' && data.redirect_url) {
+        toast.success('Redirecting to card gateway...');
+        window.location.href = data.redirect_url;
+        return;
+      }
 
       setAmount('');
       setPhoneNumber('');
@@ -204,17 +213,17 @@ export default function Wallet() {
             <form className="space-y-6" onSubmit={handleDeposit}>
               <div className="space-y-3">
                 <label className="text-[9px] font-black text-gray-500 ml-1 uppercase tracking-widest">Payment Method</label>
-                <div className="grid grid-cols-2 gap-3">
+                <div className="grid grid-cols-3 gap-3">
                   <button 
                     type="button" 
                     onClick={() => setPaymentMethod('mtn')}
-                    className={`flex flex-col items-center justify-center p-4 rounded-xl border-2 transition-all hover-lift active-press ${
+                    className={`flex flex-col items-center justify-center p-3 rounded-xl border-2 transition-all hover-lift active-press ${
                       paymentMethod === 'mtn' 
                       ? 'border-brand-purple bg-brand-purple/5 text-brand-purple shadow-sm' 
                       : 'border-white bg-white text-gray-400 hover:border-brand-purple/20 shadow-sm'
                     }`}
                   >
-                    <div className="w-12 h-12 rounded-full overflow-hidden mb-2 shadow-sm border border-white">
+                    <div className="w-10 h-10 rounded-full overflow-hidden mb-2 shadow-sm border border-white">
                       <img 
                         src="https://upload.wikimedia.org/wikipedia/commons/9/93/New-mtn-logo.jpg" 
                         alt="MTN" 
@@ -222,18 +231,18 @@ export default function Wallet() {
                         referrerPolicy="no-referrer"
                       />
                     </div>
-                    <span className="text-[8px] font-black uppercase tracking-widest">MTN MoMo</span>
+                    <span className="text-[7px] font-black uppercase tracking-widest">MTN MoMo</span>
                   </button>
                   <button 
                     type="button" 
                     onClick={() => setPaymentMethod('airtel')}
-                    className={`flex flex-col items-center justify-center p-4 rounded-xl border-2 transition-all hover-lift active-press ${
+                    className={`flex flex-col items-center justify-center p-3 rounded-xl border-2 transition-all hover-lift active-press ${
                       paymentMethod === 'airtel' 
                       ? 'border-brand-purple bg-brand-purple/5 text-brand-purple shadow-sm' 
                       : 'border-white bg-white text-gray-400 hover:border-brand-purple/20 shadow-sm'
                     }`}
                   >
-                    <div className="w-12 h-12 rounded-full overflow-hidden mb-2 shadow-sm border border-white">
+                    <div className="w-10 h-10 rounded-full overflow-hidden mb-2 shadow-sm border border-white">
                       <img 
                         src="https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcRneg0-d64LfRJ004eYrlfQWrRaRrDSStBFSbWPZKEmQg&s" 
                         alt="Airtel" 
@@ -241,23 +250,39 @@ export default function Wallet() {
                         referrerPolicy="no-referrer"
                       />
                     </div>
-                    <span className="text-[8px] font-black uppercase tracking-widest">Airtel Money</span>
+                    <span className="text-[7px] font-black uppercase tracking-widest">Airtel Money</span>
+                  </button>
+                  <button 
+                    type="button" 
+                    onClick={() => setPaymentMethod('card')}
+                    className={`flex flex-col items-center justify-center p-3 rounded-xl border-2 transition-all hover-lift active-press ${
+                      paymentMethod === 'card' 
+                      ? 'border-brand-purple bg-brand-purple/5 text-brand-purple shadow-sm' 
+                      : 'border-white bg-white text-gray-400 hover:border-brand-purple/20 shadow-sm'
+                    }`}
+                  >
+                    <div className="w-10 h-10 rounded-xl bg-gray-50 flex items-center justify-center mb-2 shadow-sm border border-white text-gray-400">
+                      <FontAwesomeIcon icon={faCreditCard} className="text-lg" />
+                    </div>
+                    <span className="text-[7px] font-black uppercase tracking-widest">Card Pay</span>
                   </button>
                 </div>
               </div>
 
               <div className="space-y-4">
-                <div className="space-y-1.5">
-                  <label className="text-[9px] font-black text-gray-500 ml-1 uppercase tracking-widest">Phone Number</label>
-                  <input
-                    type="tel"
-                    required
-                    value={phoneNumber}
-                    onChange={(e) => setPhoneNumber(e.target.value)}
-                    placeholder="07XX XXX XXX"
-                    className="w-full p-4 bg-white border border-gray-200 rounded-xl text-gray-900 placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-brand-purple/5 focus:border-brand-purple transition-all font-bold text-xs shadow-sm"
-                  />
-                </div>
+                {paymentMethod !== 'card' && (
+                  <div className="space-y-1.5">
+                    <label className="text-[9px] font-black text-gray-500 ml-1 uppercase tracking-widest">Phone Number</label>
+                    <input
+                      type="tel"
+                      required
+                      value={phoneNumber}
+                      onChange={(e) => setPhoneNumber(e.target.value)}
+                      placeholder="07XX XXX XXX"
+                      className="w-full p-4 bg-white border border-gray-200 rounded-xl text-gray-900 placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-brand-purple/5 focus:border-brand-purple transition-all font-bold text-xs shadow-sm"
+                    />
+                  </div>
+                )}
 
                 <div className="space-y-1.5">
                   <label className="text-[9px] font-black text-gray-500 ml-1 uppercase tracking-widest">Amount (UGX)</label>
@@ -274,7 +299,14 @@ export default function Wallet() {
                       className="w-full pl-12 pr-4 py-4 bg-white border border-gray-200 rounded-xl text-gray-900 placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-brand-purple/5 focus:border-brand-purple transition-all font-display font-black text-xl shadow-sm"
                     />
                   </div>
-                  <p className="text-[8px] text-gray-400 font-black uppercase tracking-widest ml-1">Min: UGX 1,000</p>
+                  <div className="flex justify-between items-center px-1">
+                    <p className="text-[8px] text-gray-400 font-black uppercase tracking-widest">Min: UGX 1,000</p>
+                    {amount && Number(amount) >= 1000 && (
+                      <p className="text-[8px] text-brand-purple font-black uppercase tracking-widest">
+                        ≈ ${(Number(amount) / USD_RATE).toFixed(2)} USD
+                      </p>
+                    )}
+                  </div>
                 </div>
               </div>
 

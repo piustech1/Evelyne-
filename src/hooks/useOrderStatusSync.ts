@@ -21,12 +21,13 @@ export function useOrderStatusSync() {
         .filter(([_, order]: [string, any]) => 
           order.userId === user.uid && 
           ['Pending', 'Processing', 'In progress', 'Partial'].includes(order.status) &&
-          order.smmOrderId // Must have an SMM order ID
+          (order.apiOrderId || order.smmOrderId)
         );
 
       for (const [id, order] of activeOrders as [string, any][]) {
         try {
-          const statusData = await smmService.getStatus(order.smmOrderId);
+          const orderId = order.apiOrderId || order.smmOrderId;
+          const statusData = await smmService.getStatus(orderId);
           
           if (statusData.status && statusData.status !== order.status) {
             // Status changed!

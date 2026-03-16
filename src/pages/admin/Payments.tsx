@@ -9,6 +9,7 @@ export default function AdminPayments() {
   const [payments, setPayments] = useState<any[]>([]);
   const [filteredPayments, setFilteredPayments] = useState<any[]>([]);
   const [searchTerm, setSearchTerm] = useState('');
+  const [methodFilter, setMethodFilter] = useState('all');
   const [isLoading, setIsLoading] = useState(true);
 
   useEffect(() => {
@@ -31,14 +32,19 @@ export default function AdminPayments() {
   }, []);
 
   useEffect(() => {
-    const result = payments.filter(pay => 
-      pay.id.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      pay.userEmail?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      pay.method?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      pay.phoneNumber?.toLowerCase().includes(searchTerm.toLowerCase())
-    );
+    const result = payments.filter(pay => {
+      const matchesSearch = pay.id.toLowerCase().includes(searchTerm.toLowerCase()) ||
+        pay.userEmail?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+        pay.method?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+        pay.phoneNumber?.toLowerCase().includes(searchTerm.toLowerCase());
+      
+      const matchesMethod = methodFilter === 'all' || 
+        pay.method?.toLowerCase().includes(methodFilter.toLowerCase());
+
+      return matchesSearch && matchesMethod;
+    });
     setFilteredPayments(result);
-  }, [searchTerm, payments]);
+  }, [searchTerm, methodFilter, payments]);
 
   const handleApprove = async (payment: any) => {
     if (payment.status !== 'Pending' && payment.status !== 'pending') return;
@@ -99,6 +105,16 @@ export default function AdminPayments() {
                 className="pl-14 pr-6 py-4 bg-gray-50 border border-gray-100 rounded-2xl text-gray-900 placeholder-gray-400 focus:outline-none focus:ring-4 focus:ring-brand-purple/5 focus:border-brand-purple transition-all w-full font-bold text-sm"
               />
             </div>
+            <select
+              value={methodFilter}
+              onChange={(e) => setMethodFilter(e.target.value)}
+              className="px-6 py-4 bg-gray-50 border border-gray-100 rounded-2xl text-gray-900 focus:outline-none focus:ring-4 focus:ring-brand-purple/5 focus:border-brand-purple transition-all font-bold text-sm"
+            >
+              <option value="all">All Methods</option>
+              <option value="mtn">MTN</option>
+              <option value="airtel">Airtel</option>
+              <option value="card">Card</option>
+            </select>
             <button className="w-14 h-14 bg-gray-50 border border-gray-100 rounded-2xl text-gray-400 hover:text-brand-purple hover:border-brand-purple transition-all group flex items-center justify-center">
               <FontAwesomeIcon icon={faFilter} className="group-hover:scale-110 transition-transform" />
             </button>
