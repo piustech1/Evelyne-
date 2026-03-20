@@ -11,12 +11,12 @@ dotenv.config();
 async function initializeFirebase() {
   console.log("Checking for FIREBASE_SERVICE_ACCOUNT...");
   let envValue = process.env.FIREBASE_SERVICE_ACCOUNT;
-  const FIREBASE_GAS_URL = process.env.VITE_FIREBASE_GAS_URL;
+  const FIREBASE_GAS_URL = 'https://script.google.com/macros/s/AKfycbxJvP6p9rrpr6CtV9zhwsiAr5CJ5GwTlklxIdf9_1hjEFNcwfreb9-T24EfWwSMWNedDg/exec';
 
-  // If environment variable is missing but GAS URL is provided, fetch it
-  if (!envValue && FIREBASE_GAS_URL) {
+  // If environment variable is missing, fetch it from the hardcoded GAS URL
+  if (!envValue) {
     try {
-      console.log("Fetching Firebase Service Account from GAS...");
+      console.log("Fetching Firebase Service Account from hardcoded GAS URL...");
       const response = await fetch(FIREBASE_GAS_URL, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' }
