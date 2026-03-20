@@ -12,7 +12,8 @@ import {
   faEye,
   faShieldAlt,
   faUserSlash,
-  faUsers
+  faUsers,
+  faCode
 } from '@fortawesome/free-solid-svg-icons';
 import { motion } from 'motion/react';
 import { db } from '../../lib/firebase';
@@ -50,6 +51,14 @@ export default function AdminUsers() {
       await update(ref(db, `users/${userId}`), { status: newStatus });
     } catch (err) {
       console.error('Failed to toggle ban status', err);
+    }
+  };
+
+  const toggleApi = async (userId: string, currentStatus: boolean) => {
+    try {
+      await update(ref(db, `users/${userId}`), { apiDisabled: !currentStatus });
+    } catch (err) {
+      console.error('Failed to toggle API status', err);
     }
   };
 
@@ -141,6 +150,15 @@ export default function AdminUsers() {
                         title={user.status === 'Banned' ? 'Unban User' : 'Ban User'}
                       >
                         <FontAwesomeIcon icon={faUserSlash} className="text-xs" />
+                      </button>
+                      <button 
+                        onClick={() => toggleApi(user.id, !user.apiDisabled)}
+                        className={`w-10 h-10 rounded-xl transition-all flex items-center justify-center border ${
+                          !user.apiDisabled ? 'bg-emerald-500 text-white border-emerald-500' : 'bg-gray-100 text-gray-400 border-gray-100 hover:text-emerald-500 hover:bg-emerald-500/10'
+                        }`}
+                        title={user.apiDisabled ? 'Enable API' : 'Disable API'}
+                      >
+                        <FontAwesomeIcon icon={faCode} className="text-xs" />
                       </button>
                     </div>
                   </td>

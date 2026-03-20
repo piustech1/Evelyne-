@@ -103,6 +103,42 @@ export default function Profile() {
     }
   };
 
+  const [isRegenerating, setIsRegenerating] = useState(false);
+
+  const generateApiKey = () => {
+    const chars = '0123456789abcdef';
+    let key = '';
+    for (let i = 0; i < 32; i++) {
+      key += chars[Math.floor(Math.random() * chars.length)];
+    }
+    return key;
+  };
+
+  const handleRegenerateApiKey = async () => {
+    if (!user) return;
+    setIsRegenerating(true);
+    const loadingToast = toast.loading('Regenerating API key...');
+
+    try {
+      const newApiKey = generateApiKey();
+      await update(ref(db, `users/${user.uid}`), { apiKey: newApiKey });
+      toast.success('API key regenerated successfully!', { id: loadingToast });
+    } catch (err: any) {
+      toast.error(err.message || 'Failed to regenerate API key', { id: loadingToast });
+    } finally {
+      setIsRegenerating(false);
+    }
+  };
+
+  const copyApiKey = () => {
+    if (userData?.apiKey) {
+      navigator.clipboard.writeText(userData.apiKey);
+      toast.success('API key copied successfully!');
+    } else {
+      toast.error('API key not found. Please regenerate one.');
+    }
+  };
+
   const handleUpdateProfile = async (e: FormEvent) => {
     e.preventDefault();
     if (!user) return;
@@ -267,6 +303,58 @@ export default function Profile() {
                     <FontAwesomeIcon icon={faShareAlt} />
                     Share
                   </button>
+                </div>
+              </div>
+            </div>
+          </motion.div>
+
+          {/* Account Details Form */}
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            className="bg-gray-50 p-6 md:p-10 rounded-3xl shadow-sm border border-gray-200"
+          >
+            <h3 className="text-xl font-display font-black text-gray-900 tracking-tighter mb-8">API Settings</h3>
+            
+            <div className="space-y-6">
+              <p className="text-gray-500 text-xs font-medium leading-relaxed">
+                Use our public API to connect your own website or SMM panel to EasyBoost. Your API key is private and should not be shared.
+              </p>
+
+              <div className="bg-white p-5 rounded-2xl border border-gray-100 space-y-4">
+                <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+                  <div className="flex-grow overflow-hidden">
+                    <p className="text-[8px] font-black text-gray-400 uppercase tracking-widest mb-1">Your API Key</p>
+                    <div className="flex items-center gap-3">
+                      <code className="text-xs font-mono font-bold text-gray-900 bg-gray-50 px-3 py-1.5 rounded-lg truncate flex-grow">
+                        {userData?.apiKey || 'No API key generated'}
+                      </code>
+                      {userData?.apiKey && (
+                        <button 
+                          onClick={copyApiKey}
+                          className="p-2 text-gray-400 hover:text-brand-purple transition-colors"
+                          title="Copy API Key"
+                        >
+                          <FontAwesomeIcon icon={faCopy} />
+                        </button>
+                      )}
+                    </div>
+                  </div>
+                  <div className="flex items-center gap-2">
+                    <button 
+                      onClick={handleRegenerateApiKey}
+                      disabled={isRegenerating}
+                      className="w-full sm:w-auto px-6 py-3 bg-gray-900 text-white font-black uppercase tracking-widest text-[9px] rounded-xl hover:bg-brand-purple transition-all active-press disabled:opacity-50"
+                    >
+                      {userData?.apiKey ? 'Regenerate Key' : 'Generate Key'}
+                    </button>
+                    <Link 
+                      to="/api-docs"
+                      className="w-full sm:w-auto px-6 py-3 bg-white text-gray-900 border border-gray-200 font-black uppercase tracking-widest text-[9px] rounded-xl hover:bg-gray-50 transition-all active-press text-center"
+                    >
+                      API Docs
+                    </Link>
+                  </div>
                 </div>
               </div>
             </div>

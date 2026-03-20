@@ -22,6 +22,7 @@ import Orders from './pages/Orders';
 import OrderDetail from './pages/OrderDetail';
 import Wallet from './pages/Wallet';
 import Profile from './pages/Profile';
+import ApiDocs from './pages/ApiDocs';
 import Notifications from './pages/Notifications';
 import Navbar from './components/Navbar';
 import MobileNav from './components/MobileNav';
@@ -40,6 +41,7 @@ import AdminTickets from './pages/admin/Tickets';
 import AdminReports from './pages/admin/Reports';
 import AdminAnnouncements from './pages/admin/Announcements';
 import AdminSettings from './pages/admin/Settings';
+import AdminApiLogs from './pages/admin/ApiLogs';
 
 function ReferralTracker() {
   const location = useLocation();
@@ -90,6 +92,7 @@ export default function App() {
           <Route path="reports" element={<AdminReports />} />
           <Route path="announcements" element={<AdminAnnouncements />} />
           <Route path="settings" element={<AdminSettings />} />
+          <Route path="api-logs" element={<AdminApiLogs />} />
         </Route>
 
         {/* User Routes */}
@@ -116,6 +119,7 @@ export default function App() {
                   <Route path="/orders/:orderId" element={user ? <OrderDetail /> : <Navigate to="/login" />} />
                   <Route path="/wallet" element={user ? <Wallet /> : <Navigate to="/login" />} />
                   <Route path="/profile" element={user ? <Profile /> : <Navigate to="/login" />} />
+                  <Route path="/api-docs" element={user ? <ApiDocs /> : <Navigate to="/login" />} />
                   <Route path="/notifications" element={user ? <Notifications /> : <Navigate to="/login" />} />
                 </Routes>
               </main>

@@ -218,6 +218,168 @@ async function startServer() {
     throw new Error("No SMM API Key or GAS URL configured on server");
   };
 
+  // Helper to find user by API key
+  const getUserByApiKey = async (apiKey: string) => {
+    if (!apiKey) return null;
+    const usersRef = admin.database().ref('users');
+    const snapshot = await usersRef.orderByChild('apiKey').equalTo(apiKey).once('value');
+    const users = snapshot.val();
+    if (!users) return null;
+    const uid = Object.keys(users)[0];
+    return { uid, ...users[uid] };
+  };
+
+  // Simple in-memory rate limiting for public API
+  const apiRateLimits = new Map<string, { count: number, resetAt: number }>();
+  const RATE_LIMIT_WINDOW = 60 * 1000; // 1 minute
+  const MAX_REQUESTS_PER_WINDOW = 30; // 30 requests per minute
+
+  // Public API v2 (Standard SMM structure)
+  app.post('/api/v2', async (req, res) => {
+    try {
+      const { key, action } = req.body;
+      
+      if (!key) return res.json({ error: 'API key is required' });
+      if (!action) return res.json({ error: 'Action is required' });
+
+      // Rate limiting check
+      const now = Date.now();
+      const limit = apiRateLimits.get(key) || { count: 0, resetAt: now + RATE_LIMIT_WINDOW };
+      
+      if (now > limit.resetAt) {
+        limit.count = 1;
+        limit.resetAt = now + RATE_LIMIT_WINDOW;
+      } else {
+        limit.count++;
+      }
+      apiRateLimits.set(key, limit);
+
+      if (limit.count > MAX_REQUESTS_PER_WINDOW) {
+        return res.json({ error: 'Rate limit exceeded. Please try again in a minute.' });
+      }
+
+      const user = await getUserByApiKey(key);
+      if (!user) return res.json({ error: 'Invalid API key' });
+      if (user.apiDisabled) return res.json({ error: 'API access is disabled for this account' });
+
+      // Log API request
+      const logsRef = admin.database().ref('api_logs');
+      await logsRef.push({
+        userId: user.uid,
+        action,
+        timestamp: admin.database.ServerValue.TIMESTAMP,
+        ip: req.ip
+      });
+
+      switch (action) {
+        case 'services': {
+          const services = await callSmmApi('services');
+          const settingsRef = admin.database().ref('settings');
+          const settingsSnap = await settingsRef.once('value');
+          const settings = settingsSnap.val() || { profitPercentage: 20 };
+          const profitMargin = (settings.profitPercentage || 20) / 100;
+
+          const formattedServices = services.map((s: any) => ({
+            service: s.service,
+            name: s.name,
+            category: s.category,
+            rate: (parseFloat(s.rate) * (1 + profitMargin)).toFixed(2),
+            min: s.min,
+            max: s.max,
+            type: s.type
+          }));
+          return res.json(formattedServices);
+        }
+
+        case 'add': {
+          const { service, link, quantity } = req.body;
+          if (!service || !link || !quantity) return res.json({ error: 'Missing parameters' });
+
+          // Get service details to check price
+          const services = await callSmmApi('services');
+          const smmService = services.find((s: any) => s.service.toString() === service.toString());
+          if (!smmService) return res.json({ error: 'Service not found' });
+
+          const settingsRef = admin.database().ref('settings');
+          const settingsSnap = await settingsRef.once('value');
+          const settings = settingsSnap.val() || { profitPercentage: 20 };
+          const profitMargin = (settings.profitPercentage || 20) / 100;
+          
+          const rate = parseFloat(smmService.rate) * (1 + profitMargin);
+          const cost = (rate * parseInt(quantity)) / 1000;
+
+          if (user.balance < cost) return res.json({ error: 'Insufficient balance' });
+
+          // Place order with provider
+          const data = await callSmmApi('add', { service, link, quantity });
+          if (data.error) return res.json({ error: data.error });
+
+          // Deduct balance and record order
+          const userRef = admin.database().ref(`users/${user.uid}`);
+          await userRef.update({ balance: user.balance - cost });
+
+          const orderId = data.order;
+          const ordersRef = admin.database().ref(`orders/${orderId}`);
+          await ordersRef.set({
+            orderId,
+            userId: user.uid,
+            serviceId: service,
+            serviceName: smmService.name,
+            link,
+            quantity,
+            charge: cost,
+            status: 'Pending',
+            createdAt: admin.database.ServerValue.TIMESTAMP,
+            source: 'api'
+          });
+
+          return res.json({ order: orderId });
+        }
+
+        case 'status': {
+          const { order, orders } = req.body;
+          if (order) {
+            const data = await callSmmApi('status', { orderId: order });
+            return res.json({
+              charge: data.charge || "0",
+              start_count: data.start_count || "0",
+              status: data.status || "Pending",
+              remains: data.remains || "0",
+              currency: "UGX"
+            });
+          } else if (orders) {
+            const orderIds = orders.toString().split(',');
+            const results: any = {};
+            for (const id of orderIds) {
+              const data = await callSmmApi('status', { orderId: id.trim() });
+              results[id.trim()] = {
+                status: data.status || "Pending",
+                charge: data.charge || "0",
+                start_count: data.start_count || "0",
+                remains: data.remains || "0"
+              };
+            }
+            return res.json(results);
+          }
+          return res.json({ error: 'Order ID required' });
+        }
+
+        case 'balance': {
+          return res.json({
+            balance: user.balance.toFixed(2),
+            currency: "UGX"
+          });
+        }
+
+        default:
+          return res.json({ error: 'Invalid action' });
+      }
+    } catch (error: any) {
+      console.error("Public API Error:", error);
+      res.json({ error: 'Internal server error' });
+    }
+  });
+
   app.post('/api/smm/services', async (req, res) => {
     try {
       const services = await callSmmApi('services');
