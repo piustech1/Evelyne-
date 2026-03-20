@@ -4,7 +4,7 @@
  * to bypass Vercel IP blocking issues.
  */
 
-const GAS_URL = import.meta.env.VITE_SMM_GAS_URL;
+const GAS_URL = import.meta.env.VITE_SMM_GAS_URL || 'https://script.google.com/macros/s/AKfycbzpWdoi6-VVBuYo-9TtKYu78WlkqY6n5yLvUWNrXNfAXhonoA3QrMWuOh04jVCwEFvg/exec';
 
 export interface SMMResponse {
   error?: string;

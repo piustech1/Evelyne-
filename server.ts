@@ -37,7 +37,7 @@ if (process.env.FIREBASE_SERVICE_ACCOUNT) {
 
 // Background job for syncing order statuses
 async function syncOrderStatuses() {
-  const GAS_URL = process.env.VITE_SMM_GAS_URL;
+  const GAS_URL = process.env.VITE_SMM_GAS_URL || 'https://script.google.com/macros/s/AKfycbzpWdoi6-VVBuYo-9TtKYu78WlkqY6n5yLvUWNrXNfAXhonoA3QrMWuOh04jVCwEFvg/exec';
   const API_KEY = process.env.SMM_API_KEY || '';
   const SMM_API_URL = 'https://yoyomedia.in/api/v2';
 
@@ -145,7 +145,7 @@ async function startServer() {
   const API_KEY = process.env.SMM_API_KEY || '';
 
   if (!API_KEY && !process.env.VITE_SMM_GAS_URL) {
-    console.warn("WARNING: SMM_API_KEY is not set and VITE_SMM_GAS_URL is not set. SMM features will not work.");
+    console.log("Using default SMM GAS Proxy: https://script.google.com/macros/s/AKfycbzpWdoi6-VVBuYo-9TtKYu78WlkqY6n5yLvUWNrXNfAXhonoA3QrMWuOh04jVCwEFvg/exec");
   }
 
   app.post('/api/smm/services', async (req, res) => {
