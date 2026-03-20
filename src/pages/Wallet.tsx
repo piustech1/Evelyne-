@@ -80,7 +80,7 @@ export default function Wallet() {
       return;
     }
 
-    const formattedPhone = paymentMethod !== 'card' ? formatPhoneNumber(phoneNumber) : 'CARD';
+    const formattedPhone = paymentMethod !== 'card' ? formatPhoneNumber(phoneNumber) : '';
     
     setIsLoading(true);
     setShowPaymentModal(true);
@@ -135,8 +135,17 @@ export default function Wallet() {
         throw new Error(data.message || 'Payment initiation failed');
       }
 
+      if (data.redirectUrl) {
+        toast.success('Redirecting to card gateway...');
+        setTimeout(() => {
+          window.location.href = data.redirectUrl;
+        }, 1500);
+        return;
+      }
+
       setAmount('');
       setPhoneNumber('');
+      toast.success('Payment initiated! Please check your phone.');
     } catch (err: any) {
       console.error('Payment error:', err);
       toast.error(err.message || 'Failed to initiate payment');
@@ -296,7 +305,9 @@ export default function Wallet() {
               <div className="space-y-4">
                 {paymentMethod !== 'card' && (
                   <div className="space-y-1.5">
-                    <label className="text-[9px] font-black text-gray-500 ml-1 uppercase tracking-widest">Phone Number</label>
+                    <label className="text-[9px] font-black text-gray-500 ml-1 uppercase tracking-widest">
+                      Mobile Money Number
+                    </label>
                     <input
                       type="tel"
                       required

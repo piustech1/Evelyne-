@@ -17,8 +17,8 @@
  * 10. Add this URL to your Vercel/Environment variables as VITE_SMM_GAS_URL.
  */
 
-const API_KEY = "83d97dd9b3b61589318f4f50b1b90d1a"; // SMM Trust Panel API Key
-const SMM_API_URL = "https://smmtrustpanel.com/api/v2";
+const API_KEY = "9eafd85ad9f6a0c06dc1b413f8380edc21cd6661e09eb0f9f0886b60214a95bb"; // YoyoMedia API Key
+const SMM_API_URL = "https://yoyomedia.in/api/v2";
 
 /**
  * Handles POST requests from the frontend
@@ -49,12 +49,11 @@ function doPost(e) {
       payload.quantity = String(postData.quantity);
       if (postData.runs) payload.runs = String(postData.runs);
       if (postData.interval) payload.interval = String(postData.interval);
-    } else if (action === 'status') {
-      // Handle single order status
-      payload.order = String(postData.order || postData.orderId);
-    } else if (action === 'orders') {
-      // Handle multiple orders status
-      payload.orders = String(postData.orders);
+    } else if (action === 'status' || action === 'orders') {
+      // Handle single or multiple order status
+      // New provider uses 'status' action for both single and multiple
+      payload.action = 'status';
+      payload.order = String(postData.order || postData.orderId || postData.orders);
     } else if (action === 'refill') {
       payload.order = String(postData.order);
     } else if (action === 'cancel') {

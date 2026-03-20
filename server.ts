@@ -39,7 +39,7 @@ if (process.env.FIREBASE_SERVICE_ACCOUNT) {
 async function syncOrderStatuses() {
   const GAS_URL = process.env.VITE_SMM_GAS_URL;
   const API_KEY = process.env.SMM_API_KEY || '';
-  const SMM_API_URL = 'https://smmtrustpanel.com/api/v2';
+  const SMM_API_URL = 'https://yoyomedia.in/api/v2';
 
   if (!GAS_URL && !API_KEY) return;
 
@@ -141,7 +141,7 @@ async function startServer() {
   app.use(express.urlencoded({ extended: true }));
 
   // SMM API Proxy Routes
-  const SMM_API_URL = 'https://smmtrustpanel.com/api/v2';
+  const SMM_API_URL = 'https://yoyomedia.in/api/v2';
   const API_KEY = process.env.SMM_API_KEY || '';
 
   if (!API_KEY && !process.env.VITE_SMM_GAS_URL) {
@@ -282,6 +282,39 @@ async function startServer() {
         res.json(data);
       } catch (e) {
         console.error("JSON Parse Error (Status):", text);
+        throw new Error("Invalid JSON response from provider API");
+      }
+    } catch (error: any) {
+      res.status(500).json({ error: error.message });
+    }
+  });
+
+  app.post('/api/smm/orders', async (req, res) => {
+    try {
+      const { orders } = req.body;
+      
+      const params = new URLSearchParams();
+      params.append('key', API_KEY);
+      params.append('action', 'status');
+      params.append('order', String(orders));
+
+      const response = await fetch(SMM_API_URL, {
+        method: 'POST',
+        headers: { 
+          'Content-Type': 'application/x-www-form-urlencoded',
+          'User-Agent': 'Mozilla/5.0'
+        },
+        body: params.toString()
+      });
+      
+      const text = await response.text();
+      if (!text) throw new Error("Empty response from provider API");
+      
+      try {
+        const data = JSON.parse(text);
+        res.json(data);
+      } catch (e) {
+        console.error("JSON Parse Error (Orders):", text);
         throw new Error("Invalid JSON response from provider API");
       }
     } catch (error: any) {

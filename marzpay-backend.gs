@@ -40,15 +40,21 @@ function doPost(e) {
  * Based on MarzPay "Create Collection" Docs
  */
 function handlePaymentRequest(data) {
-  const { phone, amount, userId, userEmail } = data;
+  const { phone, amount, userId, userEmail, method } = data;
   
-  if (!phone || !amount || !userId) {
-    return jsonResponse({ success: false, message: "Missing required fields (phone, amount, userId)" });
+  if (!amount || !userId) {
+    return jsonResponse({ success: false, message: "Missing required fields (amount, userId)" });
+  }
+
+  const isCard = method === 'card';
+  
+  if (!isCard && !phone) {
+    return jsonResponse({ success: false, message: "Phone number is required for mobile money" });
   }
   
   // DOCUMENTATION REQUIREMENT: "Must be in UUID v4 format: xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx"
   const reference = Utilities.getUuid(); 
-  Logger.log("New Collection Reference: " + reference);
+  Logger.log("New Collection Reference: " + reference + " Method: " + method);
   
   // 1. Save record to Firebase (so we know who to credit later)
   const paymentData = {
@@ -56,7 +62,8 @@ function handlePaymentRequest(data) {
     userId: userId,
     userEmail: userEmail || "",
     amount: Number(amount),
-    phone: phone,
+    phone: phone || "CARD",
+    method: method || "mobile_money",
     status: "pending",
     createdAt: new Date().toISOString(),
     source: "Vercel-Frontend"
@@ -68,12 +75,16 @@ function handlePaymentRequest(data) {
   const authCredentials = Utilities.base64Encode(MARZPAY_API_KEY + ":" + MARZPAY_API_SECRET);
   const payload = {
     "amount": Math.floor(Number(amount)),
-    "phone_number": phone,
     "country": "UG",
     "reference": reference, // The UUID we generated
     "description": "EasyBoost Wallet Top-up",
+    "method": method || "mobile_money",
     "callback_url": ScriptApp.getService().getUrl() // The URL of this Google Script
   };
+
+  if (!isCard) {
+    payload["phone_number"] = phone;
+  }
   
   const options = {
     method: "post",
@@ -97,11 +108,17 @@ function handlePaymentRequest(data) {
   }
   
   // Success response to frontend
-  return jsonResponse({
+  const responseData = {
     success: true,
     reference: reference,
-    message: "Collection initiated successfully"
-  });
+    message: isCard ? "Card collection initiated" : "Collection initiated successfully"
+  };
+
+  if (isCard && result.data && result.data.redirect_url) {
+    responseData.redirectUrl = result.data.redirect_url;
+  }
+
+  return jsonResponse(responseData);
 }
 
 /**
