@@ -8,6 +8,8 @@ import admin from 'firebase-admin';
 dotenv.config();
 
 // Initialize Firebase Admin
+let firebaseInitError: string | null = null;
+
 async function initializeFirebase() {
   console.log("Checking for FIREBASE_SERVICE_ACCOUNT...");
   let envValue = process.env.FIREBASE_SERVICE_ACCOUNT;
@@ -21,9 +23,17 @@ async function initializeFirebase() {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' }
       });
-      envValue = await response.text();
-    } catch (err) {
+      if (response.ok) {
+        envValue = await response.text();
+        // Update process.env so other parts of the app can see it
+        process.env.FIREBASE_SERVICE_ACCOUNT = envValue;
+        console.log("Successfully fetched Firebase Service Account from GAS URL");
+      } else {
+        throw new Error(`GAS URL returned status ${response.status}`);
+      }
+    } catch (err: any) {
       console.error("Failed to fetch Firebase Service Account from GAS:", err);
+      firebaseInitError = `Fetch failed: ${err.message}`;
     }
   }
 
@@ -43,12 +53,15 @@ async function initializeFirebase() {
           databaseURL: process.env.VITE_FIREBASE_DATABASE_URL || `https://${serviceAccount.project_id}-default-rtdb.firebaseio.com/`
         });
         console.log("Firebase Admin successfully initialized");
+        firebaseInitError = null;
       }
-    } catch (error) {
+    } catch (error: any) {
       console.error("Failed to initialize Firebase Admin:", error);
+      firebaseInitError = `Initialization failed: ${error.message}`;
     }
-  } else {
+  } else if (!firebaseInitError) {
     console.warn("FIREBASE_SERVICE_ACCOUNT environment variable and GAS URL are missing");
+    firebaseInitError = "Missing credentials";
   }
 }
 
@@ -312,7 +325,8 @@ async function startServer() {
       configured: appCount > 0,
       hasEnv,
       appCount,
-      envLength: process.env.FIREBASE_SERVICE_ACCOUNT?.length || 0
+      envLength: process.env.FIREBASE_SERVICE_ACCOUNT?.length || 0,
+      error: firebaseInitError
     });
   });
 

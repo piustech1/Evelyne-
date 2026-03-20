@@ -242,7 +242,7 @@ export default function AdminSettings() {
                         <p>Push notifications require a valid Firebase Service Account key.</p>
                         <div className="grid grid-cols-2 gap-4 mt-4">
                           <div className="p-3 bg-white/50 rounded-xl border border-rose-100">
-                            <div className="text-[8px] text-gray-400 uppercase mb-1">Env Variable</div>
+                            <div className="text-[8px] text-gray-400 uppercase mb-1">Credentials Status</div>
                             <div className="font-black">{pushConfig.hasEnv ? '✅ DETECTED' : '❌ MISSING'}</div>
                           </div>
                           <div className="p-3 bg-white/50 rounded-xl border border-rose-100">
@@ -250,14 +250,15 @@ export default function AdminSettings() {
                             <div className="font-black">{pushConfig.appCount > 0 ? '✅ ACTIVE' : '❌ FAILED'}</div>
                           </div>
                         </div>
-                        {pushConfig.hasEnv && pushConfig.appCount === 0 && (
-                          <p className="mt-4 p-3 bg-rose-100/50 rounded-xl border border-rose-200">
-                            <strong>Note:</strong> The environment variable was detected but initialization failed. This usually means the JSON string is invalid or the credentials are incorrect.
-                          </p>
+                        {pushConfig.error && (
+                          <div className="mt-4 p-4 bg-rose-100/50 rounded-2xl border border-rose-200 text-rose-700">
+                            <div className="text-[8px] uppercase font-black mb-1 opacity-50">Error Details</div>
+                            <div className="font-mono text-[9px] break-all">{pushConfig.error}</div>
+                          </div>
                         )}
-                        {!pushConfig.hasEnv && (
+                        {!pushConfig.hasEnv && !pushConfig.error && (
                           <p className="mt-4 p-3 bg-rose-100/50 rounded-xl border border-rose-200">
-                            <strong>Note:</strong> Please ensure <code>FIREBASE_SERVICE_ACCOUNT</code> is set in your environment variables.
+                            <strong>Note:</strong> Credentials were not found in environment variables or the linked Google Apps Script.
                           </p>
                         )}
                       </div>
