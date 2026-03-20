@@ -6,8 +6,9 @@ import {
 } from '@fortawesome/free-solid-svg-icons';
 import { motion } from 'motion/react';
 import { fetchServices, Service } from '../lib/servicesStore';
-import { platformIcons, platformColors } from '../utils/platformData';
+import { platformColors } from '../utils/platformData';
 import { ServiceCard, ServiceCardSkeleton } from '../components/ServiceCard';
+import { PlatformIcon } from '../components/PlatformIcon';
 
 export default function PlatformPage() {
   const [searchParams] = useSearchParams();
@@ -56,7 +57,6 @@ export default function PlatformPage() {
     navigate(`/order?service=${service.apiServiceId || service.service}`);
   };
 
-  const icon = platformIcons[platform.toLowerCase()] || faGlobe;
   const colorClass = platformColors[platform.toLowerCase()] || 'bg-brand-purple text-white';
 
   return (
@@ -71,7 +71,7 @@ export default function PlatformPage() {
         >
           <div className="flex flex-col items-center justify-center space-y-4">
             <div className={`w-16 h-16 ${colorClass} rounded-2xl flex items-center justify-center text-3xl shadow-xl border-4 border-white/20`}>
-              <FontAwesomeIcon icon={icon} />
+              <PlatformIcon platform={platform} imgClassName="w-10 h-10 object-contain" />
             </div>
             <div>
               <h1 className="text-3xl md:text-5xl font-display font-black tracking-tighter">{platform}</h1>
@@ -101,7 +101,7 @@ export default function PlatformPage() {
                 }`}
               >
                 <div className={`w-8 h-8 rounded-lg flex items-center justify-center text-sm ${platformColors[p.toLowerCase()] || 'bg-gray-200'}`}>
-                  <FontAwesomeIcon icon={platformIcons[p.toLowerCase()] || faGlobe} />
+                  <PlatformIcon platform={p} imgClassName="w-5 h-5 object-contain" />
                 </div>
                 <span className={`text-[10px] font-black uppercase tracking-widest ${p.toLowerCase() === platform.toLowerCase() ? 'text-brand-purple' : 'text-gray-400'}`}>
                   {p}

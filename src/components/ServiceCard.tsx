@@ -3,7 +3,8 @@ import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { faRocket, faBolt, faCheckCircle, faStar, faGlobe, faClock } from '@fortawesome/free-solid-svg-icons';
 import { motion } from 'motion/react';
 import { Service } from '../lib/servicesStore';
-import { platformIcons, platformColors } from '../utils/platformData';
+import { platformColors } from '../utils/platformData';
+import { PlatformIcon } from './PlatformIcon';
 
 interface ServiceCardProps {
   service: Service;
@@ -13,7 +14,6 @@ interface ServiceCardProps {
 
 export const ServiceCard = ({ service, onBoost, index = 0 }: ServiceCardProps) => {
   const pKey = service.category.toLowerCase();
-  const icon = platformIcons[pKey] || faGlobe;
   const colorClass = platformColors[pKey] || 'bg-brand-purple text-white';
 
   // Derive some "premium" info
@@ -58,7 +58,7 @@ export const ServiceCard = ({ service, onBoost, index = 0 }: ServiceCardProps) =
       <div className="flex-grow space-y-4">
         <div className="flex items-start space-x-3">
           <div className={`w-12 h-12 rounded-2xl flex-shrink-0 flex items-center justify-center text-xl shadow-md border-2 border-white ${colorClass}`}>
-            <FontAwesomeIcon icon={icon} />
+            <PlatformIcon platform={service.category} imgClassName="w-8 h-8 object-contain" />
           </div>
           <div className="space-y-1 pt-1">
             <div className="flex items-center gap-2">

@@ -8,8 +8,9 @@ import { useAuth } from '../hooks/useAuth';
 import { db } from '../lib/firebase';
 import { ref, push, set, runTransaction } from 'firebase/database';
 import { fetchServices, Service } from '../lib/servicesStore';
-import { platformIcons, platformColors } from '../utils/platformData';
+import { platformColors } from '../utils/platformData';
 import { smmService } from '../services/smmService';
+import { PlatformIcon } from '../components/PlatformIcon';
 
 export default function OrderPage() {
   const [searchParams] = useSearchParams();
@@ -209,7 +210,7 @@ export default function OrderPage() {
           <div className="p-6 md:p-10 border-b border-gray-50 bg-gray-50/50">
             <div className="flex items-center space-x-6">
               <div className={`w-16 h-16 rounded-2xl flex items-center justify-center text-2xl shadow-lg border-4 border-white ${platformColors[platformKey] || 'bg-brand-purple text-white'}`}>
-                <FontAwesomeIcon icon={platformIcons[platformKey] || faGlobe} />
+                <PlatformIcon platform={service.category} imgClassName="w-10 h-10 object-contain" />
               </div>
               <div>
                 <div className="text-[10px] font-black text-brand-purple uppercase tracking-[0.2em] mb-1">{service.category} Service</div>

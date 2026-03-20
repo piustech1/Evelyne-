@@ -8,32 +8,51 @@ import admin from 'firebase-admin';
 dotenv.config();
 
 // Initialize Firebase Admin
-console.log("Checking for FIREBASE_SERVICE_ACCOUNT...");
-if (process.env.FIREBASE_SERVICE_ACCOUNT) {
-  try {
-    let envValue = process.env.FIREBASE_SERVICE_ACCOUNT.trim();
-    // Handle cases where the value might be wrapped in quotes
-    if (envValue.startsWith("'") && envValue.endsWith("'")) {
-      envValue = envValue.slice(1, -1);
-    } else if (envValue.startsWith('"') && envValue.endsWith('"')) {
-      envValue = envValue.slice(1, -1);
-    }
-    const serviceAccount = JSON.parse(envValue);
-    if (!admin.apps.length) {
-      admin.initializeApp({
-        credential: admin.credential.cert(serviceAccount),
-        databaseURL: process.env.VITE_FIREBASE_DATABASE_URL || `https://${serviceAccount.project_id}-default-rtdb.firebaseio.com/`
+async function initializeFirebase() {
+  console.log("Checking for FIREBASE_SERVICE_ACCOUNT...");
+  let envValue = process.env.FIREBASE_SERVICE_ACCOUNT;
+  const FIREBASE_GAS_URL = process.env.VITE_FIREBASE_GAS_URL;
+
+  // If environment variable is missing but GAS URL is provided, fetch it
+  if (!envValue && FIREBASE_GAS_URL) {
+    try {
+      console.log("Fetching Firebase Service Account from GAS...");
+      const response = await fetch(FIREBASE_GAS_URL, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' }
       });
-      console.log("Firebase Admin successfully initialized");
-    } else {
-      console.log("Firebase Admin already initialized");
+      envValue = await response.text();
+    } catch (err) {
+      console.error("Failed to fetch Firebase Service Account from GAS:", err);
     }
-  } catch (error) {
-    console.error("Failed to initialize Firebase Admin:", error);
   }
-} else {
-  console.warn("FIREBASE_SERVICE_ACCOUNT environment variable is missing");
+
+  if (envValue) {
+    try {
+      let trimmedValue = envValue.trim();
+      // Handle cases where the value might be wrapped in quotes
+      if (trimmedValue.startsWith("'") && trimmedValue.endsWith("'")) {
+        trimmedValue = trimmedValue.slice(1, -1);
+      } else if (trimmedValue.startsWith('"') && trimmedValue.endsWith('"')) {
+        trimmedValue = trimmedValue.slice(1, -1);
+      }
+      const serviceAccount = JSON.parse(trimmedValue);
+      if (!admin.apps.length) {
+        admin.initializeApp({
+          credential: admin.credential.cert(serviceAccount),
+          databaseURL: process.env.VITE_FIREBASE_DATABASE_URL || `https://${serviceAccount.project_id}-default-rtdb.firebaseio.com/`
+        });
+        console.log("Firebase Admin successfully initialized");
+      }
+    } catch (error) {
+      console.error("Failed to initialize Firebase Admin:", error);
+    }
+  } else {
+    console.warn("FIREBASE_SERVICE_ACCOUNT environment variable and GAS URL are missing");
+  }
 }
+
+initializeFirebase();
 
 // Background job for syncing order statuses
 async function syncOrderStatuses() {
@@ -200,12 +219,21 @@ async function startServer() {
       const { service, link, quantity } = req.body;
       const data = await callSmmApi('add', { service, link, quantity });
       if (data.error) {
-        return res.json({ error: 'Order failed. Provider returned an error: ' + (typeof data.error === 'string' ? data.error : JSON.stringify(data.error)) });
+        let errorMessage = typeof data.error === 'string' ? data.error : JSON.stringify(data.error);
+        
+        // Check for insufficient balance error and make it friendly
+        if (errorMessage.toLowerCase().includes('not enough balance') || 
+            errorMessage.toLowerCase().includes('insufficient funds') ||
+            errorMessage.toLowerCase().includes('charge more')) {
+          errorMessage = "Server is busy. Please try again later.";
+        }
+        
+        return res.json({ error: 'Order failed. ' + errorMessage });
       }
       res.json(data);
     } catch (error: any) {
       console.error("SMM Order Proxy Error:", error);
-      res.status(500).json({ error: 'Order failed. Provider returned an error: ' + error.message });
+      res.status(500).json({ error: 'Order failed. Server is busy.' });
     }
   });
 

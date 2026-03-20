@@ -7,7 +7,8 @@ import { useAuth } from '../hooks/useAuth';
 import { db } from '../lib/firebase';
 import { ref, onValue, query, orderByChild, limitToLast, equalTo } from 'firebase/database';
 import { fetchServices, Service } from '../lib/servicesStore';
-import { platformIcons, platformTextColors, platformBgs } from '../utils/platformData';
+import { platformTextColors, platformBgs } from '../utils/platformData';
+import { PlatformIcon } from '../components/PlatformIcon';
 import toast from 'react-hot-toast';
 import WhatsAppCommunity from '../components/WhatsAppCommunity';
 
@@ -98,7 +99,6 @@ export default function Dashboard() {
           return {
             id: p,
             name: p,
-            icon: platformIcons[pKey] || faGlobe,
             color: platformTextColors[pKey] || 'text-gray-500',
             bg: platformBgs[pKey] || 'bg-gray-100',
             desc: `Boost your ${p} presence`
@@ -334,7 +334,7 @@ export default function Dashboard() {
                   className="bg-gray-50 p-5 rounded-2xl shadow-sm border border-gray-200 flex items-center space-x-4 hover:border-brand-purple/20 transition-all group relative overflow-hidden hover-lift active-press"
                 >
                   <div className={`w-12 h-12 ${platform.bg} ${platform.color} rounded-xl flex items-center justify-center text-xl group-hover:scale-110 transition-transform shadow-sm relative z-10 border border-white`}>
-                    <FontAwesomeIcon icon={platform.icon} />
+                    <PlatformIcon platform={platform.id} imgClassName="w-8 h-8 object-contain" />
                   </div>
                   <div className="flex-grow relative z-10">
                     <div className="text-base font-black text-gray-900 group-hover:text-brand-purple transition-colors tracking-tight">{platform.name}</div>

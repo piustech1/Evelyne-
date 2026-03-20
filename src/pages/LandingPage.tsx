@@ -2,8 +2,9 @@ import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { faBolt, faShieldAlt, faTag, faChartLine, faCheckCircle, faGlobe } from '@fortawesome/free-solid-svg-icons';
 import { motion } from 'motion/react';
 import { Link } from 'react-router-dom';
-import { platformIcons, platformTextColors } from '../utils/platformData';
+import { platformTextColors } from '../utils/platformData';
 import WhatsAppCommunity from '../components/WhatsAppCommunity';
+import { PlatformIcon } from '../components/PlatformIcon';
 
 const platformsList = [
   { id: 'instagram', name: 'Instagram' },
@@ -48,9 +49,15 @@ export default function LandingPage() {
             transition={{ duration: 0.8 }}
             className="max-w-3xl space-y-6"
           >
-            <div className="inline-flex items-center space-x-2 px-4 py-2 bg-white/10 backdrop-blur-md border border-white/20 rounded-full text-white text-[10px] font-black uppercase tracking-widest shadow-inner">
-              <FontAwesomeIcon icon={faBolt} className="animate-pulse text-brand-accent" />
-              <span>The #1 SMM Panel in Uganda</span>
+            <div className="flex flex-wrap gap-3">
+              <div className="inline-flex items-center space-x-2 px-4 py-2 bg-white/10 backdrop-blur-md border border-white/20 rounded-full text-white text-[10px] font-black uppercase tracking-widest shadow-inner">
+                <FontAwesomeIcon icon={faBolt} className="animate-pulse text-brand-accent" />
+                <span>The #1 SMM Panel in Uganda</span>
+              </div>
+              <div className="inline-flex items-center space-x-2 px-4 py-2 bg-emerald-500/20 backdrop-blur-md border border-emerald-500/30 rounded-full text-emerald-400 text-[10px] font-black uppercase tracking-widest shadow-inner">
+                <FontAwesomeIcon icon={faShieldAlt} className="text-emerald-400" />
+                <span>Non-Drop Services • Monitored Daily</span>
+              </div>
             </div>
             <h1 className="text-5xl md:text-8xl font-display font-black text-white leading-[1.1] tracking-tighter">
               Grow Your <span className="text-transparent bg-clip-text bg-gradient-to-r from-blue-400 to-purple-400">Social</span> <br /> Presence Fast
@@ -106,7 +113,7 @@ export default function LandingPage() {
                   className="group flex flex-col items-center space-y-2"
                 >
                   <div className={`w-12 h-12 md:w-16 md:h-16 bg-white rounded-2xl shadow-sm border border-gray-100 flex items-center justify-center text-xl md:text-2xl ${platformTextColors[platform.id] || 'text-gray-500'} transition-all duration-300 group-hover:scale-110 group-hover:shadow-md group-hover:-translate-y-1 active-press`}>
-                    <FontAwesomeIcon icon={platformIcons[platform.id] || faGlobe} />
+                    <PlatformIcon platform={platform.id} imgClassName="w-8 h-8 md:w-10 md:h-10 object-contain" />
                   </div>
                   <span className="text-[8px] font-black text-gray-400 uppercase tracking-widest group-hover:text-brand-purple transition-colors text-center truncate w-full px-1">{platform.name}</span>
                 </Link>

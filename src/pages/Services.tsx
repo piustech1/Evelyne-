@@ -4,8 +4,9 @@ import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { faRocket, faSearch, faList, faExclamationTriangle, faGlobe } from '@fortawesome/free-solid-svg-icons';
 import { Link, useNavigate } from 'react-router-dom';
 import { fetchServices, Service } from '../lib/servicesStore';
-import { platformIcons, platformColors, platformTextColors } from '../utils/platformData';
+import { platformColors, platformTextColors } from '../utils/platformData';
 import { ServiceCard, ServiceCardSkeleton } from '../components/ServiceCard';
+import { PlatformIcon } from '../components/PlatformIcon';
 
 export default function Services() {
   const navigate = useNavigate();
@@ -25,7 +26,6 @@ export default function Services() {
         const uniquePlatforms = Array.from(new Set(data.map(s => s.category))).sort();
         const pList = uniquePlatforms.map(p => ({
           name: p,
-          icon: platformIcons[p.toLowerCase()] || faGlobe,
           color: platformTextColors[p.toLowerCase()] || 'text-gray-500'
         }));
         setPlatforms(pList);
@@ -111,7 +111,7 @@ export default function Services() {
                 to={`/platform?platform=${platform.name}`}
                 className="flex-shrink-0 flex items-center space-x-3 px-6 py-3 bg-white rounded-2xl shadow-md border border-gray-50 hover:scale-105 transition-transform active-press"
               >
-                <FontAwesomeIcon icon={platform.icon} className={`text-xl ${platform.color}`} />
+                <PlatformIcon platform={platform.name} className={`text-xl ${platform.color}`} />
                 <span className="text-xs font-black text-gray-900 uppercase tracking-widest whitespace-nowrap">{platform.name}</span>
               </Link>
             ))}
@@ -142,7 +142,7 @@ export default function Services() {
             <div key={categoryName} className="space-y-6">
               <div className="flex items-center space-x-4 px-2">
                 <div className={`w-10 h-10 rounded-xl flex items-center justify-center ${platformColors[categoryName.toLowerCase()] || 'bg-brand-purple text-white'} shadow-sm`}>
-                  <FontAwesomeIcon icon={platformIcons[categoryName.toLowerCase()] || faGlobe} />
+                  <PlatformIcon platform={categoryName} imgClassName="w-6 h-6 object-contain" />
                 </div>
                 <h3 className="text-xl font-display font-black text-gray-900 tracking-tighter">
                   {categoryName}

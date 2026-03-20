@@ -28,7 +28,7 @@ export const platformIcons: Record<string, any> = {
   'website traffic': faChartLine,
   coinmarketcap: faSearchDollar,
   coinmarket: faSearchDollar,
-  clubhouse: faMobileAlt,
+  clubhouse: 'https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcRdmyLltdISEARz1pgjEoJFuyP8LjZjc3EOf0dp5Naj5Q&s=10',
   others: faGlobe
 };
 
