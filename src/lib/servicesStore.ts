@@ -93,14 +93,26 @@ export const fetchServices = async (force = false): Promise<Service[]> => {
     }
 
     // If not in Firebase or forced, try to sync from API
+    console.log(`[ServicesStore] Syncing from API (force=${force})...`);
     const settingsSnap = await get(ref(db, 'settings'));
     const profit = settingsSnap.val()?.profitPercentage || 20;
 
     const apiServices = await smmService.getServices();
+    console.log(`[ServicesStore] API Response received. Type: ${typeof apiServices}, IsArray: ${Array.isArray(apiServices)}`);
     
-    if (apiServices.error) throw new Error(apiServices.error);
-    if (!Array.isArray(apiServices)) throw new Error("API returned non-array data");
+    if (apiServices.error) {
+      console.error(`[ServicesStore] API Error:`, apiServices.error);
+      throw new Error(apiServices.error);
+    }
+    if (!Array.isArray(apiServices)) {
+      console.error(`[ServicesStore] API returned non-array data:`, apiServices);
+      throw new Error("API returned non-array data");
+    }
 
+    console.log(`[ServicesStore] Processing ${apiServices.length} services...`);
+    if (apiServices.length === 0) {
+      console.warn(`[ServicesStore] API returned an empty service list. This could mean the API key is invalid or the provider has no services.`);
+    }
     const servicesUpdates: Record<string, Service> = {};
     const processedServices: Service[] = apiServices.map((s: any) => {
       const usdRate = parseFloat(s.rate);

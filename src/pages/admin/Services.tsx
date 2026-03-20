@@ -1,10 +1,11 @@
 import React, { useState, useEffect } from 'react';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
-import { faSync, faSearch, faFilter, faList, faToggleOn, faToggleOff, faCloudDownloadAlt } from '@fortawesome/free-solid-svg-icons';
+import { faSync, faSearch, faFilter, faList, faToggleOn, faToggleOff, faCloudDownloadAlt, faSyncAlt, faTrash, faTrashAlt } from '@fortawesome/free-solid-svg-icons';
 import { motion } from 'motion/react';
 import toast from 'react-hot-toast';
 import { db } from '../../lib/firebase';
 import { ref, onValue, set, update, get } from 'firebase/database';
+import { fetchServices } from '../../lib/servicesStore';
 
 export default function AdminServices() {
   const [services, setServices] = useState<any[]>([]);
@@ -35,6 +36,23 @@ export default function AdminServices() {
     });
   }, []);
 
+  const handleSync = async (clearFirst = false) => {
+    setIsSyncing(true);
+    const toastId = toast.loading(clearFirst ? 'Clearing and syncing services...' : 'Syncing services from provider...');
+    try {
+      if (clearFirst) {
+        await set(ref(db, 'services'), null);
+      }
+      await fetchServices(true);
+      toast.success('Services synced successfully!', { id: toastId });
+    } catch (err: any) {
+      console.error('Sync failed:', err);
+      toast.error(`Sync failed: ${err.message}`, { id: toastId });
+    } finally {
+      setIsSyncing(false);
+    }
+  };
+
   const toggleStatus = async (service: any) => {
     const newStatus = service.status === 'Active' ? 'Disabled' : 'Active';
     try {
@@ -46,7 +64,7 @@ export default function AdminServices() {
 
   const filteredServices = services.filter(s => 
     s.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    s.categoryName?.toLowerCase().includes(searchTerm.toLowerCase())
+    s.category?.toLowerCase().includes(searchTerm.toLowerCase())
   );
 
   return (
@@ -55,6 +73,24 @@ export default function AdminServices() {
         <div>
           <h1 className="text-4xl md:text-5xl font-display font-black text-gray-900 tracking-tighter mb-2">Services</h1>
           <p className="text-gray-400 font-black text-[10px] uppercase tracking-[0.2em]">Manage your SMM services and pricing</p>
+        </div>
+        <div className="flex flex-wrap gap-4">
+          <button 
+            onClick={() => handleSync(false)}
+            disabled={isSyncing}
+            className={`px-8 py-4 bg-white border border-gray-100 text-gray-600 font-black uppercase tracking-widest text-[10px] rounded-2xl shadow-sm hover:bg-gray-50 transition-all active:scale-95 flex items-center justify-center space-x-3 ${isSyncing ? 'opacity-50 cursor-not-allowed' : ''}`}
+          >
+            <FontAwesomeIcon icon={faSyncAlt} className={isSyncing ? 'animate-spin' : ''} />
+            <span>{isSyncing ? 'Syncing...' : 'Sync Services'}</span>
+          </button>
+          <button 
+            onClick={() => handleSync(true)}
+            disabled={isSyncing}
+            className={`px-8 py-4 bg-gradient-to-r from-rose-600 to-orange-600 text-white font-black uppercase tracking-widest text-[10px] rounded-2xl shadow-xl shadow-rose-600/20 hover:scale-105 transition-all active:scale-95 flex items-center justify-center space-x-3 ${isSyncing ? 'opacity-50 cursor-not-allowed' : ''}`}
+          >
+            <FontAwesomeIcon icon={faTrashAlt} className={isSyncing ? 'animate-spin' : ''} />
+            <span>{isSyncing ? 'Clearing...' : 'Clear & Sync'}</span>
+          </button>
         </div>
       </div>
 

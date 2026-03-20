@@ -39,7 +39,23 @@ export const smmService = {
         body: JSON.stringify(params),
       };
 
-      const response = await fetch(url, fetchOptions);
+      let response;
+      try {
+        response = await fetch(url, fetchOptions);
+      } catch (fetchError: any) {
+        // If GAS fails, try to fallback to local proxy if we haven't already
+        if (isGas) {
+          console.warn(`[SMM Service] GAS Proxy failed, falling back to local proxy...`, fetchError);
+          const fallbackUrl = `/api/smm/${action === 'add' ? 'order' : action}`;
+          response = await fetch(fallbackUrl, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(params),
+          });
+        } else {
+          throw fetchError;
+        }
+      }
 
       if (!response.ok) {
         const errorText = await response.text().catch(() => 'No error details');
@@ -52,6 +68,7 @@ export const smmService = {
       }
 
       const text = await response.text();
+      console.log(`[SMM Service] Raw response from ${isGas ? 'GAS' : 'Local'} Proxy:`, text.substring(0, 200) + (text.length > 200 ? '...' : ''));
       if (!text) throw new Error(`Empty response from ${isGas ? 'GAS' : 'Local'} Proxy`);
       
       try {
