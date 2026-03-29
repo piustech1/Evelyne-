@@ -7,7 +7,7 @@ export default function MobileNav() {
   const location = useLocation();
 
   const navItems = [
-    { name: 'Picks', path: '/recommended', icon: faStar },
+    { name: 'Home', path: '/', icon: faHome },
     { name: 'Orders', path: '/orders', icon: faHistory },
     { name: 'Boost', path: '/boost', icon: faRocket, isSpecial: true },
     { name: 'Wallet', path: '/wallet', icon: faWallet },

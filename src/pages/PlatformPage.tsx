@@ -1,14 +1,82 @@
-import { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { 
-  faRocket, faGlobe, faSearch, faList
+  faRocket, faGlobe, faSearch, faList, faStar
 } from '@fortawesome/free-solid-svg-icons';
 import { motion } from 'motion/react';
 import { fetchServices, Service } from '../lib/servicesStore';
 import { platformColors } from '../utils/platformData';
 import { ServiceCard, ServiceCardSkeleton } from '../components/ServiceCard';
 import { PlatformIcon } from '../components/PlatformIcon';
+
+const RecentlyUsedSection = ({ platform }: { platform: string }) => {
+  const [services, setServices] = useState<Service[]>([]);
+  const navigate = useNavigate();
+  
+  useEffect(() => {
+    const recentlyUsed = JSON.parse(localStorage.getItem('easyboost_recently_used') || '[]');
+    const platformServices = recentlyUsed.filter((s: any) => s.category.toLowerCase() === platform.toLowerCase());
+    setServices(platformServices);
+  }, [platform]);
+
+  if (services.length === 0) return null;
+
+  return (
+    <div className="space-y-6">
+      <div className="flex items-center justify-between">
+        <div className="space-y-1">
+          <h3 className="text-[10px] font-black text-brand-purple uppercase tracking-[0.3em]">Quick Re-order</h3>
+          <p className="text-xl font-display font-black text-brand-dark tracking-tighter">Recently Used</p>
+        </div>
+      </div>
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
+        {services.map((service, idx) => (
+          <ServiceCard 
+            key={service.service} 
+            service={service} 
+            onBoost={() => navigate(`/order?service=${service.apiServiceId || service.service}`)}
+            index={idx}
+          />
+        ))}
+      </div>
+    </div>
+  );
+};
+
+const FavoritesSection = ({ platform }: { platform: string }) => {
+  const [services, setServices] = useState<Service[]>([]);
+  const navigate = useNavigate();
+  
+  useEffect(() => {
+    const favorites = JSON.parse(localStorage.getItem('easyboost_favorites') || '[]');
+    const platformServices = favorites.filter((s: any) => s.category.toLowerCase() === platform.toLowerCase());
+    setServices(platformServices);
+  }, [platform]);
+
+  if (services.length === 0) return null;
+
+  return (
+    <div className="space-y-6">
+      <div className="flex items-center justify-between">
+        <div className="space-y-1">
+          <h3 className="text-[10px] font-black text-rose-500 uppercase tracking-[0.3em]">Your Top Picks</h3>
+          <p className="text-xl font-display font-black text-brand-dark tracking-tighter">Favorites</p>
+        </div>
+      </div>
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
+        {services.map((service, idx) => (
+          <ServiceCard 
+            key={service.service} 
+            service={service} 
+            onBoost={() => navigate(`/order?service=${service.apiServiceId || service.service}`)}
+            index={idx}
+          />
+        ))}
+      </div>
+    </div>
+  );
+};
 
 export default function PlatformPage() {
   const [searchParams] = useSearchParams();
@@ -30,9 +98,27 @@ export default function PlatformPage() {
         const filtered = allServices.filter(s => s.category.toLowerCase() === platform.toLowerCase());
         setServices(filtered);
         
-        // Extract unique sub-categories for filters
-        const subs = Array.from(new Set(filtered.map(s => s.sub_category || 'General'))).sort();
-        setDynamicFilters(['All', ...subs]);
+        // Manual filter mapping (Task 5)
+        const manualFilters: Record<string, string[]> = {
+          'tiktok': ['Followers', 'Likes', 'Views', 'Live', 'Comments', 'Shares'],
+          'instagram': ['Followers', 'Reels', 'Story', 'Likes', 'Comments'],
+          'youtube': ['Subscribers', 'Views', 'Likes'],
+          'telegram': ['Members', 'Views', 'Reactions'],
+          'whatsapp': ['Group Members', 'Channel Members']
+        };
+
+        const platformKey = platform.toLowerCase();
+        let filters = ['All'];
+
+        if (manualFilters[platformKey]) {
+          filters = ['All', ...manualFilters[platformKey]];
+        } else {
+          // Extract unique sub-categories for filters
+          const subs = Array.from(new Set(filtered.map(s => s.sub_category || 'General'))).sort();
+          filters = ['All', ...subs];
+        }
+        
+        setDynamicFilters(filters);
 
         const platforms = Array.from(new Set(allServices.map(s => s.category))).sort();
         setAllPlatforms(platforms);
@@ -49,6 +135,25 @@ export default function PlatformPage() {
     const matchesSearch = s.name.toLowerCase().includes(searchTerm.toLowerCase()) || 
                          String(s.service).includes(searchTerm);
     if (activeFilter === 'All') return matchesSearch;
+    
+    // Manual filter matching logic
+    const n = s.name.toLowerCase();
+    const f = activeFilter.toLowerCase();
+    
+    if (f === 'followers') return matchesSearch && n.includes('follower');
+    if (f === 'likes') return matchesSearch && n.includes('like');
+    if (f === 'views') return matchesSearch && n.includes('view');
+    if (f === 'live') return matchesSearch && n.includes('live');
+    if (f === 'comments') return matchesSearch && n.includes('comment');
+    if (f === 'shares') return matchesSearch && n.includes('share');
+    if (f === 'reels') return matchesSearch && n.includes('reel');
+    if (f === 'story') return matchesSearch && n.includes('story');
+    if (f === 'subscribers') return matchesSearch && n.includes('subscriber');
+    if (f === 'members') return matchesSearch && n.includes('member');
+    if (f === 'reactions') return matchesSearch && n.includes('reaction');
+    if (f === 'group members') return matchesSearch && n.includes('group');
+    if (f === 'channel members') return matchesSearch && n.includes('channel');
+
     return matchesSearch && (s.sub_category === activeFilter);
   });
 
@@ -141,6 +246,14 @@ export default function PlatformPage() {
             ))}
           </div>
         </div>
+
+        {/* Recently Used & Favorites (Task 7) */}
+        {(activeFilter === 'All' && !searchTerm) && (
+          <div className="space-y-12 mb-12">
+            <RecentlyUsedSection platform={platform} />
+            <FavoritesSection platform={platform} />
+          </div>
+        )}
 
         {/* Services Grid */}
         <div className="space-y-8">

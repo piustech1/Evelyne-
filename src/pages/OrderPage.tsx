@@ -56,7 +56,15 @@ export default function OrderPage() {
   const totalPrice = service ? Math.round((service.price * quantity) / 1000) : 0;
   const hasInsufficientBalance = userData && userData.balance < totalPrice;
 
-  const [showInstructions, setShowInstructions] = useState(false);
+  const [showInstructions, setShowInstructions] = useState(true);
+
+  const defaultInstructions = `
+📌 ORDER INSTRUCTIONS:
+1. Use the correct link format for the platform.
+2. Ensure your account/post is PUBLIC before ordering.
+3. Do NOT change your username or delete the post during the order.
+4. No refunds for wrong links or private accounts.
+  `.trim();
 
   const handlePlaceOrder = async () => {
     if (!user || !userData) {
@@ -146,6 +154,11 @@ export default function OrderPage() {
       const selling_price = totalPrice;
       const profit = selling_price - provider_cost;
 
+      // Save to recently used (Task 7)
+      const recentlyUsed = JSON.parse(localStorage.getItem('easyboost_recently_used') || '[]');
+      const updatedRecentlyUsed = [service, ...recentlyUsed.filter((s: any) => s.service !== service.service)].slice(0, 5);
+      localStorage.setItem('easyboost_recently_used', JSON.stringify(updatedRecentlyUsed));
+
       const ordersRef = ref(db, 'orders');
       const newOrderRef = push(ordersRef);
       await set(newOrderRef, {
@@ -170,7 +183,16 @@ export default function OrderPage() {
       toast.success('Order placed successfully!', { id: loadingToast });
       setTimeout(() => navigate('/orders'), 2000);
     } catch (err: any) {
-      toast.error(err.message || 'Failed to place order', { id: loadingToast });
+      let userMessage = 'Failed to place order. Please try again.';
+      const errMsg = err.message?.toLowerCase() || '';
+      
+      if (errMsg.includes('balance')) userMessage = '⚠️ Insufficient balance. Please top up your wallet.';
+      else if (errMsg.includes('quantity')) userMessage = '⚠️ Invalid quantity. Check min/max limits.';
+      else if (errMsg.includes('link')) userMessage = '⚠️ Invalid link format. Please check the URL.';
+      else if (errMsg.includes('timeout') || errMsg.includes('abort')) userMessage = '⚠️ Connection timed out. Please try again.';
+      else if (errMsg.includes('network')) userMessage = '⚠️ Network error. Check your internet connection.';
+      
+      toast.error(userMessage, { id: loadingToast });
     } finally {
       setIsOrdering(false);
     }
@@ -262,37 +284,35 @@ export default function OrderPage() {
 
           <div className="p-6 md:p-10 space-y-8">
             {/* Service Instructions */}
-            {service.description && (
-              <div className="bg-brand-purple/5 rounded-2xl border border-brand-purple/10 overflow-hidden">
-                <button 
-                  onClick={() => setShowInstructions(!showInstructions)}
-                  className="w-full p-4 flex items-center justify-between text-brand-purple hover:bg-brand-purple/5 transition-colors"
-                >
-                  <div className="flex items-center gap-2">
-                    <FontAwesomeIcon icon={faInfoCircle} className="text-xs" />
-                    <span className="text-[10px] font-black uppercase tracking-widest">📌 Service Instructions</span>
-                  </div>
-                  <FontAwesomeIcon 
-                    icon={faArrowLeft} 
-                    className={`text-[10px] transition-transform duration-300 ${showInstructions ? 'rotate-90' : '-rotate-90'}`} 
-                  />
-                </button>
-                <AnimatePresence>
-                  {showInstructions && (
-                    <motion.div
-                      initial={{ height: 0, opacity: 0 }}
-                      animate={{ height: 'auto', opacity: 1 }}
-                      exit={{ height: 0, opacity: 0 }}
-                      className="px-4 pb-4"
-                    >
-                      <div className="text-[11px] font-medium text-gray-600 leading-relaxed whitespace-pre-wrap border-t border-brand-purple/10 pt-3">
-                        {service.description}
-                      </div>
-                    </motion.div>
-                  )}
-                </AnimatePresence>
-              </div>
-            )}
+            <div className="bg-brand-purple/5 rounded-2xl border border-brand-purple/10 overflow-hidden">
+              <button 
+                onClick={() => setShowInstructions(!showInstructions)}
+                className="w-full p-4 flex items-center justify-between text-brand-purple hover:bg-brand-purple/5 transition-colors"
+              >
+                <div className="flex items-center gap-2">
+                  <FontAwesomeIcon icon={faInfoCircle} className="text-xs" />
+                  <span className="text-[10px] font-black uppercase tracking-widest">📌 Order Instructions</span>
+                </div>
+                <FontAwesomeIcon 
+                  icon={faArrowLeft} 
+                  className={`text-[10px] transition-transform duration-300 ${showInstructions ? 'rotate-90' : '-rotate-90'}`} 
+                />
+              </button>
+              <AnimatePresence>
+                {showInstructions && (
+                  <motion.div
+                    initial={{ height: 0, opacity: 0 }}
+                    animate={{ height: 'auto', opacity: 1 }}
+                    exit={{ height: 0, opacity: 0 }}
+                    className="px-4 pb-4"
+                  >
+                    <div className="text-[11px] font-medium text-gray-600 leading-relaxed whitespace-pre-wrap border-t border-brand-purple/10 pt-3">
+                      {service.description || defaultInstructions}
+                    </div>
+                  </motion.div>
+                )}
+              </AnimatePresence>
+            </div>
 
             {/* Service Stats */}
             <div className="grid grid-cols-3 gap-4">

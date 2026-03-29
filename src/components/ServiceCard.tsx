@@ -23,6 +23,26 @@ export const ServiceCard: React.FC<ServiceCardProps> = ({ service, onBoost, inde
   const isBestValue = badges.includes('best_value');
   const isFast = badges.includes('fast') || service.name.toLowerCase().includes('fast') || service.name.toLowerCase().includes('instant');
 
+  const [isFavorite, setIsFavorite] = React.useState(false);
+
+  React.useEffect(() => {
+    const favorites = JSON.parse(localStorage.getItem('easyboost_favorites') || '[]');
+    setIsFavorite(favorites.some((f: any) => f.service === service.service));
+  }, [service.service]);
+
+  const toggleFavorite = (e: React.MouseEvent) => {
+    e.stopPropagation();
+    const favorites = JSON.parse(localStorage.getItem('easyboost_favorites') || '[]');
+    let updated;
+    if (isFavorite) {
+      updated = favorites.filter((f: any) => f.service !== service.service);
+    } else {
+      updated = [service, ...favorites];
+    }
+    localStorage.setItem('easyboost_favorites', JSON.stringify(updated));
+    setIsFavorite(!isFavorite);
+  };
+
   const getSpeed = () => {
     if (service.name.toLowerCase().includes('instant')) return 'Instant';
     if (service.name.toLowerCase().includes('fast')) return 'Fast';
@@ -43,6 +63,14 @@ export const ServiceCard: React.FC<ServiceCardProps> = ({ service, onBoost, inde
     >
       {/* Badges Section */}
       <div className="absolute top-3 right-3 flex flex-col items-end gap-1 z-10">
+        <button 
+          onClick={toggleFavorite}
+          className={`w-6 h-6 rounded-full flex items-center justify-center text-[10px] shadow-sm border transition-all active:scale-90 ${
+            isFavorite ? 'bg-rose-500 text-white border-rose-600' : 'bg-white text-gray-300 border-gray-100 hover:text-rose-500'
+          }`}
+        >
+          <FontAwesomeIcon icon={faStar} />
+        </button>
         {isGuaranteed && (
           <span className="px-2 py-0.5 bg-emerald-100 text-emerald-600 text-[7px] font-black uppercase tracking-widest rounded-full flex items-center gap-1 shadow-sm border border-emerald-200">
             <FontAwesomeIcon icon={faCheckCircle} className="text-[6px]" />

@@ -1,10 +1,13 @@
+import React, { useState, useEffect } from 'react';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { faBolt, faShieldAlt, faTag, faChartLine, faCheckCircle, faGlobe, faStar, faFire, faArrowRight } from '@fortawesome/free-solid-svg-icons';
 import { motion } from 'motion/react';
-import { Link } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
 import { platformTextColors } from '../utils/platformData';
 import WhatsAppCommunity from '../components/WhatsAppCommunity';
 import { PlatformIcon } from '../components/PlatformIcon';
+import { ServiceCard } from '../components/ServiceCard';
+import { Service } from '../lib/servicesStore';
 
 const platformsList = [
   { id: 'whatsapp', name: 'WhatsApp' },
@@ -25,6 +28,72 @@ const platformsList = [
   { id: 'website traffic', name: 'Website Traffic' },
   { id: 'coinmarketcap', name: 'CoinMarket' },
 ];
+
+const RecentlyUsedSection = () => {
+  const [services, setServices] = useState<Service[]>([]);
+  const navigate = useNavigate();
+  
+  useEffect(() => {
+    const recentlyUsed = JSON.parse(localStorage.getItem('easyboost_recently_used') || '[]');
+    setServices(recentlyUsed);
+  }, []);
+
+  if (services.length === 0) return null;
+
+  return (
+    <div className="space-y-6">
+      <div className="flex items-center justify-between">
+        <div className="space-y-1">
+          <h3 className="text-[10px] font-black text-brand-purple uppercase tracking-[0.3em]">Quick Re-order</h3>
+          <p className="text-xl font-display font-black text-brand-dark tracking-tighter">Recently Used Services</p>
+        </div>
+      </div>
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
+        {services.map((service, idx) => (
+          <ServiceCard 
+            key={service.service} 
+            service={service} 
+            onBoost={() => navigate(`/order?service=${service.apiServiceId || service.service}`)}
+            index={idx}
+          />
+        ))}
+      </div>
+    </div>
+  );
+};
+
+const FavoritesSection = () => {
+  const [services, setServices] = useState<Service[]>([]);
+  const navigate = useNavigate();
+  
+  useEffect(() => {
+    const favorites = JSON.parse(localStorage.getItem('easyboost_favorites') || '[]');
+    setServices(favorites);
+  }, []);
+
+  if (services.length === 0) return null;
+
+  return (
+    <div className="space-y-6">
+      <div className="flex items-center justify-between">
+        <div className="space-y-1">
+          <h3 className="text-[10px] font-black text-rose-500 uppercase tracking-[0.3em]">Your Top Picks</h3>
+          <p className="text-xl font-display font-black text-brand-dark tracking-tighter">Favorite Services</p>
+        </div>
+      </div>
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
+        {services.map((service, idx) => (
+          <ServiceCard 
+            key={service.service} 
+            service={service} 
+            onBoost={() => navigate(`/order?service=${service.apiServiceId || service.service}`)}
+            index={idx}
+          />
+        ))}
+      </div>
+    </div>
+  );
+};
 
 export default function LandingPage() {
   return (
@@ -163,6 +232,17 @@ export default function LandingPage() {
               </Link>
             </div>
           </div>
+        </div>
+      </section>
+
+      {/* Recently Used & Favorites Section (Task 7) */}
+      <section className="py-12 bg-gray-50/30 relative z-30">
+        <div className="max-w-7xl mx-auto px-6 space-y-12">
+          {/* Recently Used */}
+          <RecentlyUsedSection />
+          
+          {/* Favorites */}
+          <FavoritesSection />
         </div>
       </section>
 

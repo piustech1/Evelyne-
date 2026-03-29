@@ -16,19 +16,27 @@ export default function Recommended() {
     const loadServices = async () => {
       try {
         const allServices = await fetchServices();
-        // Filter and sort for recommendations
-        // Priority: Guaranteed > Trending > Best Value
-        const recommended = allServices.filter(s => 
-          s.guaranteed || 
-          (s.badges && s.badges.length > 0) ||
-          s.price < 1000 // Heuristic for best value
-        ).sort((a, b) => {
-          if (a.guaranteed && !b.guaranteed) return -1;
-          if (!a.guaranteed && b.guaranteed) return 1;
-          return 0;
-        });
         
-        setServices(recommended);
+        // 1. Guaranteed: refill = true
+        const guaranteed = allServices.filter(s => s.guaranteed || s.refill);
+        
+        // 2. Trending: Based on order_count (if available) or randomly select popular ones
+        // Since we don't have real order_count per service yet, we'll use a mix of badges and random popular ones
+        const trending = allServices.filter(s => 
+          s.badges?.includes('trending') || 
+          s.name.toLowerCase().includes('real') || 
+          s.name.toLowerCase().includes('active')
+        );
+
+        // 3. Best Value: price < 1000 or best_value badge
+        const value = allServices.filter(s => s.badges?.includes('best_value') || s.price < 1000);
+
+        // Ensure we have fallbacks if any list is empty
+        const fallback = allServices.slice(0, 20);
+        
+        setServices(allServices); // Keep all for filtering
+        
+        // We'll use the filteredServices logic below to handle the tabs
       } catch (err) {
         console.error(err);
       } finally {
@@ -38,13 +46,24 @@ export default function Recommended() {
     loadServices();
   }, []);
 
-  const filteredServices = services.filter(s => {
-    if (activeTab === 'all') return true;
-    if (activeTab === 'guaranteed') return s.guaranteed;
-    if (activeTab === 'trending') return s.badges?.includes('trending');
-    if (activeTab === 'value') return s.badges?.includes('best_value') || s.price < 1000;
-    return true;
-  });
+  const filteredServices = (() => {
+    let result: Service[] = [];
+    if (activeTab === 'all') {
+      result = services.filter(s => s.guaranteed || (s.badges && s.badges.length > 0) || s.price < 1000);
+    } else if (activeTab === 'guaranteed') {
+      result = services.filter(s => s.guaranteed || s.refill);
+    } else if (activeTab === 'trending') {
+      result = services.filter(s => s.badges?.includes('trending') || s.name.toLowerCase().includes('real'));
+    } else if (activeTab === 'value') {
+      result = services.filter(s => s.badges?.includes('best_value') || s.price < 1000);
+    }
+
+    // Fallback if tab is empty: show any services from that platform or general popular ones
+    if (result.length === 0 && services.length > 0) {
+      return services.slice(0, 12);
+    }
+    return result;
+  })();
 
   const handleBoost = (service: Service) => {
     navigate(`/order?service=${service.apiServiceId || service.service}`);

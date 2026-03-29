@@ -58,7 +58,7 @@ export const detectPlatform = (name: string, category: string = ''): string => {
   if (n.includes('soundcloud')) return 'SoundCloud';
   if (n.includes('twitch')) return 'Twitch';
   if (n.includes('linkedin')) return 'LinkedIn';
-  if (n.includes('whatsapp') || n.includes(' wa ')) return 'WhatsApp';
+  if (n.includes('whatsapp') || n.includes(' wa ') || n.includes('group') || n.includes('channel')) return 'WhatsApp';
   if (n.includes('google play') || n.includes('play store') || n.includes('android app')) return 'Google Play';
   if (n.includes('deezer')) return 'Deezer';
   if (n.includes('vimeo')) return 'Vimeo';
@@ -72,60 +72,102 @@ export const detectPlatform = (name: string, category: string = ''): string => {
 
 let cachedServices: Service[] | null = null;
 let lastFetchTime = 0;
-const CACHE_DURATION = 5 * 60 * 1000; // 5 minutes
+const CACHE_DURATION = 10 * 60 * 1000; // 10 minutes
+const LOCAL_STORAGE_KEY = 'easyboost_services_cache';
 
 export const fetchServices = async (force = false): Promise<Service[]> => {
   const now = Date.now();
+  
+  // 1. Check in-memory cache
   if (!force && cachedServices && (now - lastFetchTime < CACHE_DURATION)) {
     return cachedServices;
   }
 
+  // 2. Check localStorage cache
+  if (!force) {
+    const localCache = localStorage.getItem(LOCAL_STORAGE_KEY);
+    if (localCache) {
+      try {
+        const { data, timestamp } = JSON.parse(localCache);
+        if (now - timestamp < CACHE_DURATION) {
+          cachedServices = data;
+          lastFetchTime = timestamp;
+          return data;
+        }
+      } catch (e) {
+        console.warn("Failed to parse local services cache", e);
+      }
+    }
+  }
+
+  const fetchWithTimeout = async (retries = 3): Promise<Service[]> => {
+    for (let i = 0; i < retries; i++) {
+      try {
+        const controller = new AbortController();
+        const timeoutId = setTimeout(() => controller.abort(), 15000); // 15 seconds timeout
+
+        const apiServices = await smmService.getServices();
+        clearTimeout(timeoutId);
+
+        if (apiServices.error) throw new Error(apiServices.error);
+        if (!Array.isArray(apiServices)) throw new Error("API returned non-array data");
+        
+        return apiServices;
+      } catch (err: any) {
+        console.warn(`Fetch attempt ${i + 1} failed:`, err.message);
+        if (i === retries - 1) throw err;
+        await new Promise(r => setTimeout(r, 1000 * (i + 1))); // Exponential backoff
+      }
+    }
+    throw new Error("Failed after retries");
+  };
+
   try {
-    // Try to get from local Firebase first
+    // Try to get from local Firebase first (as a secondary cache)
     const servicesRef = ref(db, 'services');
     const snapshot = await get(servicesRef);
-    const data = snapshot.val();
+    const firebaseData = snapshot.val();
 
-    if (data && !force) {
-      const services = (Object.values(data) as Service[]).map(s => ({
+    if (firebaseData && !force) {
+      const services = (Object.values(firebaseData) as Service[]).map(s => ({
         ...s,
-        // Always ensure 51% markup on load
         price: Math.round(parseFloat(s.rate as any) * 1.51 * 3800)
       }));
+      
+      // Update caches
       cachedServices = services;
       lastFetchTime = now;
+      localStorage.setItem(LOCAL_STORAGE_KEY, JSON.stringify({ data: services, timestamp: now }));
+      
       return services;
     }
 
-    // If not in Firebase or forced, try to sync from API
+    // If not in Firebase or forced, sync from API
     console.log(`[ServicesStore] Syncing from API (force=${force})...`);
-    const settingsSnap = await get(ref(db, 'settings'));
-    const profit = settingsSnap.val()?.profitPercentage || 20;
-
-    const apiServices = await smmService.getServices();
-    console.log(`[ServicesStore] API Response received. Type: ${typeof apiServices}, IsArray: ${Array.isArray(apiServices)}`);
-    
-    if (apiServices.error) {
-      console.error(`[ServicesStore] API Error:`, apiServices.error);
-      throw new Error(apiServices.error);
-    }
-    if (!Array.isArray(apiServices)) {
-      console.error(`[ServicesStore] API returned non-array data:`, apiServices);
-      throw new Error("API returned non-array data");
-    }
+    const apiServices = await fetchWithTimeout();
 
     console.log(`[ServicesStore] Processing ${apiServices.length} services...`);
-    if (apiServices.length === 0) {
-      console.warn(`[ServicesStore] API returned an empty service list. This could mean the API key is invalid or the provider has no services.`);
-    }
     const servicesUpdates: Record<string, Service> = {};
     const processedServices: Service[] = apiServices.map((s: any) => {
       const usdRate = parseFloat(s.rate);
-      // Apply 1.51x markup (51% markup) and convert to UGX (3800 exchange rate)
       const finalPrice = usdRate * 1.51 * 3800;
-      
       const platform = detectPlatform(s.name, s.category);
       
+      // Sub-category detection logic (Task 5)
+      let subCategory = 'General';
+      const n = s.name.toLowerCase();
+      if (n.includes('follower')) subCategory = 'Followers';
+      else if (n.includes('like')) subCategory = 'Likes';
+      else if (n.includes('view')) subCategory = 'Views';
+      else if (n.includes('comment')) subCategory = 'Comments';
+      else if (n.includes('share')) subCategory = 'Shares';
+      else if (n.includes('member')) subCategory = 'Members';
+      else if (n.includes('reaction')) subCategory = 'Reactions';
+      else if (n.includes('subscriber')) subCategory = 'Subscribers';
+      else if (n.includes('live')) subCategory = 'Live';
+      else if (n.includes('story')) subCategory = 'Story';
+      else if (n.includes('reel')) subCategory = 'Reels';
+
       const service: Service = {
         service: s.service,
         apiServiceId: s.service,
@@ -140,7 +182,11 @@ export const fetchServices = async (force = false): Promise<Service[]> => {
         refill: s.refill === "1" || s.refill === true,
         cancel: s.cancel === "1" || s.cancel === true,
         status: 'Active',
-        updatedAt: new Date().toISOString()
+        updatedAt: new Date().toISOString(),
+        description: s.description || '',
+        guaranteed: s.refill === "1" || s.refill === true,
+        badges: (s.refill === "1" || s.refill === true) ? ['guaranteed'] : [],
+        sub_category: subCategory
       };
       
       servicesUpdates[s.service] = service;
@@ -152,20 +198,21 @@ export const fetchServices = async (force = false): Promise<Service[]> => {
 
     cachedServices = processedServices;
     lastFetchTime = now;
+    localStorage.setItem(LOCAL_STORAGE_KEY, JSON.stringify({ data: processedServices, timestamp: now }));
+    
     return processedServices;
   } catch (error) {
     console.error("Failed to fetch services:", error);
-    // If API fails, try to return whatever we have in cache or Firebase
+    
+    // Final fallback: check any cache we have
     if (cachedServices) return cachedServices;
+    const localCache = localStorage.getItem(LOCAL_STORAGE_KEY);
+    if (localCache) return JSON.parse(localCache).data;
     
     const servicesRef = ref(db, 'services');
     const snapshot = await get(servicesRef);
     const data = snapshot.val();
-    if (data) {
-      const services = Object.values(data) as Service[];
-      cachedServices = services;
-      return services;
-    }
+    if (data) return Object.values(data) as Service[];
     
     throw error;
   }

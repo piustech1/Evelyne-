@@ -42,6 +42,19 @@ function doPost(e) {
       action: action
     };
 
+    // --- CACHING LOGIC FOR SERVICES ---
+    const cache = CacheService.getScriptCache();
+    const cacheKey = "smm_services_list";
+    
+    if (action === 'services') {
+      const cachedData = cache.get(cacheKey);
+      if (cachedData) {
+        console.log("Returning cached services from GAS Cache");
+        return createResponse(JSON.parse(cachedData));
+      }
+    }
+    // ----------------------------------
+
     // Map frontend parameters to SMM API parameters
     if (action === 'add') {
       payload.service = String(postData.service);
@@ -88,6 +101,17 @@ function doPost(e) {
 
     try {
       const data = JSON.parse(responseText);
+      
+      // Cache services list if successful
+      if (action === 'services' && Array.isArray(data) && data.length > 0) {
+        try {
+          // Cache for 10 minutes (600 seconds)
+          cache.put(cacheKey, JSON.stringify(data), 600);
+        } catch (cacheError) {
+          console.error("Failed to write to GAS Cache: " + cacheError.toString());
+        }
+      }
+      
       return createResponse(data);
     } catch (parseError) {
       return createResponse({ 
