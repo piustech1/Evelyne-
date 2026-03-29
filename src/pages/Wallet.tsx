@@ -17,17 +17,20 @@ export default function Wallet() {
   const [isDataLoading, setIsDataLoading] = useState(true);
   const [transactions, setTransactions] = useState<any[]>([]);
   const [showPaymentModal, setShowPaymentModal] = useState(false);
-  const [paymentStatus, setPaymentStatus] = useState<'processing' | 'success'>('processing');
+  const [paymentStatus, setPaymentStatus] = useState<'processing' | 'success' | 'failed' | 'idle'>('idle');
   const [lastBalance, setLastBalance] = useState(0);
 
   useEffect(() => {
     if (userData?.balance !== undefined) {
+      console.log(`[Wallet] Balance check: Current=${userData.balance}, Last=${lastBalance}, Modal=${showPaymentModal}, Status=${paymentStatus}`);
       // If balance increased while modal is showing, show success
       if (showPaymentModal && paymentStatus === 'processing' && userData.balance > lastBalance) {
+        console.log(`[Wallet] Balance increased! Switching to success state.`);
         setPaymentStatus('success');
+        toast.success(`UGX ${(userData.balance - lastBalance).toLocaleString()} added to wallet!`);
         setTimeout(() => {
           setShowPaymentModal(false);
-          setPaymentStatus('processing');
+          setPaymentStatus('idle');
         }, 3000);
       }
       setLastBalance(userData.balance);
@@ -87,72 +90,91 @@ export default function Wallet() {
     setPaymentStatus('processing');
 
     try {
-      const GAS_URL = import.meta.env.VITE_PAYMENT_GATEWAY_URL || 'https://script.google.com/macros/s/AKfycbx3R9hK-5O-ROqvY3XVkBaqOgSE1XXolFg35xD73p__aY274FHPNZN3qeNE1dnZMjmy/exec';
-      
-      const response = await fetch(GAS_URL, {
+      // Use our own server endpoint for better reliability and logging
+      const response = await fetch('/api/payment/initiate', {
         method: 'POST',
-        headers: { 'Content-Type': 'text/plain;charset=utf-8' },
+        headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           userId: user.uid,
           username: userData.name,
           userEmail: user.email,
           phone: formattedPhone,
           amount: Number(amount),
-          method: paymentMethod
+          method: paymentMethod === 'card' ? 'card' : 'mobile_money'
         })
       });
 
-      const text = await response.text();
-      console.log('Payment Gateway Response:', text);
+      const result = await response.json();
 
-      if (!text) {
-        // If response is empty but status is OK, it might be a redirect issue with GAS
-        // We'll assume it's processing if we got a 200/302
-        if (response.ok) {
-          toast.success('Payment initiated! Please check your phone.');
-          setAmount('');
-          setPhoneNumber('');
-          return;
+      if (result.success) {
+        toast.success("Payment initiated! Please complete the prompt on your phone.");
+        
+        if (result.redirectUrl) {
+          // Handle Card payment redirect
+          window.open(result.redirectUrl, '_blank');
         }
-        throw new Error('Empty response from payment gateway');
-      }
 
-      let data;
-      try {
-        data = JSON.parse(text);
-      } catch (e) {
-        // If it's not JSON, it might be a success message in plain text
-        if (text.toLowerCase().includes('success') || text.toLowerCase().includes('ok')) {
-          toast.success('Payment initiated! Please check your phone.');
-          setAmount('');
-          setPhoneNumber('');
-          return;
+        // Start polling for status (Backup Verification System)
+        if (result.reference) {
+          pollPaymentStatus(result.reference);
         }
-        throw new Error('Invalid response from payment gateway: ' + text.substring(0, 50));
+      } else {
+        throw new Error(result.message || "Failed to initiate payment");
       }
-
-      if (!data.success && data.status !== 'success' && data.status !== 'processing') {
-        throw new Error(data.message || 'Payment initiation failed');
-      }
-
-      if (data.redirectUrl) {
-        toast.success('Redirecting to card gateway...');
-        setTimeout(() => {
-          window.location.href = data.redirectUrl;
-        }, 1500);
-        return;
-      }
-
-      setAmount('');
-      setPhoneNumber('');
-      toast.success('Payment initiated! Please check your phone.');
     } catch (err: any) {
       console.error('Payment error:', err);
       toast.error(err.message || 'Failed to initiate payment');
-      setShowPaymentModal(false);
+      setPaymentStatus('failed');
+      setTimeout(() => setShowPaymentModal(false), 3000);
     } finally {
       setIsLoading(false);
     }
+  };
+
+  // Polling for payment status (Backup Verification System)
+  const pollPaymentStatus = async (reference: string) => {
+    const pollInterval = setInterval(async () => {
+      try {
+        const response = await fetch(`/api/payment/status/${reference}`);
+        const data = await response.json();
+        
+        if (data.status === 'successful' || data.status === 'completed') {
+          clearInterval(pollInterval);
+          setPaymentStatus('success');
+          toast.success(`UGX ${Number(amount).toLocaleString()} added to wallet!`);
+          
+          // Clear form
+          setAmount('');
+          setPhoneNumber('');
+          
+          // Close modal after delay
+          setTimeout(() => {
+            setShowPaymentModal(false);
+            setPaymentStatus('idle');
+          }, 3000);
+        } else if (data.status === 'failed') {
+          clearInterval(pollInterval);
+          setPaymentStatus('failed');
+          toast.error("Payment failed or was cancelled.");
+          setTimeout(() => {
+            setShowPaymentModal(false);
+            setPaymentStatus('idle');
+          }, 3000);
+        }
+      } catch (error) {
+        console.error("Polling error:", error);
+      }
+    }, 5000); // Poll every 5 seconds
+
+    // Stop polling after 10 minutes
+    setTimeout(() => {
+      clearInterval(pollInterval);
+      if (showPaymentModal && paymentStatus === 'processing') {
+        setShowPaymentModal(false);
+        setPaymentStatus('idle');
+        toast.error("Payment verification timed out. If you were charged, your balance will update shortly.");
+      }
+    }, 600000);
   };
 
   return (
@@ -184,7 +206,7 @@ export default function Wallet() {
                     </p>
                   </div>
                 </>
-              ) : (
+              ) : paymentStatus === 'success' ? (
                 <>
                   <div className="w-20 h-20 bg-emerald-50 rounded-3xl flex items-center justify-center mx-auto border border-emerald-100 shadow-sm relative overflow-hidden">
                     <motion.div 
@@ -199,6 +221,24 @@ export default function Wallet() {
                     <h3 className="text-xl font-display font-black text-emerald-500 tracking-tighter">Payment Successful</h3>
                     <p className="text-gray-500 text-xs font-medium leading-relaxed">
                       Your wallet has been topped up.
+                    </p>
+                  </div>
+                </>
+              ) : (
+                <>
+                  <div className="w-20 h-20 bg-rose-50 rounded-3xl flex items-center justify-center mx-auto border border-rose-100 shadow-sm relative overflow-hidden">
+                    <motion.div 
+                      initial={{ scale: 0 }}
+                      animate={{ scale: 1 }}
+                      className="text-rose-500 text-3xl"
+                    >
+                      <FontAwesomeIcon icon={faInfoCircle} />
+                    </motion.div>
+                  </div>
+                  <div className="space-y-2">
+                    <h3 className="text-xl font-display font-black text-rose-500 tracking-tighter">Payment Failed</h3>
+                    <p className="text-gray-500 text-xs font-medium leading-relaxed">
+                      Something went wrong or the payment was cancelled.
                     </p>
                   </div>
                 </>

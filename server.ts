@@ -4,6 +4,7 @@ import cors from 'cors';
 import dotenv from 'dotenv';
 import fetch from 'node-fetch';
 import admin from 'firebase-admin';
+import crypto from 'crypto';
 
 dotenv.config();
 
@@ -48,9 +49,11 @@ async function initializeFirebase() {
       }
       const serviceAccount = JSON.parse(trimmedValue);
       if (!admin.apps.length) {
+        const dbUrl = process.env.VITE_FIREBASE_DATABASE_URL || `https://${serviceAccount.project_id}-default-rtdb.firebaseio.com/`;
+        console.log(`Initializing Firebase Admin with DB URL: ${dbUrl}`);
         admin.initializeApp({
           credential: admin.credential.cert(serviceAccount),
-          databaseURL: process.env.VITE_FIREBASE_DATABASE_URL || `https://${serviceAccount.project_id}-default-rtdb.firebaseio.com/`
+          databaseURL: dbUrl
         });
         console.log("Firebase Admin successfully initialized");
         firebaseInitError = null;
@@ -779,6 +782,269 @@ async function startServer() {
       res.json({ success: true, count: Object.keys(updates).length / 2 });
     } catch (error: any) {
       res.status(500).json({ error: error.message });
+    }
+  });
+
+  // --- PAYMENT GATEWAY ROUTES (MarzPay) ---
+  const MARZPAY_API_KEY = process.env.MARZPAY_API_KEY || 'marz_xmeCqRz0rGEme73o';
+  const MARZPAY_API_SECRET = process.env.MARZPAY_API_SECRET || 'JN7T30E2vZquBUbLZyxlZRzAhKAyJW4B';
+
+  // Helper to process successful payment
+  async function processSuccessfulPayment(reference: string, amountRaw: number, providerInfo: any = {}) {
+    const db = admin.database();
+    const paymentRef = db.ref(`payments/${reference}`);
+    const snapshot = await paymentRef.once('value');
+    const payment = snapshot.val();
+
+    if (!payment) {
+      console.log(`[Payment] Reference not found: ${reference}`);
+      return false;
+    }
+
+    if (payment.status === 'successful' || payment.status === 'completed') {
+      console.log(`[Payment] ${reference} already processed. Skipping credit.`);
+      return true;
+    }
+
+    const userId = payment.userId;
+    const amountToCredit = Number(amountRaw);
+
+    if (isNaN(amountToCredit) || amountToCredit <= 0) {
+      console.error(`[Payment] Invalid amount to credit: ${amountRaw} (Reference: ${reference})`);
+      return false;
+    }
+
+    console.log(`[Payment] Attempting to credit User ${userId} with UGX ${amountToCredit} (Reference: ${reference})`);
+
+    try {
+      // Credit user balance using transaction to prevent race conditions
+      const userRef = db.ref(`users/${userId}`);
+      const userResult = await userRef.transaction((currentData) => {
+        if (currentData) {
+          const oldBalance = Number(currentData.balance) || 0;
+          currentData.balance = oldBalance + amountToCredit;
+          console.log(`[Payment Transaction] Updating balance for ${userId}: ${oldBalance} -> ${currentData.balance}`);
+          return currentData;
+        }
+        console.warn(`[Payment Transaction] User ${userId} not found in database!`);
+        return undefined; // Abort transaction if user not found
+      });
+
+      if (!userResult.committed) {
+        console.error(`[Payment] Transaction failed for ${userId} (Reference: ${reference})`);
+        return false;
+      }
+
+      console.log(`[Payment] Successfully credited User ${userId}. Updating payment status...`);
+
+      // Update payment status
+      await paymentRef.update({
+        status: 'successful',
+        updatedAt: admin.database.ServerValue.TIMESTAMP,
+        completedAt: admin.database.ServerValue.TIMESTAMP,
+        provider_transaction_id: providerInfo.provider_transaction_id || 'N/A',
+        provider: providerInfo.provider || 'MarzPay',
+        amount_credited: amountToCredit
+      });
+
+      // Notify user
+      const notifRef = db.ref(`notifications/${userId}`).push();
+      await notifRef.set({
+        title: 'Deposit Successful',
+        message: `UGX ${amountToCredit.toLocaleString()} has been added to your wallet.`,
+        timestamp: new Date().toISOString(),
+        read: false,
+        type: 'deposit'
+      });
+
+      console.log(`[Payment] Flow completed successfully for ${reference}`);
+      return true;
+    } catch (err) {
+      console.error(`[Payment] Error during processSuccessfulPayment for ${reference}:`, err);
+      return false;
+    }
+  }
+
+  app.post('/api/payment/initiate', async (req, res) => {
+    try {
+      const { userId, amount, phone, method, username, userEmail } = req.body;
+      
+      if (!userId || !amount) {
+        return res.status(400).json({ error: 'Missing required fields' });
+      }
+
+      const reference = crypto.randomUUID();
+      const APP_URL = process.env.APP_URL || `https://${req.get('host')}`;
+
+      // Save pending payment to DB
+      const db = admin.database();
+      await db.ref(`payments/${reference}`).set({
+        reference,
+        userId,
+        username: username || '',
+        userEmail: userEmail || '',
+        amount: Number(amount),
+        phone: phone || 'CARD',
+        method: method || 'mobile_money',
+        status: 'pending',
+        createdAt: admin.database.ServerValue.TIMESTAMP,
+        source: 'Server-Initiated'
+      });
+
+      const authCredentials = Buffer.from(`${MARZPAY_API_KEY}:${MARZPAY_API_SECRET}`).toString('base64');
+      const payload: any = {
+        amount: Math.floor(Number(amount)),
+        country: 'UG',
+        reference: reference,
+        description: 'EasyBoost Wallet Top-up',
+        method: method || 'mobile_money',
+        callback_url: `${APP_URL}/api/payment/webhook`
+      };
+
+      if (method !== 'card') {
+        payload.phone_number = phone;
+      }
+
+      console.log(`[Payment] Initiating Ref=${reference}, Amount=${amount}, Method=${method}`);
+
+      const response = await fetch('https://wallet.wearemarz.com/api/v1/collect-money', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Basic ${authCredentials}`
+        },
+        body: JSON.stringify(payload)
+      });
+
+      const result = await response.json();
+      
+      if (!response.ok) {
+        console.error('[Payment] Initiation failed:', result);
+        return res.status(response.status).json({
+          success: false,
+          message: result.message || 'MarzPay initiation failed',
+          error: result
+        });
+      }
+
+      res.json({
+        success: true,
+        reference,
+        redirectUrl: result.data?.redirect_url
+      });
+
+    } catch (error: any) {
+      console.error('[Payment] Initiation Error:', error);
+      res.status(500).json({ error: 'Internal server error' });
+    }
+  });
+
+  app.post('/api/payment/webhook', async (req, res) => {
+    try {
+      const payload = req.body;
+      console.log("[Payment Webhook] Received payload:", JSON.stringify(payload));
+
+      const { event_type, transaction, collection } = payload;
+
+      if (!transaction || !transaction.reference) {
+        console.error("[Payment Webhook] Invalid payload: missing transaction or reference");
+        return res.status(200).json({ received: true });
+      }
+
+      const reference = transaction.reference;
+      const status = transaction.status;
+      // Handle both transaction.amount.raw and transaction.amount (if it's a number)
+      const amountRaw = transaction.amount?.raw || transaction.amount;
+
+      console.log(`[Payment Webhook] Processing: Ref=${reference}, Status=${status}, Amount=${amountRaw}, Event=${event_type}`);
+
+      if (event_type === 'collection.completed' || status === 'completed' || status === 'successful' || status === 'success') {
+        console.log(`[Payment Webhook] Success detected for ${reference}. Processing credit...`);
+        const success = await processSuccessfulPayment(reference, Number(amountRaw), {
+          provider_transaction_id: collection?.provider_transaction_id || transaction.provider_transaction_id,
+          provider: transaction.provider
+        });
+        console.log(`[Payment Webhook] processSuccessfulPayment result for ${reference}: ${success}`);
+      } else if (event_type === 'collection.failed' || status === 'failed') {
+        const db = admin.database();
+        await db.ref(`payments/${reference}`).update({
+          status: 'failed',
+          updatedAt: admin.database.ServerValue.TIMESTAMP
+        });
+        console.log(`[Payment Webhook] Payment ${reference} marked as failed`);
+      } else {
+        console.log(`[Payment Webhook] Unhandled status/event for ${reference}: ${status} / ${event_type}`);
+      }
+
+      res.status(200).json({ received: true });
+    } catch (error) {
+      console.error("[Payment Webhook] Critical Error:", error);
+      res.status(200).json({ received: true });
+    }
+  });
+
+  app.get('/api/payment/status/:reference', async (req, res) => {
+    try {
+      const { reference } = req.params;
+      console.log(`[Payment Status Check] Checking Ref: ${reference}`);
+      
+      const db = admin.database();
+      const snapshot = await db.ref(`payments/${reference}`).once('value');
+      const payment = snapshot.val();
+
+      if (!payment) {
+        console.warn(`[Payment Status Check] Payment not found in DB: ${reference}`);
+        return res.status(404).json({ error: 'Payment not found' });
+      }
+
+      console.log(`[Payment Status Check] Current DB Status for ${reference}: ${payment.status}`);
+
+      if (payment.status === 'pending') {
+        console.log(`[Payment Status Check] Payment is pending in DB. Checking MarzPay API for ${reference}...`);
+        const authCredentials = Buffer.from(`${MARZPAY_API_KEY}:${MARZPAY_API_SECRET}`).toString('base64');
+
+        try {
+          const response = await fetch(`https://wallet.wearemarz.com/api/v1/transaction-status?reference=${reference}`, {
+            headers: { 'Authorization': `Basic ${authCredentials}` }
+          });
+          
+          if (response.ok) {
+            const result = await response.json();
+            console.log(`[Payment Status Check] MarzPay API result for ${reference}:`, JSON.stringify(result));
+            
+            const status = result.data?.status;
+            const amountRaw = result.data?.amount?.raw || result.data?.amount;
+            
+            if (status === 'completed' || status === 'successful' || status === 'success') {
+              console.log(`[Payment Status Check] MarzPay confirms success for ${reference}. Processing credit...`);
+              await processSuccessfulPayment(reference, Number(amountRaw), {
+                provider_transaction_id: result.data?.provider_transaction_id,
+                provider: result.data?.provider
+              });
+              return res.json({ status: 'successful' });
+            } else if (status === 'failed') {
+              console.log(`[Payment Status Check] MarzPay confirms failure for ${reference}.`);
+              await db.ref(`payments/${reference}`).update({
+                status: 'failed',
+                updatedAt: admin.database.ServerValue.TIMESTAMP
+              });
+              return res.json({ status: 'failed' });
+            } else {
+              console.log(`[Payment Status Check] MarzPay status for ${reference} is still: ${status}`);
+            }
+          } else {
+            const errorText = await response.text();
+            console.error(`[Payment Status Check] MarzPay API error for ${reference}: ${response.status} ${errorText}`);
+          }
+        } catch (err) {
+          console.error('[Payment Status Check] MarzPay API fetch failed:', err);
+        }
+      }
+
+      res.json({ status: payment.status });
+    } catch (error) {
+      console.error("[Payment Status Check] Critical Error:", error);
+      res.status(500).json({ error: 'Internal server error' });
     }
   });
 
