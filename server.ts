@@ -898,6 +898,7 @@ dotenv.config();
       const authCredentials = Buffer.from(`${MARZPAY_API_KEY}:${MARZPAY_API_SECRET}`).toString('base64');
       const payload: any = {
         amount: Math.floor(Number(amount)),
+        currency: 'UGX',
         country: 'UG',
         reference: reference,
         description: 'EasyBoost Wallet Top-up',
@@ -934,7 +935,7 @@ dotenv.config();
       }
       
       if (!response.ok) {
-        console.error('[Payment] Initiation failed:', result);
+        console.error('[Payment] Initiation failed:', JSON.stringify(result, null, 2));
         return res.status(response.status).json({
           success: false,
           message: result.message || 'MarzPay initiation failed',
