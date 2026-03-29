@@ -8,71 +8,74 @@ import crypto from 'crypto';
 
 dotenv.config();
 
-// Initialize Firebase Admin
-let firebaseInitError: string | null = null;
+  // Initialize Firebase Admin
+  let firebaseInitError: string | null = null;
+  let isFirebaseInitialized = false;
 
-async function initializeFirebase() {
-  console.log("Checking for FIREBASE_SERVICE_ACCOUNT...");
-  let envValue = process.env.FIREBASE_SERVICE_ACCOUNT;
-  const FIREBASE_GAS_URL = 'https://script.google.com/macros/s/AKfycbxJvP6p9rrpr6CtV9zhwsiAr5CJ5GwTlklxIdf9_1hjEFNcwfreb9-T24EfWwSMWNedDg/exec';
+  async function initializeFirebase() {
+    if (isFirebaseInitialized) return;
+    
+    console.log("[Firebase] Checking for FIREBASE_SERVICE_ACCOUNT...");
+    let envValue = process.env.FIREBASE_SERVICE_ACCOUNT;
+    const FIREBASE_GAS_URL = 'https://script.google.com/macros/s/AKfycbxJvP6p9rrpr6CtV9zhwsiAr5CJ5GwTlklxIdf9_1hjEFNcwfreb9-T24EfWwSMWNedDg/exec';
 
-  // If environment variable is missing, fetch it from the hardcoded GAS URL
-  if (!envValue) {
-    try {
-      console.log("Fetching Firebase Service Account from hardcoded GAS URL...");
-      const response = await fetch(FIREBASE_GAS_URL, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' }
-      });
-      if (response.ok) {
-        envValue = await response.text();
-        // Update process.env so other parts of the app can see it
-        process.env.FIREBASE_SERVICE_ACCOUNT = envValue;
-        console.log("Successfully fetched Firebase Service Account from GAS URL");
-      } else {
-        throw new Error(`GAS URL returned status ${response.status}`);
-      }
-    } catch (err: any) {
-      console.error("Failed to fetch Firebase Service Account from GAS:", err);
-      firebaseInitError = `Fetch failed: ${err.message}`;
-    }
-  }
-
-  if (envValue) {
-    try {
-      let trimmedValue = envValue.trim();
-      // Handle cases where the value might be wrapped in quotes
-      if (trimmedValue.startsWith("'") && trimmedValue.endsWith("'")) {
-        trimmedValue = trimmedValue.slice(1, -1);
-      } else if (trimmedValue.startsWith('"') && trimmedValue.endsWith('"')) {
-        trimmedValue = trimmedValue.slice(1, -1);
-      }
-      const serviceAccount = JSON.parse(trimmedValue);
-      if (!admin.apps.length) {
-        const dbUrl = process.env.VITE_FIREBASE_DATABASE_URL || `https://${serviceAccount.project_id}-default-rtdb.firebaseio.com/`;
-        console.log(`Initializing Firebase Admin with DB URL: ${dbUrl}`);
-        admin.initializeApp({
-          credential: admin.credential.cert(serviceAccount),
-          databaseURL: dbUrl
+    // If environment variable is missing, fetch it from the hardcoded GAS URL
+    if (!envValue) {
+      try {
+        console.log("[Firebase] Fetching Service Account from GAS URL...");
+        const response = await fetch(FIREBASE_GAS_URL, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' }
         });
-        console.log("Firebase Admin successfully initialized");
-        firebaseInitError = null;
+        if (response.ok) {
+          envValue = await response.text();
+          process.env.FIREBASE_SERVICE_ACCOUNT = envValue;
+          console.log("[Firebase] Successfully fetched Service Account from GAS");
+        } else {
+          throw new Error(`GAS URL returned status ${response.status}`);
+        }
+      } catch (err: any) {
+        console.error("[Firebase] Failed to fetch Service Account from GAS:", err);
+        firebaseInitError = `Fetch failed: ${err.message}`;
       }
-    } catch (error: any) {
-      console.error("Failed to initialize Firebase Admin:", error);
-      firebaseInitError = `Initialization failed: ${error.message}`;
     }
-  } else if (!firebaseInitError) {
-    console.warn("FIREBASE_SERVICE_ACCOUNT environment variable and GAS URL are missing");
-    firebaseInitError = "Missing credentials";
+
+    if (envValue) {
+      try {
+        let trimmedValue = envValue.trim();
+        if (trimmedValue.startsWith("'") && trimmedValue.endsWith("'")) {
+          trimmedValue = trimmedValue.slice(1, -1);
+        } else if (trimmedValue.startsWith('"') && trimmedValue.endsWith('"')) {
+          trimmedValue = trimmedValue.slice(1, -1);
+        }
+        const serviceAccount = JSON.parse(trimmedValue);
+        if (!admin.apps.length) {
+          const dbUrl = process.env.VITE_FIREBASE_DATABASE_URL || `https://${serviceAccount.project_id}-default-rtdb.firebaseio.com/`;
+          console.log(`[Firebase] Initializing with DB URL: ${dbUrl}`);
+          admin.initializeApp({
+            credential: admin.credential.cert(serviceAccount),
+            databaseURL: dbUrl
+          });
+          console.log("[Firebase] Admin successfully initialized");
+          isFirebaseInitialized = true;
+          firebaseInitError = null;
+        } else {
+          isFirebaseInitialized = true;
+        }
+      } catch (error: any) {
+        console.error("[Firebase] Initialization failed:", error);
+        firebaseInitError = `Initialization failed: ${error.message}`;
+      }
+    } else if (!firebaseInitError) {
+      console.warn("[Firebase] Missing credentials");
+      firebaseInitError = "Missing credentials";
+    }
   }
-}
 
-initializeFirebase();
-
-// Background job for syncing order statuses
-// Background job for syncing order statuses and drop detection
-async function syncOrderStatuses() {
+  // Background job for syncing order statuses
+  async function syncOrderStatuses() {
+    if (!isFirebaseInitialized) await initializeFirebase();
+    if (!isFirebaseInitialized) return;
   const GAS_URL = process.env.VITE_SMM_GAS_URL || 'https://script.google.com/macros/s/AKfycbyJV7Rdv_6O2XDvowgCldCGW00pbFxrWlvvevzx6zr-05TsQJubWE42HjJ0vhNtG72N/exec';
   const API_KEY = process.env.SMM_API_KEY || '';
   const SMM_API_URL = 'https://morethanpanel.com/api/v2';
@@ -381,8 +384,9 @@ async function syncOrderStatuses() {
   }
 }
 
-async function startServer() {
-  const app = express();
+  async function startServer() {
+    await initializeFirebase();
+    const app = express();
   const PORT = 3000;
 
   app.use(cors());
@@ -905,7 +909,7 @@ async function startServer() {
         payload.phone_number = phone;
       }
 
-      console.log(`[Payment] Initiating Ref=${reference}, Amount=${amount}, Method=${method}`);
+      console.log(`[Payment] Initiating Ref=${reference}, Amount=${amount}, Method=${method}, Phone=${phone}`);
 
       const response = await fetch('https://wallet.wearemarz.com/api/v1/collect-money', {
         method: 'POST',
@@ -916,7 +920,18 @@ async function startServer() {
         body: JSON.stringify(payload)
       });
 
-      const result = await response.json();
+      const responseText = await response.text();
+      let result;
+      try {
+        result = JSON.parse(responseText);
+      } catch (e) {
+        console.error('[Payment] MarzPay returned non-JSON response:', responseText);
+        return res.status(500).json({ 
+          success: false, 
+          message: 'Invalid response from payment gateway',
+          rawResponse: responseText.substring(0, 200)
+        });
+      }
       
       if (!response.ok) {
         console.error('[Payment] Initiation failed:', result);
@@ -926,6 +941,8 @@ async function startServer() {
           error: result
         });
       }
+
+      console.log(`[Payment] Initiation Success for ${reference}:`, JSON.stringify(result));
 
       res.json({
         success: true,
@@ -952,7 +969,7 @@ async function startServer() {
       }
 
       const reference = transaction.reference;
-      const status = transaction.status;
+      const status = transaction.status?.toLowerCase();
       // Handle both transaction.amount.raw and transaction.amount (if it's a number)
       const amountRaw = transaction.amount?.raw || transaction.amount;
 
@@ -1012,7 +1029,7 @@ async function startServer() {
             const result = await response.json();
             console.log(`[Payment Status Check] MarzPay API result for ${reference}:`, JSON.stringify(result));
             
-            const status = result.data?.status;
+            const status = result.data?.status?.toLowerCase();
             const amountRaw = result.data?.amount?.raw || result.data?.amount;
             
             if (status === 'completed' || status === 'successful' || status === 'success') {

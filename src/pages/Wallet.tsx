@@ -66,7 +66,7 @@ export default function Wallet() {
     if (!cleaned.startsWith('256') && cleaned.length === 9) {
       cleaned = '256' + cleaned;
     }
-    return '+' + cleaned;
+    return cleaned;
   };
 
   const handleDeposit = async (e: FormEvent) => {
