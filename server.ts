@@ -843,7 +843,7 @@ dotenv.config();
 
       // Update payment status
       await paymentRef.update({
-        status: 'successful',
+        status: 'completed',
         updatedAt: admin.database.ServerValue.TIMESTAMP,
         completedAt: admin.database.ServerValue.TIMESTAMP,
         provider_transaction_id: providerInfo.provider_transaction_id || 'N/A',
@@ -871,10 +871,19 @@ dotenv.config();
 
   app.post('/api/payment/initiate', async (req, res) => {
     try {
+      if (!isFirebaseInitialized) await initializeFirebase();
+      
       const { userId, amount, phone, method, username, userEmail } = req.body;
+      console.log(`[Payment Initiate] Received request: userId=${userId}, amount=${amount}, phone=${phone}, method=${method}`);
       
       if (!userId || !amount) {
+        console.error('[Payment Initiate] Missing required fields:', { userId, amount });
         return res.status(400).json({ error: 'Missing required fields' });
+      }
+
+      if (!MARZPAY_API_KEY || !MARZPAY_API_SECRET) {
+        console.error('[Payment Initiate] MarzPay credentials missing!');
+        return res.status(500).json({ error: 'Payment gateway configuration error' });
       }
 
       const reference = crypto.randomUUID();
@@ -959,6 +968,8 @@ dotenv.config();
 
   app.post('/api/payment/webhook', async (req, res) => {
     try {
+      if (!isFirebaseInitialized) await initializeFirebase();
+      
       const payload = req.body;
       console.log("[Payment Webhook] Received payload:", JSON.stringify(payload));
 
@@ -972,7 +983,7 @@ dotenv.config();
       const reference = transaction.reference;
       const status = transaction.status?.toLowerCase();
       // Handle both transaction.amount.raw and transaction.amount (if it's a number)
-      const amountRaw = transaction.amount?.raw || transaction.amount;
+      const amountRaw = (typeof transaction.amount === 'object') ? transaction.amount?.raw : transaction.amount;
 
       console.log(`[Payment Webhook] Processing: Ref=${reference}, Status=${status}, Amount=${amountRaw}, Event=${event_type}`);
 
@@ -983,6 +994,12 @@ dotenv.config();
           provider: transaction.provider
         });
         console.log(`[Payment Webhook] processSuccessfulPayment result for ${reference}: ${success}`);
+        if (success) {
+          await db.ref(`payments/${reference}`).update({
+            status: 'completed',
+            updatedAt: admin.database.ServerValue.TIMESTAMP
+          });
+        }
       } else if (event_type === 'collection.failed' || status === 'failed') {
         const db = admin.database();
         await db.ref(`payments/${reference}`).update({
@@ -1003,6 +1020,8 @@ dotenv.config();
 
   app.get('/api/payment/status/:reference', async (req, res) => {
     try {
+      if (!isFirebaseInitialized) await initializeFirebase();
+      
       const { reference } = req.params;
       console.log(`[Payment Status Check] Checking Ref: ${reference}`);
       
@@ -1022,7 +1041,7 @@ dotenv.config();
         const authCredentials = Buffer.from(`${MARZPAY_API_KEY}:${MARZPAY_API_SECRET}`).toString('base64');
 
         try {
-          const response = await fetch(`https://wallet.wearemarz.com/api/v1/transaction-status?reference=${reference}`, {
+          const response = await fetch(`https://wallet.wearemarz.com/api/v1/transactions/${reference}`, {
             headers: { 'Authorization': `Basic ${authCredentials}` }
           });
           
@@ -1031,15 +1050,20 @@ dotenv.config();
             console.log(`[Payment Status Check] MarzPay API result for ${reference}:`, JSON.stringify(result));
             
             const status = result.data?.status?.toLowerCase();
-            const amountRaw = result.data?.amount?.raw || result.data?.amount;
+            const amountRaw = (typeof result.data?.amount === 'object') ? result.data?.amount?.raw : result.data?.amount;
             
             if (status === 'completed' || status === 'successful' || status === 'success') {
               console.log(`[Payment Status Check] MarzPay confirms success for ${reference}. Processing credit...`);
-              await processSuccessfulPayment(reference, Number(amountRaw), {
+              const success = await processSuccessfulPayment(reference, Number(amountRaw), {
                 provider_transaction_id: result.data?.provider_transaction_id,
                 provider: result.data?.provider
               });
-              return res.json({ status: 'successful' });
+              
+              if (success) {
+                return res.json({ status: 'completed' });
+              } else {
+                return res.status(500).json({ error: 'Failed to process successful payment' });
+              }
             } else if (status === 'failed') {
               console.log(`[Payment Status Check] MarzPay confirms failure for ${reference}.`);
               await db.ref(`payments/${reference}`).update({
