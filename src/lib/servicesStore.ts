@@ -17,9 +17,14 @@ export interface Service {
   cancel: boolean;
   status: string;
   updatedAt: string;
+  description?: string;
+  guaranteed?: boolean;
+  badges?: string[];
+  sub_category?: string;
 }
 
 export const PLATFORMS = [
+  'WhatsApp',
   'TikTok',
   'Instagram',
   'Facebook',
@@ -53,7 +58,7 @@ export const detectPlatform = (name: string, category: string = ''): string => {
   if (n.includes('soundcloud')) return 'SoundCloud';
   if (n.includes('twitch')) return 'Twitch';
   if (n.includes('linkedin')) return 'LinkedIn';
-  if (n.includes('clubhouse')) return 'Clubhouse';
+  if (n.includes('whatsapp') || n.includes(' wa ')) return 'WhatsApp';
   if (n.includes('google play') || n.includes('play store') || n.includes('android app')) return 'Google Play';
   if (n.includes('deezer')) return 'Deezer';
   if (n.includes('vimeo')) return 'Vimeo';

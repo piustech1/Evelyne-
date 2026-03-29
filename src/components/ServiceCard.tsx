@@ -12,14 +12,16 @@ interface ServiceCardProps {
   index?: number;
 }
 
-export const ServiceCard = ({ service, onBoost, index = 0 }: ServiceCardProps) => {
+export const ServiceCard: React.FC<ServiceCardProps> = ({ service, onBoost, index = 0 }) => {
   const pKey = service.category.toLowerCase();
   const colorClass = platformColors[pKey] || 'bg-brand-purple text-white';
 
-  // Derive some "premium" info
-  const isPopular = service.price > 5000 || index % 5 === 0;
-  const isFast = service.name.toLowerCase().includes('fast') || service.name.toLowerCase().includes('instant') || index % 3 === 0;
-  const isRecommended = index % 7 === 0;
+  // Derive badges from service object
+  const badges = service.badges || [];
+  const isGuaranteed = service.guaranteed || badges.includes('guaranteed');
+  const isTrending = badges.includes('trending');
+  const isBestValue = badges.includes('best_value');
+  const isFast = badges.includes('fast') || service.name.toLowerCase().includes('fast') || service.name.toLowerCase().includes('instant');
 
   const getSpeed = () => {
     if (service.name.toLowerCase().includes('instant')) return 'Instant';
@@ -39,18 +41,24 @@ export const ServiceCard = ({ service, onBoost, index = 0 }: ServiceCardProps) =
       transition={{ delay: index * 0.02 }}
       className="bg-white rounded-2xl p-5 border border-gray-100 shadow-sm hover:shadow-xl transition-all group flex flex-col h-full relative overflow-hidden"
     >
-      {/* Popularity Tag */}
-      <div className="absolute top-3 right-3 flex gap-1">
-        {isPopular && (
-          <span className="px-2 py-0.5 bg-amber-100 text-amber-600 text-[7px] font-black uppercase tracking-widest rounded-full flex items-center gap-1">
-            <FontAwesomeIcon icon={faStar} className="text-[6px]" />
-            Popular
+      {/* Badges Section */}
+      <div className="absolute top-3 right-3 flex flex-col items-end gap-1 z-10">
+        {isGuaranteed && (
+          <span className="px-2 py-0.5 bg-emerald-100 text-emerald-600 text-[7px] font-black uppercase tracking-widest rounded-full flex items-center gap-1 shadow-sm border border-emerald-200">
+            <FontAwesomeIcon icon={faCheckCircle} className="text-[6px]" />
+            Guaranteed
           </span>
         )}
-        {isRecommended && (
-          <span className="px-2 py-0.5 bg-blue-100 text-blue-600 text-[7px] font-black uppercase tracking-widest rounded-full flex items-center gap-1">
-            <FontAwesomeIcon icon={faCheckCircle} className="text-[6px]" />
-            Best
+        {isTrending && (
+          <span className="px-2 py-0.5 bg-amber-100 text-amber-600 text-[7px] font-black uppercase tracking-widest rounded-full flex items-center gap-1 shadow-sm border border-amber-200">
+            <FontAwesomeIcon icon={faStar} className="text-[6px]" />
+            Trending
+          </span>
+        )}
+        {isBestValue && (
+          <span className="px-2 py-0.5 bg-blue-100 text-blue-600 text-[7px] font-black uppercase tracking-widest rounded-full flex items-center gap-1 shadow-sm border border-blue-200">
+            <FontAwesomeIcon icon={faBolt} className="text-[6px]" />
+            Best Value
           </span>
         )}
       </div>

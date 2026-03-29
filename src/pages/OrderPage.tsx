@@ -56,6 +56,8 @@ export default function OrderPage() {
   const totalPrice = service ? Math.round((service.price * quantity) / 1000) : 0;
   const hasInsufficientBalance = userData && userData.balance < totalPrice;
 
+  const [showInstructions, setShowInstructions] = useState(false);
+
   const handlePlaceOrder = async () => {
     if (!user || !userData) {
       toast.error('Please login to place an order');
@@ -69,6 +71,16 @@ export default function OrderPage() {
       toast.error('Please provide a target link');
       return;
     }
+
+    // WhatsApp Link Validation
+    if (service.category.toLowerCase() === 'whatsapp') {
+      const isWhatsAppLink = link.includes('chat.whatsapp.com') || link.includes('whatsapp.com/channel');
+      if (!isWhatsAppLink) {
+        toast.error('Please provide a valid WhatsApp Channel or Group link');
+        return;
+      }
+    }
+
     if (quantity < (service.min || 100)) {
       toast.error(`Minimum quantity is ${service.min || 100}`);
       return;
@@ -92,18 +104,8 @@ export default function OrderPage() {
     const loadingToast = toast.loading('Processing your order...');
 
     try {
-      const apiData = await smmService.placeOrder(service.service, link, quantity);
-
-      if (apiData.error) {
-        throw new Error(apiData.error);
-      }
-      
-      if (!apiData.order) {
-        throw new Error('Order failed. Provider response: ' + JSON.stringify(apiData));
-      }
-
-      const userRef = ref(db, `users/${user.uid}`);
-      await runTransaction(userRef, (currentData) => {
+      // 1. Deduct balance first
+      await runTransaction(ref(db, `users/${user.uid}`), (currentData) => {
         if (currentData) {
           if (currentData.balance < totalPrice) throw new Error('Insufficient balance');
           currentData.balance -= totalPrice;
@@ -111,6 +113,35 @@ export default function OrderPage() {
         return currentData;
       });
 
+      // 2. Place order with provider
+      let apiData;
+      try {
+        apiData = await smmService.placeOrder(service.service, link, quantity);
+        if (apiData.error) {
+          throw new Error(apiData.error);
+        }
+        if (!apiData.order) {
+          throw new Error('Order failed. Provider response: ' + JSON.stringify(apiData));
+        }
+      } catch (apiErr: any) {
+        // 3. Refund immediately if provider fails
+        await runTransaction(ref(db, `users/${user.uid}`), (currentData) => {
+          if (currentData) {
+            currentData.balance += totalPrice;
+          }
+          return currentData;
+        });
+
+        let errorMessage = apiErr.message || 'Server is busy. Please try again later.';
+        if (errorMessage.toLowerCase().includes('not enough balance') || 
+            errorMessage.toLowerCase().includes('insufficient funds') ||
+            errorMessage.toLowerCase().includes('charge more')) {
+          errorMessage = "Server processing, please try again later";
+        }
+        throw new Error(errorMessage);
+      }
+
+      // 4. Save order to database
       const provider_cost = (service.rate * 3800 * quantity) / 1000;
       const selling_price = totalPrice;
       const profit = selling_price - provider_cost;
@@ -213,7 +244,15 @@ export default function OrderPage() {
                 <PlatformIcon platform={service.category} imgClassName="w-10 h-10 object-contain" />
               </div>
               <div>
-                <div className="text-[10px] font-black text-brand-purple uppercase tracking-[0.2em] mb-1">{service.category} Service</div>
+                <div className="flex items-center gap-2 mb-1">
+                  <div className="text-[10px] font-black text-brand-purple uppercase tracking-[0.2em]">{service.category} Service</div>
+                  {service.guaranteed && (
+                    <span className="px-1.5 py-0.5 bg-emerald-100 text-emerald-600 text-[8px] font-black rounded uppercase tracking-widest border border-emerald-200 flex items-center gap-1">
+                      <FontAwesomeIcon icon={faCheckCircle} className="text-[7px]" />
+                      Guaranteed
+                    </span>
+                  )}
+                </div>
                 <h2 className="text-xl md:text-2xl font-display font-black text-gray-900 tracking-tighter leading-tight">
                   {service.name}
                 </h2>
@@ -222,6 +261,39 @@ export default function OrderPage() {
           </div>
 
           <div className="p-6 md:p-10 space-y-8">
+            {/* Service Instructions */}
+            {service.description && (
+              <div className="bg-brand-purple/5 rounded-2xl border border-brand-purple/10 overflow-hidden">
+                <button 
+                  onClick={() => setShowInstructions(!showInstructions)}
+                  className="w-full p-4 flex items-center justify-between text-brand-purple hover:bg-brand-purple/5 transition-colors"
+                >
+                  <div className="flex items-center gap-2">
+                    <FontAwesomeIcon icon={faInfoCircle} className="text-xs" />
+                    <span className="text-[10px] font-black uppercase tracking-widest">📌 Service Instructions</span>
+                  </div>
+                  <FontAwesomeIcon 
+                    icon={faArrowLeft} 
+                    className={`text-[10px] transition-transform duration-300 ${showInstructions ? 'rotate-90' : '-rotate-90'}`} 
+                  />
+                </button>
+                <AnimatePresence>
+                  {showInstructions && (
+                    <motion.div
+                      initial={{ height: 0, opacity: 0 }}
+                      animate={{ height: 'auto', opacity: 1 }}
+                      exit={{ height: 0, opacity: 0 }}
+                      className="px-4 pb-4"
+                    >
+                      <div className="text-[11px] font-medium text-gray-600 leading-relaxed whitespace-pre-wrap border-t border-brand-purple/10 pt-3">
+                        {service.description}
+                      </div>
+                    </motion.div>
+                  )}
+                </AnimatePresence>
+              </div>
+            )}
+
             {/* Service Stats */}
             <div className="grid grid-cols-3 gap-4">
               <div className="bg-gray-50 p-4 rounded-2xl border border-gray-100 text-center">

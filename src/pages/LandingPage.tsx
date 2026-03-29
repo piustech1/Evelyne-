@@ -1,5 +1,5 @@
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
-import { faBolt, faShieldAlt, faTag, faChartLine, faCheckCircle, faGlobe } from '@fortawesome/free-solid-svg-icons';
+import { faBolt, faShieldAlt, faTag, faChartLine, faCheckCircle, faGlobe, faStar, faFire, faArrowRight } from '@fortawesome/free-solid-svg-icons';
 import { motion } from 'motion/react';
 import { Link } from 'react-router-dom';
 import { platformTextColors } from '../utils/platformData';
@@ -7,9 +7,10 @@ import WhatsAppCommunity from '../components/WhatsAppCommunity';
 import { PlatformIcon } from '../components/PlatformIcon';
 
 const platformsList = [
+  { id: 'whatsapp', name: 'WhatsApp' },
+  { id: 'tiktok', name: 'TikTok' },
   { id: 'instagram', name: 'Instagram' },
   { id: 'facebook', name: 'Facebook' },
-  { id: 'tiktok', name: 'TikTok' },
   { id: 'youtube', name: 'YouTube' },
   { id: 'twitter', name: 'X (Twitter)' },
   { id: 'spotify', name: 'Spotify' },
@@ -18,7 +19,6 @@ const platformsList = [
   { id: 'linkedin', name: 'LinkedIn' },
   { id: 'snapchat', name: 'Snapchat' },
   { id: 'kick', name: 'Kick' },
-  { id: 'clubhouse', name: 'Clubhouse' },
   { id: 'google play', name: 'Google Play' },
   { id: 'deezer', name: 'Deezer' },
   { id: 'vimeo', name: 'Vimeo' },
@@ -88,6 +88,81 @@ export default function LandingPage() {
             <path d="M0,0V46.29c47.79,22.2,103.59,32.17,158,28,70.36-5.37,136.33-33.31,206.8-37.5,73.84-4.36,147.54,16.88,218.2,35.26,69.27,18,138.3,24.88,209.4,13.08,36.15-6,69.85-17.84,104.45-29.34C989.49,25,1113-14.29,1200,52.47V0Z" className="fill-white opacity-50"></path>
             <path d="M0,0V15.81C13,36.92,27.64,56.86,47.69,72.05,99.41,111.27,165,111,224.58,91.58c31.15-10.15,60.09-26.07,89.67-39.8,40.92-19,84.73-46,130.83-49.67,36.26-2.85,70.9,9.42,98.6,31.56,31.77,25.39,62.32,62,103.63,73,40.44,10.79,81.35-6.69,119.13-24.28s75.16-39,116.92-43.05c59.73-5.85,113.28,22.88,168.9,38.84,30.2,8.66,59,6.17,87.09-7.5,22.43-10.89,48-26.93,60.65-49.24V0Z" className="fill-white"></path>
           </svg>
+        </div>
+      </section>
+
+      {/* Recommended Section */}
+      <section className="py-24 bg-white relative overflow-hidden">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 relative z-10">
+          <div className="flex flex-col md:flex-row md:items-end justify-between gap-6 mb-12">
+            <div className="space-y-4 text-center md:text-left">
+              <div className="inline-flex items-center px-3 py-1 bg-amber-50 text-amber-600 rounded-full text-[10px] font-black uppercase tracking-widest border border-amber-100 gap-2">
+                <FontAwesomeIcon icon={faStar} className="text-[8px]" />
+                Top Quality Picks
+              </div>
+              <h2 className="text-3xl md:text-5xl font-display font-black text-gray-900 tracking-tighter leading-tight">
+                Recommended <br />
+                <span className="text-brand-purple">Services</span>
+              </h2>
+              <p className="text-gray-500 text-sm font-medium max-w-md leading-relaxed mx-auto md:mx-0">
+                Hand-picked services with guaranteed delivery, high retention, and the best value for your money.
+              </p>
+            </div>
+            <Link 
+              to="/recommended"
+              className="px-8 py-4 bg-gray-900 text-white rounded-2xl text-[10px] font-black uppercase tracking-widest hover:bg-brand-purple transition-all shadow-xl shadow-gray-900/10 flex items-center justify-center gap-3 group"
+            >
+              <span>View All Recommendations</span>
+              <FontAwesomeIcon icon={faArrowRight} className="group-hover:translate-x-1 transition-transform" />
+            </Link>
+          </div>
+
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
+            <div className="bg-gray-50 rounded-[2.5rem] p-8 border border-gray-100 space-y-6 hover:shadow-xl transition-all group">
+              <div className="w-14 h-14 bg-emerald-100 text-emerald-600 rounded-2xl flex items-center justify-center text-2xl shadow-sm group-hover:scale-110 transition-transform">
+                <FontAwesomeIcon icon={faCheckCircle} />
+              </div>
+              <div className="space-y-2">
+                <h3 className="text-xl font-display font-black text-gray-900">Guaranteed</h3>
+                <p className="text-gray-500 text-xs font-medium leading-relaxed">
+                  Services with 30-day refill guarantee. If they drop, we refill them for free.
+                </p>
+              </div>
+              <Link to="/recommended?tab=guaranteed" className="text-[10px] font-black text-brand-purple uppercase tracking-widest flex items-center gap-2 hover:gap-3 transition-all">
+                Explore Guaranteed <FontAwesomeIcon icon={faArrowRight} />
+              </Link>
+            </div>
+
+            <div className="bg-gray-50 rounded-[2.5rem] p-8 border border-gray-100 space-y-6 hover:shadow-xl transition-all group">
+              <div className="w-14 h-14 bg-amber-100 text-amber-600 rounded-2xl flex items-center justify-center text-2xl shadow-sm group-hover:scale-110 transition-transform">
+                <FontAwesomeIcon icon={faFire} />
+              </div>
+              <div className="space-y-2">
+                <h3 className="text-xl font-display font-black text-gray-900">Trending</h3>
+                <p className="text-gray-500 text-xs font-medium leading-relaxed">
+                  The most popular services used by our top clients this week.
+                </p>
+              </div>
+              <Link to="/recommended?tab=trending" className="text-[10px] font-black text-brand-purple uppercase tracking-widest flex items-center gap-2 hover:gap-3 transition-all">
+                See What's Hot <FontAwesomeIcon icon={faArrowRight} />
+              </Link>
+            </div>
+
+            <div className="bg-gray-50 rounded-[2.5rem] p-8 border border-gray-100 space-y-6 hover:shadow-xl transition-all group">
+              <div className="w-14 h-14 bg-blue-100 text-blue-600 rounded-2xl flex items-center justify-center text-2xl shadow-sm group-hover:scale-110 transition-transform">
+                <FontAwesomeIcon icon={faBolt} />
+              </div>
+              <div className="space-y-2">
+                <h3 className="text-xl font-display font-black text-gray-900">Best Value</h3>
+                <p className="text-gray-500 text-xs font-medium leading-relaxed">
+                  High quality services at the lowest possible prices in the market.
+                </p>
+              </div>
+              <Link to="/recommended?tab=value" className="text-[10px] font-black text-brand-purple uppercase tracking-widest flex items-center gap-2 hover:gap-3 transition-all">
+                Get Best Deals <FontAwesomeIcon icon={faArrowRight} />
+              </Link>
+            </div>
+          </div>
         </div>
       </section>
 

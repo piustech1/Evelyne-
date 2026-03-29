@@ -15,7 +15,8 @@ import {
   faSignOutAlt,
   faRocket,
   faXmark,
-  faCode
+  faCode,
+  faHistory
 } from '@fortawesome/free-solid-svg-icons';
 import { auth } from '../../lib/firebase';
 import { signOut } from 'firebase/auth';
@@ -31,6 +32,7 @@ const menuItems = [
   { name: 'Tickets', icon: faTicketAlt, path: '/admin/tickets' },
   { name: 'Reports', icon: faChartBar, path: '/admin/reports' },
   { name: 'Announcements', icon: faBullhorn, path: '/admin/announcements' },
+  { name: 'Refund Logs', icon: faHistory, path: '/admin/refund-logs' },
   { name: 'API Logs', icon: faCode, path: '/admin/api-logs' },
   { name: 'Settings', icon: faCog, path: '/admin/settings' },
 ];

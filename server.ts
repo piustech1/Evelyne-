@@ -68,10 +68,11 @@ async function initializeFirebase() {
 initializeFirebase();
 
 // Background job for syncing order statuses
+// Background job for syncing order statuses and drop detection
 async function syncOrderStatuses() {
-  const GAS_URL = process.env.VITE_SMM_GAS_URL || 'https://script.google.com/macros/s/AKfycbzpWdoi6-VVBuYo-9TtKYu78WlkqY6n5yLvUWNrXNfAXhonoA3QrMWuOh04jVCwEFvg/exec';
+  const GAS_URL = process.env.VITE_SMM_GAS_URL || 'https://script.google.com/macros/s/AKfycbyJV7Rdv_6O2XDvowgCldCGW00pbFxrWlvvevzx6zr-05TsQJubWE42HjJ0vhNtG72N/exec';
   const API_KEY = process.env.SMM_API_KEY || '';
-  const SMM_API_URL = 'https://yoyomedia.in/api/v2';
+  const SMM_API_URL = 'https://morethanpanel.com/api/v2';
 
   if (!GAS_URL && !API_KEY) return;
 
@@ -83,16 +84,29 @@ async function syncOrderStatuses() {
 
     if (!orders) return;
 
+    const now = Date.now();
+    
+    // 1. Sync Active Orders (Pending, Processing, etc.)
     const activeOrders = Object.entries(orders).filter(([_, order]: [string, any]) => 
       ['Pending', 'Processing', 'In progress', 'Partial'].includes(order.status) &&
       (order.apiOrderId || order.smmOrderId)
     );
 
-    if (activeOrders.length === 0) return;
+    // 2. Drop Detection for Completed Guaranteed Orders
+    const completedGuaranteedOrders = Object.entries(orders).filter(([_, order]: [string, any]) => 
+      order.status === 'Completed' && 
+      order.guaranteed === true && 
+      !order.refunded &&
+      (!order.last_checked_at || (now - order.last_checked_at) > 15 * 60 * 1000) // Check every 15 mins
+    );
 
-    console.log(`[Sync] Checking status for ${activeOrders.length} active orders...`);
+    const ordersToSync = [...activeOrders, ...completedGuaranteedOrders];
 
-    for (const [id, order] of activeOrders as [string, any][]) {
+    if (ordersToSync.length === 0) return;
+
+    console.log(`[Sync] Checking status for ${ordersToSync.length} orders (${activeOrders.length} active, ${completedGuaranteedOrders.length} drop detection)...`);
+
+    for (const [id, order] of ordersToSync as [string, any][]) {
       try {
         const orderId = order.apiOrderId || order.smmOrderId;
         let statusData: any = null;
@@ -127,15 +141,173 @@ async function syncOrderStatuses() {
           const providerStatus = statusData.status.toLowerCase();
           
           if (providerStatus === 'completed') newStatus = 'Completed';
-          else if (providerStatus === 'processing') newStatus = 'Processing';
+          else if (providerStatus === 'processing' || providerStatus === 'in progress') newStatus = 'Processing';
           else if (providerStatus === 'pending') newStatus = 'Pending';
-          else if (providerStatus === 'in progress') newStatus = 'In progress';
           else if (providerStatus === 'partial') newStatus = 'Partial';
-          else if (providerStatus === 'canceled' || providerStatus === 'cancelled') newStatus = 'Canceled';
+          else if (providerStatus === 'canceled' || providerStatus === 'cancelled' || providerStatus === 'failed') newStatus = 'Canceled';
           else if (providerStatus === 'refunded') newStatus = 'Canceled';
+
+          const remains = parseFloat(statusData.remains || 0);
+          const startCount = parseFloat(statusData.start_count || 0);
+          
+          // Drop Detection Logic
+          if (order.status === 'Completed' && order.guaranteed) {
+            if (remains > 0 || providerStatus === 'partial') {
+              console.log(`[Drop Detection] Drop detected for order ${id}. Remains: ${remains}`);
+              
+              // Trigger Action
+              if (order.refill) {
+                // Call Refill API
+                try {
+                  let refillResult: any = null;
+                  if (GAS_URL) {
+                    const response = await fetch(GAS_URL, {
+                      method: 'POST',
+                      headers: { 'Content-Type': 'text/plain;charset=utf-8' },
+                      body: JSON.stringify({ action: 'refill', order: orderId })
+                    });
+                    refillResult = await response.json();
+                  } else {
+                    const params = new URLSearchParams();
+                    params.append('key', API_KEY);
+                    params.append('action', 'refill');
+                    params.append('order', String(orderId));
+                    const response = await fetch(SMM_API_URL, {
+                      method: 'POST',
+                      headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+                      body: params.toString()
+                    });
+                    refillResult = await response.json();
+                  }
+
+                  if (refillResult && refillResult.refill) {
+                    await ordersRef.child(id).update({
+                      refillId: refillResult.refill,
+                      refillTriggered: true,
+                      drop_detected: true,
+                      last_checked_at: admin.database.ServerValue.TIMESTAMP
+                    });
+
+                    // Notify User
+                    const notifRef = db.ref(`notifications/${order.userId}`).push();
+                    await notifRef.set({
+                      title: `Auto-Refill Triggered`,
+                      message: `A drop was detected in your order for ${order.serviceName || order.service}. We have automatically triggered a refill.`,
+                      timestamp: new Date().toISOString(),
+                      read: false,
+                      type: 'refill',
+                      orderId: id
+                    });
+                  }
+                } catch (refillErr) {
+                  console.error(`[Drop Detection] Failed to trigger refill for order ${id}:`, refillErr);
+                }
+              } else {
+                // Calculate Refund
+                const totalQty = parseFloat(order.quantity || 0);
+                const paidAmount = parseFloat(order.charge || order.price || 0);
+                
+                if (totalQty > 0 && remains > 0) {
+                  const refundAmount = (remains / totalQty) * paidAmount;
+                  if (refundAmount > 0) {
+                    const userRef = db.ref(`users/${order.userId}`);
+                    const userSnap = await userRef.get();
+                    const userData = userSnap.val();
+                    
+                    if (userData) {
+                      const newBalance = (userData.balance || 0) + refundAmount;
+                      await userRef.update({ balance: newBalance });
+                      
+                      // Log Refund
+                      await db.ref('refund_logs').push({
+                        userId: order.userId,
+                        orderId: id,
+                        amount: refundAmount,
+                        status: 'Partial Refund (Drop)',
+                        timestamp: admin.database.ServerValue.TIMESTAMP
+                      });
+
+                      // Notify User
+                      const notifRef = db.ref(`notifications/${order.userId}`).push();
+                      await notifRef.set({
+                        title: `Refund Issued`,
+                        message: `UGX ${Math.round(refundAmount).toLocaleString()} has been refunded to your wallet due to a drop in your order for ${order.serviceName || order.service}.`,
+                        timestamp: new Date().toISOString(),
+                        read: false,
+                        type: 'refund',
+                        orderId: id
+                      });
+
+                      await ordersRef.child(id).update({
+                        status: 'Partial Refunded',
+                        refunded: true,
+                        refundAmount,
+                        drop_detected: true,
+                        last_checked_at: admin.database.ServerValue.TIMESTAMP
+                      });
+                    }
+                  }
+                }
+              }
+            } else {
+              // No drop detected, update last checked
+              await ordersRef.child(id).update({
+                last_checked_at: admin.database.ServerValue.TIMESTAMP
+              });
+            }
+          }
 
           if (newStatus !== order.status) {
             console.log(`[Sync] Order ${id} status changed: ${order.status} -> ${newStatus}`);
+            
+            // Handle Refund Logic for Canceled/Partial
+            if ((newStatus === 'Canceled' || newStatus === 'Partial') && !order.refunded) {
+              const remainsVal = parseFloat(statusData.remains || 0);
+              const totalQty = parseFloat(order.quantity || 0);
+              const paidAmount = parseFloat(order.charge || order.price || 0);
+              
+              let refundAmount = 0;
+              if (newStatus === 'Canceled') {
+                refundAmount = paidAmount;
+              } else if (newStatus === 'Partial' && remainsVal > 0 && totalQty > 0) {
+                refundAmount = (remainsVal / totalQty) * paidAmount;
+              }
+
+              if (refundAmount > 0) {
+                const userRef = db.ref(`users/${order.userId}`);
+                const userSnap = await userRef.get();
+                const userData = userSnap.val();
+                
+                if (userData) {
+                  const newBalance = (userData.balance || 0) + refundAmount;
+                  await userRef.update({ balance: newBalance });
+                  
+                  // Log Refund
+                  await db.ref('refund_logs').push({
+                    userId: order.userId,
+                    orderId: id,
+                    amount: refundAmount,
+                    status: newStatus,
+                    timestamp: admin.database.ServerValue.TIMESTAMP
+                  });
+
+                  // Notify User
+                  const notifRef = db.ref(`notifications/${order.userId}`).push();
+                  await notifRef.set({
+                    title: `Order Refunded`,
+                    message: `Your order for ${order.serviceName || order.service} was ${newStatus.toLowerCase()}. UGX ${Math.round(refundAmount).toLocaleString()} has been refunded to your wallet.`,
+                    timestamp: new Date().toISOString(),
+                    read: false,
+                    type: 'refund',
+                    orderId: id
+                  });
+
+                  // Mark order as refunded
+                  await ordersRef.child(id).update({ refunded: true, refundAmount });
+                }
+              }
+            }
+
             await ordersRef.child(id).update({
               status: newStatus,
               remains: statusData.remains || 0,
@@ -143,16 +315,58 @@ async function syncOrderStatuses() {
               updatedAt: new Date().toISOString()
             });
 
-            // Send in-app notification
-            const notifRef = db.ref(`notifications/${order.userId}`).push();
-            await notifRef.set({
-              title: `Order Update`,
-              message: `Your order for ${order.service} is now ${newStatus}.`,
-              timestamp: new Date().toISOString(),
-              read: false,
-              type: 'order',
-              orderId: id
-            });
+            // Send in-app notification for status change (if not already notified by refund)
+            if (!(newStatus === 'Canceled' || newStatus === 'Partial')) {
+              const notifRef = db.ref(`notifications/${order.userId}`).push();
+              await notifRef.set({
+                title: `Order Update`,
+                message: `Your order for ${order.serviceName || order.service} is now ${newStatus}.`,
+                timestamp: new Date().toISOString(),
+                read: false,
+                type: 'order',
+                orderId: id
+              });
+            }
+          }
+
+          // Check Refill Status if active
+          if (order.refillTriggered && order.refillId && order.refillStatus !== 'Completed') {
+            try {
+              let refillData: any = null;
+              if (GAS_URL) {
+                const response = await fetch(GAS_URL, {
+                  method: 'POST',
+                  headers: { 'Content-Type': 'text/plain;charset=utf-8' },
+                  body: JSON.stringify({ action: 'refill_status', refillId: order.refillId })
+                });
+                refillData = await response.json();
+              } else {
+                const params = new URLSearchParams();
+                params.append('key', API_KEY);
+                params.append('action', 'refill_status');
+                params.append('refill', String(order.refillId));
+
+                const response = await fetch(SMM_API_URL, {
+                  method: 'POST',
+                  headers: { 
+                    'Content-Type': 'application/x-www-form-urlencoded',
+                    'User-Agent': 'Mozilla/5.0'
+                  },
+                  body: params.toString()
+                });
+                const text = await response.text();
+                refillData = JSON.parse(text);
+              }
+
+              if (refillData && refillData.status) {
+                await ordersRef.child(id).update({
+                  refillStatus: refillData.status,
+                  updatedAt: new Date().toISOString()
+                });
+              }
+            } catch (refillErr) {
+              console.error(`[Sync] Failed to sync refill status for order ${id}:`, refillErr);
+            }
           }
         }
       } catch (err) {
@@ -173,9 +387,9 @@ async function startServer() {
   app.use(express.urlencoded({ extended: true }));
 
   // SMM API Proxy Routes
-  const SMM_API_URL = 'https://yoyomedia.in/api/v2';
+  const SMM_API_URL = 'https://morethanpanel.com/api/v2';
   const API_KEY = process.env.SMM_API_KEY || '';
-  const GAS_URL = process.env.VITE_SMM_GAS_URL || 'https://script.google.com/macros/s/AKfycbzpWdoi6-VVBuYo-9TtKYu78WlkqY6n5yLvUWNrXNfAXhonoA3QrMWuOh04jVCwEFvg/exec';
+  const GAS_URL = process.env.VITE_SMM_GAS_URL || 'https://script.google.com/macros/s/AKfycbyJV7Rdv_6O2XDvowgCldCGW00pbFxrWlvvevzx6zr-05TsQJubWE42HjJ0vhNtG72N/exec';
 
   const callSmmApi = async (action: string, params: any = {}) => {
     // Try direct API first if key exists
@@ -276,18 +490,49 @@ async function startServer() {
           const services = await callSmmApi('services');
           const settingsRef = admin.database().ref('settings');
           const settingsSnap = await settingsRef.once('value');
-          const settings = settingsSnap.val() || { profitPercentage: 20 };
-          const profitMargin = (settings.profitPercentage || 20) / 100;
+          const settings = settingsSnap.val() || { profitPercentage: 51 };
+          const profitMargin = (settings.profitPercentage || 51) / 100;
 
-          const formattedServices = services.map((s: any) => ({
-            service: s.service,
-            name: s.name,
-            category: s.category,
-            rate: (parseFloat(s.rate) * (1 + profitMargin)).toFixed(2),
-            min: s.min,
-            max: s.max,
-            type: s.type
-          }));
+          const formattedServices = services.map((s: any) => {
+            // Auto-detect sub-category
+            let subCategory = 'General';
+            const name = s.name.toLowerCase();
+            if (name.includes('follower')) subCategory = 'Followers';
+            else if (name.includes('like')) subCategory = 'Likes';
+            else if (name.includes('view')) subCategory = 'Views';
+            else if (name.includes('subscriber')) subCategory = 'Subscribers';
+            else if (name.includes('member')) subCategory = 'Members';
+            else if (name.includes('comment')) subCategory = 'Comments';
+            else if (name.includes('share')) subCategory = 'Shares';
+            else if (name.includes('live')) subCategory = 'Live';
+            else if (name.includes('reel')) subCategory = 'Reels';
+            else if (name.includes('story')) subCategory = 'Story';
+            else if (name.includes('target')) subCategory = 'Targeted';
+            else if (name.includes('reaction')) subCategory = 'Reactions';
+            else if (name.includes('watch time')) subCategory = 'Watch Time';
+
+            // Badges
+            const badges = [];
+            if (s.refill) badges.push('guaranteed');
+            if (parseFloat(s.rate) < 0.5) badges.push('best_value');
+            // Trending logic would ideally be based on DB order counts, but for API response we can mock or use a simple heuristic
+            
+            return {
+              service: s.service,
+              name: s.name,
+              category: s.category,
+              rate: (parseFloat(s.rate) * (1 + profitMargin)).toFixed(2),
+              min: s.min,
+              max: s.max,
+              type: s.type,
+              refill: s.refill,
+              cancel: s.cancel,
+              description: s.description || s.instructions || "No instructions provided",
+              guaranteed: !!s.refill,
+              badges: badges,
+              sub_category: subCategory
+            };
+          });
           return res.json(formattedServices);
         }
 
@@ -302,11 +547,13 @@ async function startServer() {
 
           const settingsRef = admin.database().ref('settings');
           const settingsSnap = await settingsRef.once('value');
-          const settings = settingsSnap.val() || { profitPercentage: 20 };
-          const profitMargin = (settings.profitPercentage || 20) / 100;
+          const settings = settingsSnap.val() || { profitPercentage: 51 };
+          const profitMargin = (settings.profitPercentage || 51) / 100;
           
           const rate = parseFloat(smmService.rate) * (1 + profitMargin);
           const cost = (rate * parseInt(quantity)) / 1000;
+          const providerCost = (parseFloat(smmService.rate) * parseInt(quantity)) / 1000;
+          const profit = cost - providerCost;
 
           if (user.balance < cost) return res.json({ error: 'Insufficient balance' });
 
@@ -322,15 +569,30 @@ async function startServer() {
           const ordersRef = admin.database().ref(`orders/${orderId}`);
           await ordersRef.set({
             orderId,
+            apiOrderId: orderId,
             userId: user.uid,
             serviceId: service,
             serviceName: smmService.name,
             link,
             quantity,
             charge: cost,
+            price: cost,
+            provider_cost: providerCost,
+            profit: profit,
             status: 'Pending',
             createdAt: admin.database.ServerValue.TIMESTAMP,
-            source: 'api'
+            source: 'api',
+            guaranteed: !!smmService.refill,
+            refill: !!smmService.refill,
+            start_count: 0,
+            remains: quantity,
+            last_checked_at: admin.database.ServerValue.TIMESTAMP
+          });
+
+          // Increment order count for trending logic
+          const serviceStatsRef = admin.database().ref(`service_stats/${service}`);
+          await serviceStatsRef.transaction((current) => {
+            return (current || 0) + 1;
           });
 
           return res.json({ order: orderId });
@@ -534,8 +796,8 @@ async function startServer() {
   app.listen(PORT, '0.0.0.0', () => {
     console.log(`Server live on http://localhost:${PORT}`);
     
-    // Start background sync every 5 minutes
-    setInterval(syncOrderStatuses, 5 * 60 * 1000);
+    // Start background sync every 3 minutes
+    setInterval(syncOrderStatuses, 3 * 60 * 1000);
     // Initial run after 30 seconds
     setTimeout(syncOrderStatuses, 30 * 1000);
   });

@@ -28,7 +28,6 @@ export const platformIcons: Record<string, any> = {
   'website traffic': faChartLine,
   coinmarketcap: faSearchDollar,
   coinmarket: faSearchDollar,
-  clubhouse: 'https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcRdmyLltdISEARz1pgjEoJFuyP8LjZjc3EOf0dp5Naj5Q&s=10',
   others: faGlobe
 };
 
@@ -51,7 +50,6 @@ export const platformColors: Record<string, string> = {
   kick: 'bg-[#53FC18] text-black',
   'website traffic': 'bg-emerald-600 text-white',
   coinmarketcap: 'bg-[#171924] text-white',
-  clubhouse: 'bg-[#705e4f] text-white',
   others: 'bg-gray-500 text-white',
 };
 
@@ -74,7 +72,6 @@ export const platformTextColors: Record<string, string> = {
   kick: 'text-[#53FC18]',
   'website traffic': 'text-emerald-600',
   coinmarketcap: 'text-[#171924]',
-  clubhouse: 'text-[#705e4f]',
   others: 'text-gray-500',
 };
 
@@ -97,6 +94,5 @@ export const platformBgs: Record<string, string> = {
   kick: 'bg-[#53FC18]/10',
   'website traffic': 'bg-emerald-50',
   coinmarketcap: 'bg-gray-100',
-  clubhouse: 'bg-orange-50',
   others: 'bg-gray-100',
 };

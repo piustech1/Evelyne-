@@ -1,6 +1,6 @@
 import { Link, useNavigate } from 'react-router-dom';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
-import { faRocket, faBars, faTimes, faUserCircle, faWallet, faHistory, faChartLine, faSignOutAlt, faBell } from '@fortawesome/free-solid-svg-icons';
+import { faRocket, faBars, faTimes, faUserCircle, faWallet, faHistory, faChartLine, faSignOutAlt, faBell, faStar } from '@fortawesome/free-solid-svg-icons';
 import { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'motion/react';
 import { auth, db } from '../lib/firebase';
@@ -47,6 +47,7 @@ export default function Navbar() {
 
   const navLinks = [
     { name: 'Boost', path: '/boost', icon: faRocket },
+    { name: 'Recommended', path: '/recommended', icon: faStar },
     { name: 'Dashboard', path: '/dashboard', icon: faChartLine },
     { name: 'Orders', path: '/orders', icon: faHistory },
     { name: 'Wallet', path: '/wallet', icon: faWallet },

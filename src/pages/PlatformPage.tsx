@@ -20,9 +20,8 @@ export default function PlatformPage() {
   const [isLoading, setIsLoading] = useState(true);
   const [activeFilter, setActiveFilter] = useState('All');
   const [searchTerm, setSearchTerm] = useState('');
+  const [dynamicFilters, setDynamicFilters] = useState<string[]>(['All']);
   const sliderRef = useRef<HTMLDivElement>(null);
-
-  const filters = ['All', 'Followers', 'Likes', 'Views', 'Comments', 'Shares', 'Other'];
 
   useEffect(() => {
     const loadData = async () => {
@@ -31,6 +30,10 @@ export default function PlatformPage() {
         const filtered = allServices.filter(s => s.category.toLowerCase() === platform.toLowerCase());
         setServices(filtered);
         
+        // Extract unique sub-categories for filters
+        const subs = Array.from(new Set(filtered.map(s => s.sub_category || 'General'))).sort();
+        setDynamicFilters(['All', ...subs]);
+
         const platforms = Array.from(new Set(allServices.map(s => s.category))).sort();
         setAllPlatforms(platforms);
       } catch (err) {
@@ -46,11 +49,7 @@ export default function PlatformPage() {
     const matchesSearch = s.name.toLowerCase().includes(searchTerm.toLowerCase()) || 
                          String(s.service).includes(searchTerm);
     if (activeFilter === 'All') return matchesSearch;
-    if (activeFilter === 'Other') {
-      const knownFilters = ['Followers', 'Likes', 'Views', 'Comments', 'Shares'];
-      return matchesSearch && !knownFilters.some(f => s.name.toLowerCase().includes(f.toLowerCase()));
-    }
-    return matchesSearch && s.name.toLowerCase().includes(activeFilter.toLowerCase());
+    return matchesSearch && (s.sub_category === activeFilter);
   });
 
   const handleBoost = (service: Service) => {
@@ -127,7 +126,7 @@ export default function PlatformPage() {
           </div>
 
           <div className="flex overflow-x-auto no-scrollbar gap-3 pb-2 justify-start md:justify-center items-center">
-            {filters.map((f) => (
+            {dynamicFilters.map((f) => (
               <button
                 key={f}
                 onClick={() => setActiveFilter(f)}

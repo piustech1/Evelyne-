@@ -1,14 +1,14 @@
 /**
- * SMM API Proxy Script (Dedicated for SMM Trust Panel)
+ * SMM API Proxy Script (Dedicated for MoreThanPanel)
  * 
- * This script acts as a secure bridge between your frontend and the SMM Trust Panel API.
+ * This script acts as a secure bridge between your frontend and the MoreThanPanel API.
  * It prevents "Empty response" errors often caused by Vercel's shared IP addresses.
  * 
  * DEPLOYMENT INSTRUCTIONS:
  * 1. Go to script.google.com
  * 2. Create a new project.
  * 3. Paste this code into the editor.
- * 4. Replace 'YOUR_SMM_API_KEY' with your actual SMM Trust Panel API key.
+ * 4. Replace 'YOUR_MTP_API_KEY' with your actual MoreThanPanel API key.
  * 5. Click "Deploy" > "New Deployment".
  * 6. Select "Web App".
  * 7. Set "Execute as" to "Me".
@@ -17,8 +17,8 @@
  * 10. Add this URL to your Vercel/Environment variables as VITE_SMM_GAS_URL.
  */
 
-const API_KEY = "9eafd85ad9f6a0c06dc1b413f8380edc21cd6661e09eb0f9f0886b60214a95bb"; // YoyoMedia API Key
-const SMM_API_URL = "https://yoyomedia.in/api/v2";
+const API_KEY = "4185ebf986cd0eccbfccf02d8b3788a7"; // Replace with your MoreThanPanel API Key
+const SMM_API_URL = "https://morethanpanel.com/api/v2";
 
 /**
  * Handles POST requests from the frontend
@@ -49,15 +49,21 @@ function doPost(e) {
       payload.quantity = String(postData.quantity);
       if (postData.runs) payload.runs = String(postData.runs);
       if (postData.interval) payload.interval = String(postData.interval);
-    } else if (action === 'status' || action === 'orders') {
-      // Handle single or multiple order status
-      // New provider uses 'status' action for both single and multiple
+    } else if (action === 'status') {
+      if (postData.orders) {
+        payload.orders = String(postData.orders);
+      } else {
+        payload.order = String(postData.order || postData.orderId);
+      }
+    } else if (action === 'orders') {
       payload.action = 'status';
-      payload.order = String(postData.order || postData.orderId || postData.orders);
+      payload.orders = String(postData.orders);
     } else if (action === 'refill') {
-      payload.order = String(postData.order);
+      payload.order = String(postData.order || postData.orderId);
+    } else if (action === 'refill_status') {
+      payload.refill = String(postData.refillId || postData.refill);
     } else if (action === 'cancel') {
-      payload.order = String(postData.order);
+      payload.orders = String(postData.orders || postData.order);
     } else if (action === 'balance') {
       // No extra params needed
     } else if (action === 'services') {

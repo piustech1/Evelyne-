@@ -15,6 +15,7 @@ import { useNavigate } from 'react-router-dom';
 import { db } from '../../lib/firebase';
 import { ref, onValue, update } from 'firebase/database';
 import { smmService } from '../../services/smmService';
+import toast from 'react-hot-toast';
 
 const statusStyles: any = {
   'Completed': 'bg-emerald-500/10 text-emerald-500 border-emerald-500/20',
@@ -71,17 +72,20 @@ export default function AdminOrders() {
   const handleUpdateStatus = async (orderId: string, newStatus: string) => {
     try {
       await update(ref(db, `orders/${orderId}`), { status: newStatus });
+      toast.success(`Order status updated to ${newStatus}`);
     } catch (err) {
       console.error('Failed to update status', err);
+      toast.error('Failed to update status');
     }
   };
 
   const handleCheckStatus = async (order: any) => {
     if (!order.apiOrderId) {
-      alert('This order was not placed via API.');
+      toast.error('This order was not placed via API.');
       return;
     }
 
+    const loadingToast = toast.loading('Checking API status...');
     try {
       const data = await smmService.getStatus(order.apiOrderId);
 
@@ -91,12 +95,13 @@ export default function AdminOrders() {
           remains: data.remains,
           start_count: data.start_count
         });
+        toast.success(`Status synced: ${data.status}`, { id: loadingToast });
       } else if (data.error) {
-        alert('API Error: ' + data.error);
+        toast.error('API Error: ' + data.error, { id: loadingToast });
       }
     } catch (err: any) {
       console.error('Status Check Error:', err);
-      alert('Failed to check status: ' + err.message);
+      toast.error('Failed to check status: ' + err.message, { id: loadingToast });
     }
   };
 
@@ -156,12 +161,13 @@ export default function AdminOrders() {
           <table className="w-full text-left border-collapse">
             <thead>
               <tr className="text-[10px] font-black text-gray-400 uppercase tracking-[0.2em] border-b border-gray-50">
-                <th className="pb-6 px-4">ID</th>
+                <th className="pb-6 px-4 text-center">API ID</th>
                 <th className="pb-6 px-4">User</th>
                 <th className="pb-6 px-4">Service</th>
                 <th className="pb-6 px-4 hidden lg:table-cell">Link</th>
                 <th className="pb-6 px-4 text-center">Qty</th>
                 <th className="pb-6 px-4">Charge</th>
+                <th className="pb-6 px-4">Profit</th>
                 <th className="pb-6 px-4">Status</th>
                 <th className="pb-6 px-4 text-right">Actions</th>
               </tr>
@@ -175,13 +181,21 @@ export default function AdminOrders() {
                   transition={{ delay: idx * 0.05 }}
                   className="group hover:bg-gray-50 transition-colors"
                 >
-                  <td className="py-6 px-4 text-xs font-black text-gray-900 group-hover:text-brand-purple transition-colors">#{order.id.slice(-6).toUpperCase()}</td>
-                  <td className="py-6 px-4 text-xs font-bold text-gray-500">{order.userEmail}</td>
-                  <td className="py-6 px-4 text-xs font-bold text-gray-400 truncate max-w-[150px]">{order.service}</td>
-                  <td className="py-6 px-4 text-xs text-brand-blue font-bold truncate max-w-[150px] hover:underline transition-all underline-offset-4 cursor-pointer hidden lg:table-cell">{order.link}</td>
-                  <td className="py-6 px-4 text-xs font-black text-gray-900 text-center">{order.quantity?.toLocaleString()}</td>
-                  <td className="py-6 px-4 text-xs font-black text-gray-900">UGX {order.price?.toLocaleString()}</td>
-                  <td className="py-6 px-4">
+                    <td className="py-6 px-4 text-center">
+                      <div className="flex flex-col items-center">
+                        <span className="text-[10px] font-black text-gray-900">#{order.id.slice(-6).toUpperCase()}</span>
+                        {order.apiOrderId && (
+                          <span className="text-[8px] font-black text-brand-purple uppercase tracking-tighter">API: {order.apiOrderId}</span>
+                        )}
+                      </div>
+                    </td>
+                    <td className="py-6 px-4 text-xs font-bold text-gray-500">{order.userEmail}</td>
+                    <td className="py-6 px-4 text-xs font-bold text-gray-400 truncate max-w-[150px]">{order.service}</td>
+                    <td className="py-6 px-4 text-xs text-brand-blue font-bold truncate max-w-[150px] hover:underline transition-all underline-offset-4 cursor-pointer hidden lg:table-cell">{order.link}</td>
+                    <td className="py-6 px-4 text-xs font-black text-gray-900 text-center">{order.quantity?.toLocaleString()}</td>
+                    <td className="py-6 px-4 text-xs font-black text-gray-900">UGX {order.price?.toLocaleString()}</td>
+                    <td className="py-6 px-4 text-xs font-black text-emerald-500">UGX {Math.round(order.profit || 0).toLocaleString()}</td>
+                    <td className="py-6 px-4">
                     <span className={`inline-flex items-center px-4 py-1.5 rounded-full text-[9px] font-black uppercase tracking-widest border ${statusStyles[order.status] || statusStyles['Pending']}`}>
                       {order.status}
                     </span>

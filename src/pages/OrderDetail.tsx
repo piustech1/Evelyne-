@@ -32,6 +32,7 @@ export default function OrderDetail() {
   const [order, setOrder] = useState<any>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [isRefreshing, setIsRefreshing] = useState(false);
+  const [isRefilling, setIsRefilling] = useState(false);
 
   const handleRefresh = async () => {
     if (!order || !order.apiOrderId) {
@@ -58,6 +59,31 @@ export default function OrderDetail() {
       toast.error(err.message || 'Failed to refresh status', { id: loadingToast });
     } finally {
       setIsRefreshing(false);
+    }
+  };
+
+  const handleRefill = async () => {
+    if (!order || !order.apiOrderId) return;
+    
+    setIsRefilling(true);
+    const loadingToast = toast.loading('Requesting refill...');
+    try {
+      const data = await smmService.refill(order.apiOrderId);
+      if (data.refill) {
+        await update(ref(db, `orders/${orderId}`), {
+          refillId: data.refill,
+          refillStatus: 'Pending',
+          refillTriggered: true,
+          updatedAt: new Date().toISOString()
+        });
+        toast.success('Refill requested successfully!', { id: loadingToast });
+      } else if (data.error) {
+        toast.error('Refill failed: ' + data.error, { id: loadingToast });
+      }
+    } catch (err: any) {
+      toast.error('Failed to request refill: ' + err.message, { id: loadingToast });
+    } finally {
+      setIsRefilling(false);
     }
   };
 
@@ -145,6 +171,29 @@ export default function OrderDetail() {
       </div>
 
       <div className="max-w-4xl mx-auto px-4 -mt-12 relative z-20 space-y-8">
+        {/* Refill Status Alert */}
+        {order.refillTriggered && (
+          <motion.div 
+            initial={{ opacity: 0, scale: 0.95 }}
+            animate={{ opacity: 1, scale: 1 }}
+            className="bg-brand-purple p-6 rounded-3xl text-white shadow-xl flex items-center justify-between gap-4 border border-white/10"
+          >
+            <div className="flex items-center space-x-4">
+              <div className="w-12 h-12 bg-white/20 rounded-2xl flex items-center justify-center text-xl">
+                <FontAwesomeIcon icon={faSyncAlt} className="animate-spin" />
+              </div>
+              <div>
+                <div className="text-[10px] font-black uppercase tracking-widest opacity-60">Refill in Progress</div>
+                <div className="text-sm font-black tracking-tight">Status: {order.refillStatus || 'Pending'}</div>
+              </div>
+            </div>
+            <div className="text-right">
+              <div className="text-[10px] font-black uppercase tracking-widest opacity-60">Refill ID</div>
+              <div className="text-xs font-black">#{order.refillId || '---'}</div>
+            </div>
+          </motion.div>
+        )}
+
         {/* Progress Card */}
         <motion.div 
           initial={{ opacity: 0, y: 20 }}
@@ -241,6 +290,20 @@ export default function OrderDetail() {
                   </div>
                   <span className="text-xs font-black text-gray-500">#{order.apiOrderId || '---'}</span>
                 </div>
+                
+                {order.status === 'Completed' && order.refill && !order.refillTriggered && (
+                  <div className="pt-6 border-t border-gray-50">
+                    <button 
+                      onClick={handleRefill}
+                      disabled={isRefilling}
+                      className="w-full py-4 bg-emerald-500 text-white rounded-2xl text-[10px] font-black uppercase tracking-widest shadow-lg shadow-emerald-500/20 hover:bg-emerald-600 transition-all flex items-center justify-center space-x-2 disabled:opacity-50"
+                    >
+                      <FontAwesomeIcon icon={faSyncAlt} className={isRefilling ? 'animate-spin' : ''} />
+                      <span>Request Anti-Drop Refill</span>
+                    </button>
+                    <p className="mt-3 text-[8px] text-gray-400 font-bold text-center uppercase tracking-widest">Available for this service</p>
+                  </div>
+                )}
               </div>
             </motion.div>
           </div>

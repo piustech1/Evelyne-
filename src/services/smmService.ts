@@ -4,7 +4,7 @@
  * to bypass Vercel IP blocking issues.
  */
 
-const GAS_URL = import.meta.env.VITE_SMM_GAS_URL || 'https://script.google.com/macros/s/AKfycbzpWdoi6-VVBuYo-9TtKYu78WlkqY6n5yLvUWNrXNfAXhonoA3QrMWuOh04jVCwEFvg/exec';
+const GAS_URL = import.meta.env.VITE_SMM_GAS_URL || 'https://script.google.com/macros/s/AKfycbyJV7Rdv_6O2XDvowgCldCGW00pbFxrWlvvevzx6zr-05TsQJubWE42HjJ0vhNtG72N/exec';
 
 export interface SMMResponse {
   error?: string;
@@ -133,6 +133,13 @@ export const smmService = {
    */
   async refill(orderId: string | number) {
     return this.call('refill', { order: orderId });
+  },
+
+  /**
+   * Check refill status
+   */
+  async refillStatus(refillId: string | number) {
+    return this.call('refill_status', { refill: refillId });
   },
 
   /**

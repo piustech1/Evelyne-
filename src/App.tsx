@@ -24,6 +24,7 @@ import Wallet from './pages/Wallet';
 import Profile from './pages/Profile';
 import ApiDocs from './pages/ApiDocs';
 import Notifications from './pages/Notifications';
+import Recommended from './pages/Recommended';
 import Navbar from './components/Navbar';
 import MobileNav from './components/MobileNav';
 
@@ -42,6 +43,7 @@ import AdminReports from './pages/admin/Reports';
 import AdminAnnouncements from './pages/admin/Announcements';
 import AdminSettings from './pages/admin/Settings';
 import AdminApiLogs from './pages/admin/ApiLogs';
+import AdminRefundLogs from './pages/admin/RefundLogs';
 
 function ReferralTracker() {
   const location = useLocation();
@@ -93,6 +95,7 @@ export default function App() {
           <Route path="announcements" element={<AdminAnnouncements />} />
           <Route path="settings" element={<AdminSettings />} />
           <Route path="api-logs" element={<AdminApiLogs />} />
+          <Route path="refund-logs" element={<AdminRefundLogs />} />
         </Route>
 
         {/* User Routes */}
@@ -112,6 +115,7 @@ export default function App() {
                   {/* Protected Routes */}
                   <Route path="/dashboard" element={user ? <Dashboard /> : <Navigate to="/login" />} />
                   <Route path="/services" element={user ? <Services /> : <Navigate to="/login" />} />
+                  <Route path="/recommended" element={user ? <Recommended /> : <Navigate to="/login" />} />
                   <Route path="/platform" element={user ? <PlatformPage /> : <Navigate to="/login" />} />
                   <Route path="/boost" element={user ? <Boost /> : <Navigate to="/login" />} />
                   <Route path="/order" element={user ? <OrderPage /> : <Navigate to="/login" />} />
