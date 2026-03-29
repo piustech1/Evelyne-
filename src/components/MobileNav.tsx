@@ -2,12 +2,14 @@ import { Link, useLocation } from 'react-router-dom';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { faHome, faRocket, faHistory, faUser, faWallet, faStar } from '@fortawesome/free-solid-svg-icons';
 import { motion } from 'motion/react';
+import { useAuth } from '../hooks/useAuth';
 
 export default function MobileNav() {
   const location = useLocation();
+  const { user } = useAuth();
 
   const navItems = [
-    { name: 'Home', path: '/', icon: faHome },
+    { name: 'Home', path: user ? '/dashboard' : '/', icon: faHome },
     { name: 'Orders', path: '/orders', icon: faHistory },
     { name: 'Boost', path: '/boost', icon: faRocket, isSpecial: true },
     { name: 'Wallet', path: '/wallet', icon: faWallet },

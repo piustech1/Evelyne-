@@ -54,13 +54,13 @@ export default function Navbar() {
   ];
 
   return (
-    <nav className={`fixed top-0 left-0 right-0 z-50 transition-all duration-300 ${
+    <nav className={`sticky top-0 z-50 transition-all duration-300 ${
       isScrolled ? 'bg-gradient-to-r from-blue-600 to-purple-600 shadow-md py-2' : 'bg-gradient-to-r from-blue-500 to-purple-500 py-3'
     }`}>
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="flex justify-between items-center h-12">
           {/* Logo */}
-          <Link to="/" className="flex items-center space-x-3 group">
+          <Link to={user ? "/dashboard" : "/"} className="flex items-center space-x-3 group">
             <div className="w-8 h-8 bg-white rounded-lg flex items-center justify-center shadow-sm group-hover:scale-110 transition-transform overflow-hidden">
               <img 
                 src="https://i.postimg.cc/sxNQyXFG/0x0.png" 

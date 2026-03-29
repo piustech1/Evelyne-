@@ -27,6 +27,7 @@ import Notifications from './pages/Notifications';
 import Recommended from './pages/Recommended';
 import Navbar from './components/Navbar';
 import MobileNav from './components/MobileNav';
+import GlobalAnnouncement from './components/GlobalAnnouncement';
 
 // Admin Pages
 import AdminLayout from './components/admin/AdminLayout';
@@ -103,9 +104,10 @@ export default function App() {
           path="*"
           element={
             <div className="min-h-screen flex flex-col bg-white">
-              <Navbar isLoggedIn={!!user} />
+              <GlobalAnnouncement />
+              <Navbar />
               
-              <main className="flex-grow pt-16 md:pt-20">
+              <main className="flex-grow">
                 <Routes>
                   <Route path="/" element={<LandingPage />} />
                   <Route path="/login" element={!user ? <Login /> : <Navigate to="/dashboard" />} />

@@ -58,7 +58,9 @@ export const detectPlatform = (name: string, category: string = ''): string => {
   if (n.includes('soundcloud')) return 'SoundCloud';
   if (n.includes('twitch')) return 'Twitch';
   if (n.includes('linkedin')) return 'LinkedIn';
-  if (n.includes('whatsapp') || n.includes(' wa ') || n.includes('group') || n.includes('channel')) return 'WhatsApp';
+  if (n.includes('whatsapp') || n.includes(' wa ') || n.includes('group') || n.includes('channel')) {
+    return 'WhatsApp';
+  }
   if (n.includes('google play') || n.includes('play store') || n.includes('android app')) return 'Google Play';
   if (n.includes('deezer')) return 'Deezer';
   if (n.includes('vimeo')) return 'Vimeo';
@@ -148,10 +150,13 @@ export const fetchServices = async (force = false): Promise<Service[]> => {
 
     console.log(`[ServicesStore] Processing ${apiServices.length} services...`);
     const servicesUpdates: Record<string, Service> = {};
+    let whatsappCount = 0;
     const processedServices: Service[] = apiServices.map((s: any) => {
       const usdRate = parseFloat(s.rate);
       const finalPrice = usdRate * 1.51 * 3800;
       const platform = detectPlatform(s.name, s.category);
+      
+      if (platform === 'WhatsApp') whatsappCount++;
       
       // Sub-category detection logic (Task 5)
       let subCategory = 'General';
@@ -192,6 +197,8 @@ export const fetchServices = async (force = false): Promise<Service[]> => {
       servicesUpdates[s.service] = service;
       return service;
     });
+
+    console.log(`[ServicesStore] WhatsApp services detected: ${whatsappCount}`);
 
     // Update Firebase in background
     set(ref(db, 'services'), servicesUpdates).catch(console.error);

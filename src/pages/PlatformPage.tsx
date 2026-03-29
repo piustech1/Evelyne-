@@ -95,7 +95,15 @@ export default function PlatformPage() {
     const loadData = async () => {
       try {
         const allServices = await fetchServices();
-        const filtered = allServices.filter(s => s.category.toLowerCase() === platform.toLowerCase());
+        let filtered = allServices.filter(s => s.category.toLowerCase() === platform.toLowerCase());
+        
+        // Fallback for WhatsApp (Task 1)
+        if (platform.toLowerCase() === 'whatsapp' && filtered.length === 0) {
+          filtered = allServices.filter(s => {
+            const n = s.name.toLowerCase();
+            return n.includes('group') || n.includes('members') || n.includes('channel');
+          });
+        }
         setServices(filtered);
         
         // Manual filter mapping (Task 5)
@@ -284,7 +292,7 @@ export default function PlatformPage() {
                     <FontAwesomeIcon icon={faList} />
                   </div>
                   <div className="text-gray-400 font-black uppercase tracking-widest text-[10px]">
-                    No services found for this filter
+                    {isLoading ? "⚠️ Services loading or temporarily unavailable" : "No services found for this filter"}
                   </div>
                 </div>
               )}
