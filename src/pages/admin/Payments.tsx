@@ -4,7 +4,6 @@ import { faCheckCircle, faTimesCircle, faEye, faSearch, faFilter, faMoneyBillWav
 import { motion } from 'motion/react';
 import { db } from '../../lib/firebase';
 import { ref, onValue, update, runTransaction } from 'firebase/database';
-import { toast } from 'react-hot-toast';
 
 export default function AdminPayments() {
   const [payments, setPayments] = useState<any[]>([]);
@@ -60,20 +59,20 @@ export default function AdminPayments() {
         return (currentBalance || 0) + payment.amount;
       });
       
-      toast.success('Payment approved and balance updated!');
+      alert('Payment approved and balance updated!');
     } catch (err) {
       console.error('Approval failed', err);
-      toast.error('Failed to approve payment');
+      alert('Failed to approve payment');
     }
   };
 
   const handleReject = async (paymentId: string) => {
     try {
       await update(ref(db, `payments/${paymentId}`), { status: 'Rejected' });
-      toast.success('Payment rejected');
+      alert('Payment rejected');
     } catch (err) {
       console.error('Rejection failed', err);
-      toast.error('Failed to reject payment');
+      alert('Failed to reject payment');
     }
   };
 
