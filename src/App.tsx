@@ -5,10 +5,12 @@
 
 import { BrowserRouter as Router, Routes, Route, Navigate, useLocation } from 'react-router-dom';
 import { Toaster } from 'react-hot-toast';
-import { useEffect } from 'react';
+import { useEffect, useState } from 'react';
 import { useAuth } from './hooks/useAuth';
 import { useNotifications } from './hooks/useNotifications';
 import { useOrderStatusSync } from './hooks/useOrderStatusSync';
+import { db } from './lib/firebase';
+import { ref, onValue } from 'firebase/database';
 import ScrollToTop from './components/ScrollToTop';
 import LandingPage from './pages/LandingPage';
 import Login from './pages/Login';
@@ -25,6 +27,7 @@ import Profile from './pages/Profile';
 import ApiDocs from './pages/ApiDocs';
 import Notifications from './pages/Notifications';
 import Recommended from './pages/Recommended';
+import MaintenancePage from './pages/Maintenance';
 import Navbar from './components/Navbar';
 import MobileNav from './components/MobileNav';
 import GlobalAnnouncement from './components/GlobalAnnouncement';
@@ -61,12 +64,43 @@ function ReferralTracker() {
   return null;
 }
 
+function MaintenanceGuard({ settings }: { settings: { maintenanceMode: boolean, maintenanceStartTime: number | null } }) {
+  const location = useLocation();
+  const isAdminPath = location.pathname.startsWith('/admin');
+  const isMaintenancePath = location.pathname === '/maintenance';
+
+  if (settings.maintenanceMode && !isAdminPath && !isMaintenancePath) {
+    return <Navigate to="/maintenance" replace />;
+  }
+
+  if (!settings.maintenanceMode && isMaintenancePath) {
+    return <Navigate to="/" replace />;
+  }
+
+  return null;
+}
+
 export default function App() {
   const { user, loading } = useAuth();
+  const [maintenanceSettings, setMaintenanceSettings] = useState<{ maintenanceMode: boolean, maintenanceStartTime: number | null } | null>(null);
   useNotifications();
   useOrderStatusSync();
 
-  if (loading) {
+  useEffect(() => {
+    const settingsRef = ref(db, 'settings');
+    const unsubscribe = onValue(settingsRef, (snapshot) => {
+      const data = snapshot.val();
+      if (data) {
+        setMaintenanceSettings({
+          maintenanceMode: data.maintenanceMode || false,
+          maintenanceStartTime: data.maintenanceStartTime || null
+        });
+      }
+    });
+    return () => unsubscribe();
+  }, []);
+
+  if (loading || maintenanceSettings === null) {
     return (
       <div className="min-h-screen bg-brand-dark flex items-center justify-center">
         <div className="w-12 h-12 border-4 border-brand-purple border-t-transparent rounded-full animate-spin" />
@@ -77,9 +111,13 @@ export default function App() {
   return (
     <Router>
       <ReferralTracker />
+      <MaintenanceGuard settings={maintenanceSettings} />
       <Toaster position="top-center" reverseOrder={false} />
       <ScrollToTop />
       <Routes>
+        {/* Maintenance Page */}
+        <Route path="/maintenance" element={<MaintenancePage startTime={maintenanceSettings.maintenanceStartTime || undefined} />} />
+
         {/* Admin Routes */}
         <Route path="/admin/login" element={<AdminLogin />} />
         <Route path="/admin" element={<AdminLayout />}>

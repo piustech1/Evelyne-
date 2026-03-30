@@ -307,7 +307,14 @@ export default function AdminSettings() {
                       <div className="text-[10px] font-bold text-gray-400 uppercase tracking-widest">Disable site for all users except admins</div>
                     </div>
                     <button 
-                      onClick={() => handleChange('maintenanceMode', !settings.maintenanceMode)}
+                      onClick={() => {
+                        const newMode = !settings.maintenanceMode;
+                        setSettings((prev: any) => ({
+                          ...prev,
+                          maintenanceMode: newMode,
+                          maintenanceStartTime: newMode ? Date.now() : null
+                        }));
+                      }}
                       className={`w-14 h-8 rounded-full relative transition-all ${settings.maintenanceMode ? 'bg-rose-500' : 'bg-gray-200'}`}
                     >
                       <div className={`absolute top-1 w-6 h-6 bg-white rounded-full shadow-md transition-all ${settings.maintenanceMode ? 'right-1' : 'left-1'}`} />

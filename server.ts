@@ -970,6 +970,7 @@ dotenv.config();
     try {
       if (!isFirebaseInitialized) await initializeFirebase();
       
+      const db = admin.database();
       const payload = req.body;
       console.log("[Payment Webhook] Received payload:", JSON.stringify(payload));
 
@@ -1001,7 +1002,6 @@ dotenv.config();
           });
         }
       } else if (event_type === 'collection.failed' || status === 'failed') {
-        const db = admin.database();
         await db.ref(`payments/${reference}`).update({
           status: 'failed',
           updatedAt: admin.database.ServerValue.TIMESTAMP
