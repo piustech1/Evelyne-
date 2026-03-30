@@ -1,67 +1,71 @@
 /**
- * EASYBOOST PAYMENT BACKEND (Google Apps Script)
- * Updated for MarzPay 2026 API Specifications
- * Developer: Piustech
+ * MarzPay Payment Backend (Google Apps Script)
+ * 
+ * This script handles MarzPay payment initiation, status checks, and webhooks.
+ * 
+ * DEPLOYMENT INSTRUCTIONS:
+ * 1. Go to script.google.com
+ * 2. Create a new project named "MarzPay Backend".
+ * 3. Paste this code into the editor.
+ * 4. Update the CONFIGURATION section below.
+ * 5. Click "Deploy" > "New Deployment".
+ * 6. Select "Web App".
+ * 7. Set "Execute as" to "Me".
+ * 8. Set "Who has access" to "Anyone".
+ * 9. Click "Deploy" and copy the "Web App URL".
+ * 10. Add this URL to your Vercel/Environment variables as VITE_MARZPAY_GAS_URL.
  */
 
 // --- CONFIGURATION ---
 const MARZPAY_API_KEY = "marz_xmeCqRz0rGEme73o";
 const MARZPAY_API_SECRET = "JN7T30E2vZquBUbLZyxlZRzAhKAyJW4B";
+
 const FIREBASE_DB_URL = "https://easyboost-f6ac5-default-rtdb.firebaseio.com/"; // Must have trailing slash
-const FIREBASE_AUTH = "bqvL37nBIPlxBBBm4CiesQIQJhNihnI6o7u9gzw0"; // Get from Project Settings > Service Accounts > Database Secrets
+const FIREBASE_AUTH = "bqvL37nBIPlxBBBm4CiesQIQJhNihnI6o7u9gzw0"; // Get from Firebase Project Settings
 
 /**
- * Main entry point for POST requests from Frontend & MarzPay Webhooks
+ * Main entry point for all POST requests
  */
 function doPost(e) {
   try {
+    if (!e.postData || !e.postData.contents) {
+      return createResponse({ error: "No data provided" });
+    }
+
     const postData = JSON.parse(e.postData.contents);
-    Logger.log("Incoming JSON: " + JSON.stringify(postData));
     
-    // Check if it's a status check
-    if (postData.action === 'status') {
-      return handleStatusCheck(postData);
-    }
-    
-    // Check if it's a MarzPay Webhook (Documentation says look for event_type)
+    // 1. ROUTE: MarzPay Webhook (Detected by event_type)
     if (postData.event_type) {
-      return handleWebhook(postData);
+      return handleMarzPayWebhook(postData);
     }
-    
-    // Otherwise, treat as Frontend Payment Initiation
-    return handlePaymentRequest(postData);
-    
+
+    // 2. ROUTE: MarzPay Status Check (Detected by action: 'status' + reference)
+    if (postData.action === 'status' && postData.reference) {
+      return handleMarzPayStatusCheck(postData);
+    }
+
+    // 3. ROUTE: MarzPay Initiation (Detected by userId + amount)
+    // We check for userId and amount to identify initiation requests
+    if (postData.userId && postData.amount) {
+      return handleMarzPayInitiation(postData);
+    }
+
+    return createResponse({ error: "No valid action or data specified" });
+
   } catch (error) {
-    Logger.log("Critical Error: " + error.toString());
-    return jsonResponse({
-      success: false,
-      message: "Server Error: " + error.toString()
-    });
+    return createResponse({ error: "MarzPay Proxy Error: " + error.toString() });
   }
 }
 
 /**
- * PART 1: Handle Payment Initiation
- * Based on MarzPay "Create Collection" Docs
+ * MarzPay Initiation Logic
  */
-function handlePaymentRequest(data) {
+function handleMarzPayInitiation(data) {
   const { phone, amount, userId, userEmail, method } = data;
-  
-  if (!amount || !userId) {
-    return jsonResponse({ success: false, message: "Missing required fields (amount, userId)" });
-  }
-
   const isCard = method === 'card';
-  
-  if (!isCard && !phone) {
-    return jsonResponse({ success: false, message: "Phone number is required for mobile money" });
-  }
-  
-  // DOCUMENTATION REQUIREMENT: "Must be in UUID v4 format: xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx"
   const reference = Utilities.getUuid(); 
-  Logger.log("New Collection Reference: " + reference + " Method: " + method);
   
-  // 1. Save record to Firebase (so we know who to credit later)
+  // Save to Firebase
   const paymentData = {
     reference: reference,
     userId: userId,
@@ -70,171 +74,97 @@ function handlePaymentRequest(data) {
     phone: phone || "CARD",
     method: method || "mobile_money",
     status: "pending",
-    createdAt: new Date().toISOString(),
-    source: "Vercel-Frontend"
+    createdAt: new Date().toISOString()
   };
-  
   firebasePut("payments/" + reference, paymentData);
   
-  // 2. Prepare MarzPay Request
-  const authCredentials = Utilities.base64Encode(MARZPAY_API_KEY + ":" + MARZPAY_API_SECRET);
+  // Call MarzPay
+  const authHeader = "Basic " + Utilities.base64Encode(MARZPAY_API_KEY + ":" + MARZPAY_API_SECRET);
   const payload = {
     "amount": Math.floor(Number(amount)),
     "country": "UG",
-    "reference": reference, // The UUID we generated
-    "description": "EasyBoost Wallet Top-up",
+    "reference": reference,
+    "description": "EasyBoost Top-up",
     "method": method || "mobile_money",
-    "callback_url": ScriptApp.getService().getUrl() // The URL of this Google Script
+    "callback_url": ScriptApp.getService().getUrl()
   };
+  if (!isCard) payload["phone_number"] = phone;
 
-  if (!isCard) {
-    payload["phone_number"] = phone;
-  }
-  
   const options = {
     method: "post",
     contentType: "application/json",
-    headers: { "Authorization": "Basic " + authCredentials },
+    headers: { "Authorization": authHeader },
     payload: JSON.stringify(payload),
     muteHttpExceptions: true
   };
   
   const response = UrlFetchApp.fetch("https://wallet.wearemarz.com/api/v1/collect-money", options);
-  const responseText = response.getContentText();
-  let result;
+  const result = JSON.parse(response.getContentText());
   
-  try {
-    result = JSON.parse(responseText);
-  } catch (e) {
-    Logger.log("Failed to parse MarzPay response: " + responseText);
-    return jsonResponse({ 
-      success: false, 
-      message: "Invalid response from MarzPay gateway",
-      raw: responseText.substring(0, 100)
-    });
+  if (response.getResponseCode() > 299) {
+    return createResponse({ success: false, message: result.message || "MarzPay Error" });
   }
   
-  Logger.log("MarzPay API Response: " + responseText);
-  
-  if (response.getResponseCode() !== 200 && response.getResponseCode() !== 201) {
-    return jsonResponse({ 
-      success: false, 
-      message: result.message || "MarzPay connection error",
-      error_code: result.error_code || "UNKNOWN"
-    });
-  }
-  
-  // Success response to frontend
   const responseData = {
     success: true,
     reference: reference,
-    message: isCard ? "Card collection initiated" : "Collection initiated successfully"
+    message: "Initiated"
   };
-
   if (isCard && result.data && result.data.redirect_url) {
     responseData.redirectUrl = result.data.redirect_url;
   }
-
-  return jsonResponse(responseData);
+  return createResponse(responseData);
 }
 
 /**
- * PART 2: Handle Webhook Notification
- * Based on MarzPay "Webhook Payload Structure" Docs
+ * MarzPay Webhook Logic
  */
-function handleWebhook(payload) {
-  Logger.log("Processing Webhook: " + JSON.stringify(payload));
-  
-  // MarzPay webhooks usually wrap data in a 'data' object
+function handleMarzPayWebhook(payload) {
   const data = payload.data || payload;
   const transaction = data.transaction || payload.transaction;
-  const collectionData = data.collection || payload.collection;
   
-  if (!transaction || !transaction.reference) {
-    Logger.log("Invalid webhook payload: missing transaction or reference");
-    return jsonResponse({ received: true, message: "Invalid payload" });
-  }
-  
-  const event_type = payload.event_type || data.event_type;
-  if (event_type !== "collection.completed") {
-    Logger.log("Non-completion event ignored: " + event_type);
-    return jsonResponse({ received: true, message: "Event ignored" });
+  if (!transaction || payload.event_type !== "collection.completed") {
+    return createResponse({ received: true });
   }
   
   const reference = transaction.reference;
   const status = (transaction.status || "").toLowerCase();
   
-  if (status !== "completed" && status !== "successful" && status !== "success") {
-    Logger.log("Transaction status: " + status + ". Skipping credit.");
-    return jsonResponse({ received: true });
-  }
-  
-  // 1. Verify payment exists in our Firebase
-  const paymentRecord = firebaseGet("payments/" + reference);
-  
-  if (paymentRecord && paymentRecord.status === "pending") {
-    const userId = paymentRecord.userId;
-    // DOC: "amount.raw" is the integer value
-    const amountToCredit = Number(transaction.amount?.raw || transaction.amount || collectionData?.amount?.raw || 0);
-    
-    if (amountToCredit <= 0) {
-      Logger.log("Invalid amount to credit: " + amountToCredit);
-      return jsonResponse({ received: true });
+  if (status === "completed" || status === "successful" || status === "success") {
+    const paymentRecord = firebaseGet("payments/" + reference);
+    if (paymentRecord && paymentRecord.status === "pending") {
+      const amount = Number(transaction.amount?.raw || transaction.amount || 0);
+      updateUserBalance(paymentRecord.userId, amount);
+      
+      firebasePatch("payments/" + reference, {
+        status: "Successful",
+        completedAt: new Date().toISOString()
+      });
+      
+      firebasePush("notifications/" + paymentRecord.userId, {
+        message: "Deposit of UGX " + amount.toLocaleString() + " successful.",
+        type: "deposit",
+        timestamp: new Date().toISOString(),
+        read: false
+      });
     }
-    
-    // 2. Perform Wallet Credit
-    updateUserBalance(userId, amountToCredit);
-    
-    // 3. Update Payment record to prevent double-crediting
-    firebasePatch("payments/" + reference, {
-      status: "Successful",
-      completedAt: new Date().toISOString(),
-      provider_transaction_id: collectionData.provider_transaction_id || "N/A",
-      provider: transaction.provider || "N/A"
-    });
-    
-    // 4. Record Notification for the User Dashboard
-    firebasePush("notifications/" + userId, {
-      message: "Wallet Deposit of UGX " + amountToCredit.toLocaleString() + " successful.",
-      type: "deposit",
-      timestamp: new Date().toISOString(),
-      read: false
-    });
-    
-    Logger.log("Successfully credited User: " + userId);
-  } else {
-    Logger.log("Payment already processed or reference not found: " + reference);
   }
-  
-  // Documentation: "Your callback endpoint should return HTTP 200 to acknowledge receipt"
-  return jsonResponse({ received: true });
+  return createResponse({ received: true });
 }
 
 /**
- * PART 3: Handle Status Check for Frontend
+ * MarzPay Status Check Logic
  */
-function handleStatusCheck(data) {
-  const { reference } = data;
-  if (!reference) return jsonResponse({ error: "Missing reference" });
-  
-  const payment = firebaseGet("payments/" + reference);
-  if (!payment) return jsonResponse({ error: "Payment not found" });
-  
-  return jsonResponse({
-    status: payment.status,
-    amount: payment.amount,
-    reference: payment.reference
-  });
+function handleMarzPayStatusCheck(data) {
+  const payment = firebaseGet("payments/" + data.reference);
+  if (!payment) return createResponse({ error: "Not found" });
+  return createResponse({ status: payment.status, reference: payment.reference });
 }
 
-// --- PART 4: FIREBASE CONNECTION (REST API) ---
+// --- HELPERS ---
 
 function getFirebaseUrl(path) {
-  let url = FIREBASE_DB_URL + path + ".json";
-  if (FIREBASE_AUTH) {
-    url += "?auth=" + FIREBASE_AUTH;
-  }
-  return url;
+  return FIREBASE_DB_URL + path + ".json" + (FIREBASE_AUTH ? "?auth=" + FIREBASE_AUTH : "");
 }
 
 function firebaseGet(path) {
@@ -243,47 +173,24 @@ function firebaseGet(path) {
 }
 
 function firebasePut(path, data) {
-  UrlFetchApp.fetch(getFirebaseUrl(path), {
-    method: "put",
-    contentType: "application/json",
-    payload: JSON.stringify(data)
-  });
+  UrlFetchApp.fetch(getFirebaseUrl(path), { method: "put", contentType: "application/json", payload: JSON.stringify(data) });
 }
 
 function firebasePatch(path, data) {
-  UrlFetchApp.fetch(getFirebaseUrl(path), {
-    method: "patch",
-    contentType: "application/json",
-    payload: JSON.stringify(data)
-  });
+  UrlFetchApp.fetch(getFirebaseUrl(path), { method: "patch", contentType: "application/json", payload: JSON.stringify(data) });
 }
 
 function firebasePush(path, data) {
-  UrlFetchApp.fetch(getFirebaseUrl(path), {
-    method: "post",
-    contentType: "application/json",
-    payload: JSON.stringify(data)
-  });
+  UrlFetchApp.fetch(getFirebaseUrl(path), { method: "post", contentType: "application/json", payload: JSON.stringify(data) });
 }
 
-/**
- * Update Wallet logic (Read current -> Add amount -> Write back)
- */
 function updateUserBalance(userId, amount) {
   const path = "users/" + userId;
   const user = firebaseGet(path);
-  
   const currentBalance = (user && user.balance) ? Number(user.balance) : 0;
-  const newBalance = currentBalance + amount;
-  
-  firebasePatch(path, { balance: newBalance });
-  Logger.log("Balance updated for " + userId + ": " + newBalance);
+  firebasePatch(path, { balance: currentBalance + amount });
 }
 
-/**
- * Output JSON for both Frontend and MarzPay Webhook
- */
-function jsonResponse(obj) {
-  return ContentService.createTextOutput(JSON.stringify(obj))
-    .setMimeType(ContentService.MimeType.JSON);
+function createResponse(data) {
+  return ContentService.createTextOutput(JSON.stringify(data)).setMimeType(ContentService.MimeType.JSON);
 }

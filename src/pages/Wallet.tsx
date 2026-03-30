@@ -89,7 +89,7 @@ export default function Wallet() {
     setShowPaymentModal(true);
     setPaymentStatus('processing');
 
-    const GAS_URL = import.meta.env.VITE_SMM_GAS_URL;
+    const MARZPAY_GAS_URL = import.meta.env.VITE_MARZPAY_GAS_URL;
     const payload = {
       userId: user.uid,
       username: userData.name,
@@ -121,13 +121,14 @@ export default function Wallet() {
       } catch (localErr: any) {
         console.warn('Local API failed, falling back to GAS:', localErr);
         // Fallback to GAS URL directly if local API fails (common on Vercel)
-        if (!GAS_URL || GAS_URL === 'undefined') {
-          throw new Error('Payment gateway configuration missing (VITE_SMM_GAS_URL not set).');
-        }
         
         console.log('[Payment] Attempting GAS initiation...');
         // Use text/plain to avoid CORS preflight (OPTIONS) which GAS doesn't handle
-        response = await fetch(GAS_URL, {
+        if (!MARZPAY_GAS_URL || MARZPAY_GAS_URL === 'undefined') {
+          throw new Error('MarzPay GAS URL configuration missing (VITE_MARZPAY_GAS_URL not set).');
+        }
+        
+        response = await fetch(MARZPAY_GAS_URL, {
           method: 'POST',
           mode: 'cors',
           headers: {
@@ -174,7 +175,7 @@ export default function Wallet() {
 
   // Polling for payment status (Backup Verification System)
   const pollPaymentStatus = async (reference: string) => {
-    const GAS_URL = import.meta.env.VITE_SMM_GAS_URL;
+    const MARZPAY_GAS_URL = import.meta.env.VITE_MARZPAY_GAS_URL;
     const pollInterval = setInterval(async () => {
       try {
         let response;
@@ -189,10 +190,10 @@ export default function Wallet() {
           }
         } catch (e) {
           console.warn('Local status check failed, falling back to GAS:', e);
-          if (!GAS_URL || GAS_URL === 'undefined') return;
+          if (!MARZPAY_GAS_URL || MARZPAY_GAS_URL === 'undefined') return;
           
           try {
-            response = await fetch(GAS_URL, {
+            response = await fetch(MARZPAY_GAS_URL, {
               method: 'POST',
               mode: 'cors',
               headers: {
