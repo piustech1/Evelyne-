@@ -89,32 +89,47 @@ export default function Wallet() {
     setShowPaymentModal(true);
     setPaymentStatus('processing');
 
-    try {
-      // Use our own server endpoint for better reliability and logging
-      const response = await fetch('/api/payment/initiate', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          userId: user.uid,
-          username: userData.name,
-          userEmail: user.email,
-          phone: formattedPhone,
-          amount: Number(amount),
-          method: paymentMethod === 'card' ? 'card' : 'mobile_money'
-        })
-      });
+    const GAS_URL = import.meta.env.VITE_SMM_GAS_URL;
+    const payload = {
+      userId: user.uid,
+      username: userData.name,
+      userEmail: user.email,
+      phone: formattedPhone,
+      amount: Number(amount),
+      method: paymentMethod === 'card' ? 'card' : 'mobile_money'
+    };
 
+    try {
+      // Try local server first
+      let response;
       let result;
-      const contentType = response.headers.get('content-type');
-      if (contentType && contentType.includes('application/json')) {
+      
+      try {
+        response = await fetch('/api/payment/initiate', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(payload)
+        });
+
+        const contentType = response.headers.get('content-type');
+        if (contentType && contentType.includes('application/json')) {
+          result = await response.json();
+        } else {
+          throw new Error('Non-JSON response');
+        }
+      } catch (localErr) {
+        console.warn('Local API failed, falling back to GAS:', localErr);
+        // Fallback to GAS URL directly if local API fails (common on Vercel)
+        if (!GAS_URL) throw new Error('Payment gateway configuration missing.');
+        
+        response = await fetch(GAS_URL, {
+          method: 'POST',
+          body: JSON.stringify(payload)
+        });
         result = await response.json();
-      } else {
-        const text = await response.text();
-        console.error('Non-JSON response from server:', text);
-        throw new Error(`Server returned non-JSON response: ${text.substring(0, 100)}`);
       }
 
-      if (result.success) {
+      if (result.success || result.status === 'success') {
         toast.success("Payment initiated! Please complete the prompt on your phone.");
         
         if (result.redirectUrl) {
@@ -141,12 +156,28 @@ export default function Wallet() {
 
   // Polling for payment status (Backup Verification System)
   const pollPaymentStatus = async (reference: string) => {
+    const GAS_URL = import.meta.env.VITE_SMM_GAS_URL;
     const pollInterval = setInterval(async () => {
       try {
-        const response = await fetch(`/api/payment/status/${reference}`);
-        const data = await response.json();
+        let response;
+        let data;
+
+        try {
+          response = await fetch(`/api/payment/status/${reference}`);
+          if (response.ok) {
+            data = await response.json();
+          } else {
+            throw new Error('Local status check failed');
+          }
+        } catch (e) {
+          // If local status check fails, we rely on the balance listener in useEffect
+          // or we could potentially poll GAS if we added a status check there.
+          // For now, we'll just log it.
+          console.log('Local status check failed, relying on balance listener.');
+          return;
+        }
         
-        if (data.status === 'completed') {
+        if (data && (data.status === 'completed' || data.status === 'success')) {
           clearInterval(pollInterval);
           setPaymentStatus('success');
           toast.success(`UGX ${Number(amount).toLocaleString()} added to wallet!`);
@@ -160,7 +191,7 @@ export default function Wallet() {
             setShowPaymentModal(false);
             setPaymentStatus('idle');
           }, 3000);
-        } else if (data.status === 'failed') {
+        } else if (data && data.status === 'failed') {
           clearInterval(pollInterval);
           setPaymentStatus('failed');
           toast.error("Payment failed or was cancelled.");
