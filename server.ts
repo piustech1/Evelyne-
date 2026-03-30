@@ -795,51 +795,62 @@ dotenv.config();
 
   // Helper to process successful payment
   async function processSuccessfulPayment(reference: string, amountRaw: number, providerInfo: any = {}) {
+    console.log(`[Payment Process] Starting for Ref=${reference}, Amount=${amountRaw}`);
     const db = admin.database();
     const paymentRef = db.ref(`payments/${reference}`);
     const snapshot = await paymentRef.once('value');
     const payment = snapshot.val();
 
     if (!payment) {
-      console.log(`[Payment] Reference not found: ${reference}`);
+      console.error(`[Payment Process] Reference not found in database: ${reference}`);
       return false;
     }
 
-    if (payment.status === 'successful' || payment.status === 'completed') {
-      console.log(`[Payment] ${reference} already processed. Skipping credit.`);
+    if (payment.status === 'successful' || payment.status === 'completed' || payment.status === 'Successful') {
+      console.log(`[Payment Process] ${reference} already processed. Skipping credit.`);
       return true;
     }
 
     const userId = payment.userId;
-    const amountToCredit = Number(amountRaw);
-
-    if (isNaN(amountToCredit) || amountToCredit <= 0) {
-      console.error(`[Payment] Invalid amount to credit: ${amountRaw} (Reference: ${reference})`);
+    if (!userId) {
+      console.error(`[Payment Process] No userId found for payment ${reference}`);
       return false;
     }
 
-    console.log(`[Payment] Attempting to credit User ${userId} with UGX ${amountToCredit} (Reference: ${reference})`);
+    const amountToCredit = Number(amountRaw);
+
+    if (isNaN(amountToCredit) || amountToCredit <= 0) {
+      console.error(`[Payment Process] Invalid amount to credit: ${amountRaw} (Reference: ${reference})`);
+      return false;
+    }
+
+    console.log(`[Payment Process] Attempting to credit User ${userId} with UGX ${amountToCredit} (Reference: ${reference})`);
 
     try {
       // Credit user balance using transaction to prevent race conditions
       const userRef = db.ref(`users/${userId}`);
       const userResult = await userRef.transaction((currentData) => {
-        if (currentData) {
-          const oldBalance = Number(currentData.balance) || 0;
-          currentData.balance = oldBalance + amountToCredit;
-          console.log(`[Payment Transaction] Updating balance for ${userId}: ${oldBalance} -> ${currentData.balance}`);
-          return currentData;
-        }
-        console.warn(`[Payment Transaction] User ${userId} not found in database!`);
-        return undefined; // Abort transaction if user not found
+        // If user doesn't exist, we initialize it with the balance.
+        // This handles cases where the user node might be missing but the UID is valid.
+        const data = currentData || { 
+          uid: userId, 
+          balance: 0, 
+          role: 'user', 
+          createdAt: new Date().toISOString(),
+          email: payment.userEmail || 'unknown@example.com'
+        };
+        const oldBalance = Number(data.balance) || 0;
+        data.balance = oldBalance + amountToCredit;
+        console.log(`[Payment Transaction] Updating balance for ${userId}: ${oldBalance} -> ${data.balance}`);
+        return data;
       });
 
       if (!userResult.committed) {
-        console.error(`[Payment] Transaction failed for ${userId} (Reference: ${reference})`);
+        console.error(`[Payment Process] Transaction failed for ${userId} (Reference: ${reference}). User might not exist.`);
         return false;
       }
 
-      console.log(`[Payment] Successfully credited User ${userId}. Updating payment status...`);
+      console.log(`[Payment Process] Successfully credited User ${userId}. Updating payment status...`);
 
       // Update payment status
       await paymentRef.update({
@@ -857,14 +868,15 @@ dotenv.config();
         title: 'Deposit Successful',
         message: `UGX ${amountToCredit.toLocaleString()} has been added to your wallet.`,
         timestamp: new Date().toISOString(),
+        status: 'unread',
         read: false,
         type: 'deposit'
       });
 
-      console.log(`[Payment] Flow completed successfully for ${reference}`);
+      console.log(`[Payment Process] Flow completed successfully for ${reference}`);
       return true;
     } catch (err) {
-      console.error(`[Payment] Error during processSuccessfulPayment for ${reference}:`, err);
+      console.error(`[Payment Process] Error during processSuccessfulPayment for ${reference}:`, err);
       return false;
     }
   }
@@ -887,7 +899,12 @@ dotenv.config();
       }
 
       const reference = crypto.randomUUID();
+      // Use APP_URL if set, otherwise fallback to host header.
+      // IMPORTANT: In AI Studio preview, APP_URL must be set in settings for webhooks to work.
       const APP_URL = process.env.APP_URL || `https://${req.get('host')}`;
+      const callbackUrl = `${APP_URL}/api/payment/webhook`;
+      
+      console.log(`[Payment Initiate] Using callback_url: ${callbackUrl}`);
 
       // Save pending payment to DB
       const db = admin.database();
@@ -972,13 +989,16 @@ dotenv.config();
       
       const db = admin.database();
       const payload = req.body;
-      console.log("[Payment Webhook] Received payload:", JSON.stringify(payload));
+      console.log("[Payment Webhook] Received raw payload:", JSON.stringify(payload));
 
-      const { event_type, transaction, collection } = payload;
+      // MarzPay webhooks usually wrap data in a 'data' object
+      const event_type = payload.event_type;
+      const transaction = payload.data?.transaction || payload.transaction;
+      const collection = payload.data?.collection || payload.collection;
 
       if (!transaction || !transaction.reference) {
-        console.error("[Payment Webhook] Invalid payload: missing transaction or reference");
-        return res.status(200).json({ received: true });
+        console.error("[Payment Webhook] Invalid payload: missing transaction or reference. Payload keys:", Object.keys(payload));
+        return res.status(200).json({ received: true, error: 'missing_transaction' });
       }
 
       const reference = transaction.reference;
@@ -988,7 +1008,7 @@ dotenv.config();
 
       console.log(`[Payment Webhook] Processing: Ref=${reference}, Status=${status}, Amount=${amountRaw}, Event=${event_type}`);
 
-      if (event_type === 'collection.completed' || status === 'completed' || status === 'successful' || status === 'success') {
+      if (event_type === 'collection.completed' || status === 'completed' || status === 'successful' || status === 'success' || status === 'Successful') {
         console.log(`[Payment Webhook] Success detected for ${reference}. Processing credit...`);
         const success = await processSuccessfulPayment(reference, Number(amountRaw), {
           provider_transaction_id: collection?.provider_transaction_id || transaction.provider_transaction_id,
@@ -996,12 +1016,13 @@ dotenv.config();
         });
         console.log(`[Payment Webhook] processSuccessfulPayment result for ${reference}: ${success}`);
         if (success) {
+          // Status update is already handled in processSuccessfulPayment, but we can double-ensure here
           await db.ref(`payments/${reference}`).update({
             status: 'completed',
             updatedAt: admin.database.ServerValue.TIMESTAMP
           });
         }
-      } else if (event_type === 'collection.failed' || status === 'failed') {
+      } else if (event_type === 'collection.failed' || status === 'failed' || status === 'Failed') {
         await db.ref(`payments/${reference}`).update({
           status: 'failed',
           updatedAt: admin.database.ServerValue.TIMESTAMP
@@ -1041,7 +1062,10 @@ dotenv.config();
         const authCredentials = Buffer.from(`${MARZPAY_API_KEY}:${MARZPAY_API_SECRET}`).toString('base64');
 
         try {
-          const response = await fetch(`https://wallet.wearemarz.com/api/v1/transactions/${reference}`, {
+          // Try fetching by reference filter instead of direct UUID lookup
+          // MarzPay docs show that /transactions/{uuid} expects the MarzPay UUID, 
+          // but we can filter the list by our reference.
+          const response = await fetch(`https://wallet.wearemarz.com/api/v1/transactions?reference=${reference}`, {
             headers: { 'Authorization': `Basic ${authCredentials}` }
           });
           
@@ -1049,14 +1073,21 @@ dotenv.config();
             const result = await response.json();
             console.log(`[Payment Status Check] MarzPay API result for ${reference}:`, JSON.stringify(result));
             
-            const status = result.data?.status?.toLowerCase();
-            const amountRaw = (typeof result.data?.amount === 'object') ? result.data?.amount?.raw : result.data?.amount;
+            // If we filtered by reference, the result might be in an array
+            let transaction = result.transaction || result.data?.transaction;
+            if (!transaction && result.data?.transactions && result.data.transactions.length > 0) {
+              transaction = result.data.transactions[0];
+            }
             
-            if (status === 'completed' || status === 'successful' || status === 'success') {
+            const status = transaction?.status?.toLowerCase() || result.data?.status?.toLowerCase();
+            const amountRaw = (typeof transaction?.amount === 'object') ? transaction.amount?.raw : 
+                             (typeof result.data?.amount === 'object' ? result.data?.amount?.raw : (transaction?.amount || result.data?.amount));
+            
+            if (status === 'completed' || status === 'successful' || status === 'success' || status === 'Successful') {
               console.log(`[Payment Status Check] MarzPay confirms success for ${reference}. Processing credit...`);
               const success = await processSuccessfulPayment(reference, Number(amountRaw), {
-                provider_transaction_id: result.data?.provider_transaction_id,
-                provider: result.data?.provider
+                provider_transaction_id: transaction?.provider_transaction_id || result.data?.provider_transaction_id,
+                provider: transaction?.provider || result.data?.provider
               });
               
               if (success) {
@@ -1064,7 +1095,7 @@ dotenv.config();
               } else {
                 return res.status(500).json({ error: 'Failed to process successful payment' });
               }
-            } else if (status === 'failed') {
+            } else if (status === 'failed' || status === 'Failed') {
               console.log(`[Payment Status Check] MarzPay confirms failure for ${reference}.`);
               await db.ref(`payments/${reference}`).update({
                 status: 'failed',
@@ -1083,11 +1114,33 @@ dotenv.config();
         }
       }
 
-      res.json({ status: payment.status });
+      res.json({ status: (payment.status === 'Successful' || payment.status === 'successful') ? 'completed' : payment.status });
     } catch (error) {
       console.error("[Payment Status Check] Critical Error:", error);
       res.status(500).json({ error: 'Internal server error' });
     }
+  });
+
+  app.get('/api/payment/test-success/:reference', async (req, res) => {
+    try {
+      if (!isFirebaseInitialized) await initializeFirebase();
+      const { reference } = req.params;
+      const amount = Number(req.query.amount) || 1000;
+      console.log(`[Payment Test] Manually triggering success for ${reference} with amount ${amount}`);
+      const success = await processSuccessfulPayment(reference, amount);
+      res.json({ success, message: success ? 'Payment processed successfully' : 'Failed to process payment' });
+    } catch (error: any) {
+      res.status(500).json({ error: error.message });
+    }
+  });
+
+  app.get('/api/payment/debug-env', (req, res) => {
+    res.json({
+      APP_URL: process.env.APP_URL,
+      HOST: req.get('host'),
+      MARZPAY_API_KEY: MARZPAY_API_KEY ? 'Set' : 'Not Set',
+      MARZPAY_API_SECRET: MARZPAY_API_SECRET ? 'Set' : 'Not Set'
+    });
   });
 
   if (process.env.NODE_ENV !== 'production') {
