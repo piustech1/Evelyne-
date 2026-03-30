@@ -18,6 +18,11 @@ function doPost(e) {
     const postData = JSON.parse(e.postData.contents);
     Logger.log("Incoming JSON: " + JSON.stringify(postData));
     
+    // Check if it's a status check
+    if (postData.action === 'status') {
+      return handleStatusCheck(postData);
+    }
+    
     // Check if it's a MarzPay Webhook (Documentation says look for event_type)
     if (postData.event_type) {
       return handleWebhook(postData);
@@ -95,9 +100,21 @@ function handlePaymentRequest(data) {
   };
   
   const response = UrlFetchApp.fetch("https://wallet.wearemarz.com/api/v1/collect-money", options);
-  const result = JSON.parse(response.getContentText());
+  const responseText = response.getContentText();
+  let result;
   
-  Logger.log("MarzPay API Response: " + response.getContentText());
+  try {
+    result = JSON.parse(responseText);
+  } catch (e) {
+    Logger.log("Failed to parse MarzPay response: " + responseText);
+    return jsonResponse({ 
+      success: false, 
+      message: "Invalid response from MarzPay gateway",
+      raw: responseText.substring(0, 100)
+    });
+  }
+  
+  Logger.log("MarzPay API Response: " + responseText);
   
   if (response.getResponseCode() !== 200 && response.getResponseCode() !== 201) {
     return jsonResponse({ 
@@ -126,20 +143,28 @@ function handlePaymentRequest(data) {
  * Based on MarzPay "Webhook Payload Structure" Docs
  */
 function handleWebhook(payload) {
-  Logger.log("Processing Webhook: " + payload.event_type);
+  Logger.log("Processing Webhook: " + JSON.stringify(payload));
   
-  // According to Doc: payload contains 'transaction' and 'collection' objects
-  const transaction = payload.transaction;
-  const collectionData = payload.collection;
+  // MarzPay webhooks usually wrap data in a 'data' object
+  const data = payload.data || payload;
+  const transaction = data.transaction || payload.transaction;
+  const collectionData = data.collection || payload.collection;
   
-  if (!transaction || payload.event_type !== "collection.completed") {
-    return jsonResponse({ received: true, message: "Non-completion event ignored" });
+  if (!transaction || !transaction.reference) {
+    Logger.log("Invalid webhook payload: missing transaction or reference");
+    return jsonResponse({ received: true, message: "Invalid payload" });
+  }
+  
+  const event_type = payload.event_type || data.event_type;
+  if (event_type !== "collection.completed") {
+    Logger.log("Non-completion event ignored: " + event_type);
+    return jsonResponse({ received: true, message: "Event ignored" });
   }
   
   const reference = transaction.reference;
-  const status = transaction.status;
+  const status = (transaction.status || "").toLowerCase();
   
-  if (status !== "completed") {
+  if (status !== "completed" && status !== "successful" && status !== "success") {
     Logger.log("Transaction status: " + status + ". Skipping credit.");
     return jsonResponse({ received: true });
   }
@@ -150,7 +175,12 @@ function handleWebhook(payload) {
   if (paymentRecord && paymentRecord.status === "pending") {
     const userId = paymentRecord.userId;
     // DOC: "amount.raw" is the integer value
-    const amountToCredit = Number(transaction.amount.raw);
+    const amountToCredit = Number(transaction.amount?.raw || transaction.amount || collectionData?.amount?.raw || 0);
+    
+    if (amountToCredit <= 0) {
+      Logger.log("Invalid amount to credit: " + amountToCredit);
+      return jsonResponse({ received: true });
+    }
     
     // 2. Perform Wallet Credit
     updateUserBalance(userId, amountToCredit);
@@ -180,7 +210,24 @@ function handleWebhook(payload) {
   return jsonResponse({ received: true });
 }
 
-// --- PART 3: FIREBASE CONNECTION (REST API) ---
+/**
+ * PART 3: Handle Status Check for Frontend
+ */
+function handleStatusCheck(data) {
+  const { reference } = data;
+  if (!reference) return jsonResponse({ error: "Missing reference" });
+  
+  const payment = firebaseGet("payments/" + reference);
+  if (!payment) return jsonResponse({ error: "Payment not found" });
+  
+  return jsonResponse({
+    status: payment.status,
+    amount: payment.amount,
+    reference: payment.reference
+  });
+}
+
+// --- PART 4: FIREBASE CONNECTION (REST API) ---
 
 function getFirebaseUrl(path) {
   let url = FIREBASE_DB_URL + path + ".json";

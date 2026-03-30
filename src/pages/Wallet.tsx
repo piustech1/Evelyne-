@@ -105,6 +105,7 @@ export default function Wallet() {
       let result;
       
       try {
+        console.log('[Payment] Attempting local initiation...');
         response = await fetch('/api/payment/initiate', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
@@ -115,18 +116,35 @@ export default function Wallet() {
         if (contentType && contentType.includes('application/json')) {
           result = await response.json();
         } else {
-          throw new Error('Non-JSON response');
+          throw new Error('Local API returned non-JSON response');
         }
-      } catch (localErr) {
+      } catch (localErr: any) {
         console.warn('Local API failed, falling back to GAS:', localErr);
         // Fallback to GAS URL directly if local API fails (common on Vercel)
-        if (!GAS_URL) throw new Error('Payment gateway configuration missing.');
+        if (!GAS_URL || GAS_URL === 'undefined') {
+          throw new Error('Payment gateway configuration missing (VITE_SMM_GAS_URL not set).');
+        }
         
+        console.log('[Payment] Attempting GAS initiation...');
+        // Use text/plain to avoid CORS preflight (OPTIONS) which GAS doesn't handle
         response = await fetch(GAS_URL, {
           method: 'POST',
+          mode: 'cors',
+          headers: {
+            'Content-Type': 'text/plain;charset=utf-8',
+          },
           body: JSON.stringify(payload)
         });
-        result = await response.json();
+
+        const text = await response.text();
+        if (!text) throw new Error('Empty response from GAS proxy');
+        
+        try {
+          result = JSON.parse(text);
+        } catch (parseErr) {
+          console.error('[Payment] GAS returned invalid JSON:', text);
+          throw new Error('Invalid response from payment proxy. Please check GAS deployment.');
+        }
       }
 
       if (result.success || result.status === 'success') {
@@ -142,7 +160,7 @@ export default function Wallet() {
           pollPaymentStatus(result.reference);
         }
       } else {
-        throw new Error(result.message || "Failed to initiate payment");
+        throw new Error(result.message || result.error || "Failed to initiate payment");
       }
     } catch (err: any) {
       console.error('Payment error:', err);
@@ -170,14 +188,27 @@ export default function Wallet() {
             throw new Error('Local status check failed');
           }
         } catch (e) {
-          // If local status check fails, we rely on the balance listener in useEffect
-          // or we could potentially poll GAS if we added a status check there.
-          // For now, we'll just log it.
-          console.log('Local status check failed, relying on balance listener.');
-          return;
+          console.warn('Local status check failed, falling back to GAS:', e);
+          if (!GAS_URL || GAS_URL === 'undefined') return;
+          
+          try {
+            response = await fetch(GAS_URL, {
+              method: 'POST',
+              mode: 'cors',
+              headers: {
+                'Content-Type': 'text/plain;charset=utf-8',
+              },
+              body: JSON.stringify({ action: 'status', reference })
+            });
+            const text = await response.text();
+            data = JSON.parse(text);
+          } catch (gasErr) {
+            console.error('GAS status check failed:', gasErr);
+            return;
+          }
         }
         
-        if (data && (data.status === 'completed' || data.status === 'success')) {
+        if (data && (data.status === 'completed' || data.status === 'success' || data.status === 'Successful')) {
           clearInterval(pollInterval);
           setPaymentStatus('success');
           toast.success(`UGX ${Number(amount).toLocaleString()} added to wallet!`);
