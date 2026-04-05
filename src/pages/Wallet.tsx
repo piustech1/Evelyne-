@@ -71,7 +71,10 @@ export default function Wallet() {
 
   const handleDeposit = async (e: FormEvent) => {
     e.preventDefault();
-    if (!user || !userData) return;
+    if (!user || !userData) {
+      toast.error('Please wait for user data to load or log in again.');
+      return;
+    }
     
     if (Number(amount) < 1000) {
       toast.error('Minimum deposit is UGX 1,000');
@@ -85,6 +88,7 @@ export default function Wallet() {
 
     const formattedPhone = paymentMethod !== 'card' ? formatPhoneNumber(phoneNumber) : '';
     
+    console.log('[Payment] Initiating deposit:', { amount, paymentMethod, formattedPhone });
     setIsLoading(true);
     setShowPaymentModal(true);
     setPaymentStatus('processing');
@@ -441,7 +445,7 @@ export default function Wallet() {
                       required
                       value={amount}
                       onChange={(e) => setAmount(e.target.value)}
-                      placeholder="5,000"
+                      placeholder="5000"
                       className="w-full pl-12 pr-4 py-4 bg-white border border-gray-200 rounded-xl text-gray-900 placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-brand-purple/5 focus:border-brand-purple transition-all font-display font-black text-xl shadow-sm"
                     />
                   </div>
@@ -450,10 +454,21 @@ export default function Wallet() {
               </div>
 
               <button 
+                type="submit"
                 disabled={isLoading}
-                className="w-full py-4 bg-gradient-to-r from-blue-600 to-purple-600 text-white font-black uppercase tracking-widest rounded-xl shadow-sm hover:scale-[1.02] active-press transition-all text-[10px] disabled:opacity-50 disabled:cursor-not-allowed"
+                className="w-full py-4 bg-gradient-to-r from-blue-600 to-purple-600 text-white font-black uppercase tracking-widest rounded-xl shadow-sm hover:scale-[1.02] active-press transition-all text-[10px] disabled:opacity-50 disabled:cursor-not-allowed cursor-pointer flex items-center justify-center gap-2"
               >
-                {isLoading ? 'Processing...' : 'Deposit Funds'}
+                {isLoading ? (
+                  <>
+                    <FontAwesomeIcon icon={faSpinner} className="animate-spin" />
+                    Processing...
+                  </>
+                ) : (
+                  <>
+                    <FontAwesomeIcon icon={faPlus} className="text-[8px]" />
+                    Deposit Funds
+                  </>
+                )}
               </button>
             </form>
           </div>
