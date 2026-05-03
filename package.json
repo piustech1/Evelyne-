@@ -1,7 +1,9 @@
 {
-  "name": "react-example",
+  "name": "super-boost-smm",
   "private": true,
-  "version": "0.0.0",
+  "version": "1.0.0",
+  "description": "Professional SMM Panel Developed by Piustech",
+  "author": "Piustech",
   "type": "module",
   "scripts": {
     "dev": "tsx server.ts",
