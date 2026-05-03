@@ -1,7 +1,7 @@
 /**
- * EASYBOOST PAYMENT BACKEND (Google Apps Script)
+ * SUPER BOOST PAYMENT BACKEND (Google Apps Script)
  * Updated for MarzPay 2026 API Specifications
- * Developer: Piustech & AI Assistant
+ * Developer: Piustech
  */
 
 // --- CONFIGURATION ---
@@ -131,7 +131,7 @@ function handlePaymentRequest(data) {
     "amount": Math.floor(Number(amount)),
     "country": "UG",
     "reference": reference,
-    "description": "EasyBoost Top-up",
+    "description": "Super Boost Top-up",
     "phone_number": phone,
     "callback_url": ScriptApp.getService().getUrl()
   };

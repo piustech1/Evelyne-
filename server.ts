@@ -927,7 +927,7 @@ dotenv.config();
         currency: 'UGX',
         country: 'UG',
         reference: reference,
-        description: 'EasyBoost Wallet Top-up',
+        description: 'Super Boost Wallet Top-up',
         method: method || 'mobile_money',
         callback_url: `${APP_URL}/api/payment/webhook`
       };

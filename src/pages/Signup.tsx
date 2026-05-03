@@ -194,7 +194,7 @@ export default function Signup() {
               <div className="w-10 h-10 bg-gradient-to-r from-blue-600 to-purple-600 rounded-lg flex items-center justify-center shadow-lg shadow-blue-600/20 group-hover:scale-110 transition-transform">
                 <FontAwesomeIcon icon={faRocket} className="text-white text-lg" />
               </div>
-              <span className="text-xl font-display font-black text-gray-900 tracking-tighter">EasyBoost</span>
+              <span className="text-xl font-display font-black text-gray-900 tracking-tighter">Super Boost</span>
             </Link>
             
             <h2 className="text-2xl font-display font-black text-gray-900 tracking-tighter mb-1">Join Us</h2>

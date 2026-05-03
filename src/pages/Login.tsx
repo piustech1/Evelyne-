@@ -57,7 +57,7 @@ export default function Login() {
               <div className="w-10 h-10 bg-gradient-to-r from-blue-600 to-purple-600 rounded-lg flex items-center justify-center shadow-lg shadow-blue-600/20 group-hover:scale-110 transition-transform">
                 <FontAwesomeIcon icon={faRocket} className="text-white text-lg" />
               </div>
-              <span className="text-xl font-display font-black text-gray-900 tracking-tighter">EasyBoost</span>
+              <span className="text-xl font-display font-black text-gray-900 tracking-tighter">Super Boost</span>
             </Link>
             
             <h2 className="text-2xl font-display font-black text-gray-900 tracking-tighter mb-1">Welcome Back</h2>
@@ -148,7 +148,7 @@ export default function Login() {
 
           <div className="text-center pt-6">
             <p className="text-gray-500 text-xs font-medium">
-              New to EasyBoost?{' '}
+              New to Super Boost?{' '}
               <Link to="/signup" className="font-bold text-blue-600 hover:text-purple-600 transition-colors underline underline-offset-4">
                 Create Account
               </Link>
@@ -181,7 +181,7 @@ export default function Login() {
             </div>
             <h2 className="text-5xl font-display font-bold leading-tight tracking-tighter">Dominate Your Social Media</h2>
             <p className="text-lg text-white/70 font-medium leading-relaxed">
-              Join thousands of influencers and businesses who use EasyBoost to scale their reach and engagement across all platforms.
+              Join thousands of influencers and businesses who use Super Boost to scale their reach and engagement across all platforms.
             </p>
             
             <div className="grid grid-cols-3 gap-4 pt-8">

@@ -9,9 +9,9 @@ export default function AdminSettings() {
   const [activeTab, setActiveTab] = useState('General');
   const [pushConfig, setPushConfig] = useState<any>(null);
   const [settings, setSettings] = useState<any>({
-    siteName: 'EasyBoost',
+    siteName: 'Super Boost',
     currency: 'UGX',
-    supportEmail: 'support@easyboost.com',
+    supportEmail: 'support@superboost.com',
     timezone: 'East Africa Time (EAT)',
     maintenanceMode: false,
     emailVerification: true,

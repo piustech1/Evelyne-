@@ -41,7 +41,7 @@ export default function WhatsAppCommunity({ className = "" }: WhatsAppCommunityP
           </div>
 
           <p className="text-xs text-gray-600 font-medium leading-relaxed max-w-lg">
-            Connect with other users, get instant updates on new services, and access priority support. Join thousands of users growing their presence with EasyBoost.
+            Connect with other users, get instant updates on new services, and access priority support. Join thousands of users growing their presence with Super Boost.
           </p>
 
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 pt-2">
@@ -53,7 +53,7 @@ export default function WhatsAppCommunity({ className = "" }: WhatsAppCommunityP
               Join Group
             </button>
             <button 
-              onClick={() => window.open(`https://wa.me/${supportNumber}?text=Hello%20EasyBoost%20Support`, '_blank')}
+              onClick={() => window.open(`https://wa.me/${supportNumber}?text=Hello%20Super%20Boost%20Support`, '_blank')}
               className="flex items-center justify-center gap-2 py-3 bg-white text-[#25D366] border border-[#25D366]/20 hover:bg-[#25D366]/5 rounded-xl text-[10px] font-black uppercase tracking-widest transition-all shadow-sm active-press"
             >
               <FontAwesomeIcon icon={faHeadset} className="text-xs" />

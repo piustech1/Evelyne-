@@ -26,13 +26,13 @@ export default function GlobalAnnouncement() {
         <div className="flex-grow relative flex items-center h-full">
           <div className="whitespace-nowrap animate-marquee flex items-center">
             <span className="text-[9px] font-black text-white uppercase tracking-widest px-4">
-              🚀 EasyBoost is now fully upgraded! No more drops, better speed & stronger services 💪
+              🚀 Super Boost is now fully upgraded! No more drops, better speed & stronger services 💪
             </span>
             <span className="text-[9px] font-black text-white uppercase tracking-widest px-4">
-              🚀 EasyBoost is now fully upgraded! No more drops, better speed & stronger services 💪
+              🚀 Super Boost is now fully upgraded! No more drops, better speed & stronger services 💪
             </span>
             <span className="text-[9px] font-black text-white uppercase tracking-widest px-4">
-              🚀 EasyBoost is now fully upgraded! No more drops, better speed & stronger services 💪
+              🚀 Super Boost is now fully upgraded! No more drops, better speed & stronger services 💪
             </span>
           </div>
         </div>

@@ -34,7 +34,7 @@ const RecentlyUsedSection = () => {
   const navigate = useNavigate();
   
   useEffect(() => {
-    const recentlyUsed = JSON.parse(localStorage.getItem('easyboost_recently_used') || '[]');
+    const recentlyUsed = JSON.parse(localStorage.getItem('superboost_recently_used') || '[]');
     setServices(recentlyUsed);
   }, []);
 
@@ -67,7 +67,7 @@ const FavoritesSection = () => {
   const navigate = useNavigate();
   
   useEffect(() => {
-    const favorites = JSON.parse(localStorage.getItem('easyboost_favorites') || '[]');
+    const favorites = JSON.parse(localStorage.getItem('superboost_favorites') || '[]');
     setServices(favorites);
   }, []);
 
@@ -289,7 +289,7 @@ export default function LandingPage() {
             <div className="relative z-10 space-y-6 md:space-y-8">
               <h2 className="text-4xl md:text-6xl font-bold leading-tight tracking-tighter">Ready to Boost <br /> Your Growth?</h2>
               <p className="text-white/80 text-lg md:text-xl max-w-xl mx-auto font-medium">
-                Join 50,000+ users who are already using EasyBoost to grow their social media presence and dominate their niche.
+                Join 50,000+ users who are already using Super Boost to grow their social media presence and dominate their niche.
               </p>
               <Link
                 to="/signup"
@@ -309,7 +309,7 @@ export default function LandingPage() {
                 <div className="flex items-center space-x-2">
                   <FontAwesomeIcon icon={faCheckCircle} className="text-white/80" />
                   <button 
-                    onClick={() => window.open('https://wa.me/256709728322?text=Hello%20EasyBoost%20Support,%20I%20have%20a%20question.', '_blank')}
+                    onClick={() => window.open('https://wa.me/256709728322?text=Hello%20Super%20Boost%20Support,%20I%20have%20a%20question.', '_blank')}
                     className="hover:text-brand-accent transition-colors"
                   >
                     24/7 Support
@@ -332,10 +332,10 @@ export default function LandingPage() {
       <footer className="py-12 border-t border-gray-100">
         <div className="max-w-7xl mx-auto px-6 text-center">
           <p className="text-gray-400 text-[10px] font-black uppercase tracking-widest">
-            &copy; {new Date().getFullYear()} EasyBoost. All rights reserved.
+            &copy; {new Date().getFullYear()} Super Boost. All rights reserved.
           </p>
           <p className="text-gray-400 text-[10px] font-black uppercase tracking-widest mt-2">
-            Powered by Pius Tech
+            Developed by Piustech
           </p>
         </div>
       </footer>

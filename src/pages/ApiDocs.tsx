@@ -152,7 +152,7 @@ print(response.json())`,
           API Documentation
         </h1>
         <p className="text-gray-500 text-sm md:text-base max-w-2xl mx-auto font-medium">
-          Integrate EasyBoost directly into your own website or SMM panel using our standard API.
+          Integrate Super Boost directly into your own website or SMM panel using our standard API.
         </p>
       </motion.div>
 

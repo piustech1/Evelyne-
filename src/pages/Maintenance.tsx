@@ -72,7 +72,7 @@ const MaintenancePage: React.FC<MaintenancePageProps> = ({ startTime }) => {
               <Hammer size={40} />
             </motion.div>
             <h1 className="mb-3 text-3xl font-bold tracking-tight text-white md:text-4xl">
-              🚧 EasyBoost Under Maintenance
+              🚧 Super Boost Under Maintenance
             </h1>
             <p className="mx-auto max-w-md text-lg text-blue-100/80">
               We are working hard to improve your experience 💪 Fixing recent issues, boosting performance, and making our services stronger than ever 🚀
@@ -124,7 +124,7 @@ const MaintenancePage: React.FC<MaintenancePageProps> = ({ startTime }) => {
               We appreciate your patience 🤝 We’ll be back better and stronger!
             </p>
             <div className="flex items-center justify-center gap-2 text-blue-400 font-semibold">
-              <span>— Team EasyBoostUG</span>
+              <span>— Team Super Boost</span>
               <Heart size={16} className="fill-current" />
             </div>
           </div>

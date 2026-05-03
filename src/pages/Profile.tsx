@@ -50,12 +50,12 @@ export default function Profile() {
   const shareReferral = async () => {
     const link = getReferralLink();
     if (link) {
-      const text = `Grow your social media using EasyBoost. Join now!`;
+      const text = `Grow your social media using Super Boost. Join now!`;
       
       if (navigator.share) {
         try {
           await navigator.share({
-            title: 'Join EasyBoost',
+            title: 'Join Super Boost',
             text: text,
             url: link,
           });
@@ -273,7 +273,7 @@ export default function Profile() {
             
             <div className="space-y-6">
               <p className="text-gray-500 text-xs font-medium leading-relaxed">
-                Invite your friends to EasyBoost and earn rewards for every successful referral. Your friends also get a special welcome bonus!
+                Invite your friends to Super Boost and earn rewards for every successful referral. Your friends also get a special welcome bonus!
               </p>
 
               <div className="bg-white p-4 rounded-2xl border border-gray-100 flex flex-col sm:flex-row items-center justify-between gap-4">
@@ -318,7 +318,7 @@ export default function Profile() {
             
             <div className="space-y-6">
               <p className="text-gray-500 text-xs font-medium leading-relaxed">
-                Use our public API to connect your own website or SMM panel to EasyBoost. Your API key is private and should not be shared.
+                Use our public API to connect your own website or SMM panel to Super Boost. Your API key is private and should not be shared.
               </p>
 
               <div className="bg-white p-5 rounded-2xl border border-gray-100 space-y-4">
@@ -458,7 +458,7 @@ export default function Profile() {
             <h4 className="text-xl font-display font-black text-gray-900 tracking-tighter mb-2">Need Help?</h4>
             <p className="text-gray-400 text-[10px] font-medium mb-6 leading-relaxed">Our support team is available 24/7 to assist you.</p>
             <button 
-              onClick={() => window.open('https://wa.me/256709728322?text=Hello%20EasyBoost%20Support,%20I%20need%20help%20with%20my%20account.', '_blank')}
+              onClick={() => window.open('https://wa.me/256709728322?text=Hello%20Super%20Boost%20Support,%20I%20need%20help%20with%20my%20account.', '_blank')}
               className="w-full py-3 bg-white text-gray-900 font-black uppercase tracking-widest text-[9px] rounded-xl hover:bg-gradient-to-r hover:from-blue-600 hover:to-purple-600 hover:text-white transition-all border border-gray-200 shadow-sm active-press"
             >
               Contact Support
@@ -468,7 +468,7 @@ export default function Profile() {
 
         <div className="text-center pt-8">
           <p className="text-gray-400 text-[10px] font-black uppercase tracking-widest">
-            Powered by Pius Tech
+            Developed by Piustech
           </p>
         </div>
       </div>

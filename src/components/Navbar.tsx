@@ -64,13 +64,13 @@ export default function Navbar() {
             <div className="w-8 h-8 bg-white rounded-lg flex items-center justify-center shadow-sm group-hover:scale-110 transition-transform overflow-hidden">
               <img 
                 src="https://i.postimg.cc/sxNQyXFG/0x0.png" 
-                alt="EasyBoost Logo" 
+                alt="Super Boost Logo" 
                 className="w-full h-full object-cover"
                 referrerPolicy="no-referrer"
               />
             </div>
             <span className="text-lg font-display font-black tracking-tighter text-white">
-              Easy<span className="text-white/80">Boost</span>
+              Super<span className="text-white/80">Boost</span>
             </span>
           </Link>
 
