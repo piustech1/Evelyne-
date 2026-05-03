@@ -16,6 +16,10 @@ export default function Login() {
 
   const handleSubmit = async (e: FormEvent) => {
     e.preventDefault();
+    if (!auth) {
+      toast.error('Authentication service is currently unavailable. Please try again later.');
+      return;
+    }
     setIsLoading(true);
     const loadingToast = toast.loading('Signing in...');
     try {
@@ -30,6 +34,10 @@ export default function Login() {
   };
 
   const handleGoogleLogin = async () => {
+    if (!auth) {
+      toast.error('Authentication service is currently unavailable. Please try again later.');
+      return;
+    }
     setIsLoading(true);
     const loadingToast = toast.loading('Connecting to Google...');
     try {

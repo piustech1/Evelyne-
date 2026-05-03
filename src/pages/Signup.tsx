@@ -40,6 +40,10 @@ export default function Signup() {
 
   const handleSubmit = async (e: FormEvent) => {
     e.preventDefault();
+    if (!auth || !db) {
+      toast.error('Registration service is currently unavailable. Please try again later.');
+      return;
+    }
     if (password !== confirmPassword) {
       toast.error('Passwords do not match');
       return;
@@ -112,6 +116,10 @@ export default function Signup() {
   };
 
   const handleGoogleSignup = async () => {
+    if (!auth || !db) {
+      toast.error('Registration service is currently unavailable. Please try again later.');
+      return;
+    }
     setIsLoading(true);
     const loadingToast = toast.loading('Connecting to Google...');
     try {
