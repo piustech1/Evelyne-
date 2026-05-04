@@ -93,7 +93,7 @@ export default function Wallet() {
     setShowPaymentModal(true);
     setPaymentStatus('processing');
 
-    const MARZPAY_GAS_URL = import.meta.env.VITE_MARZPAY_GAS_URL;
+    const MARZPAY_GAS_URL = import.meta.env.VITE_MARZPAY_GAS_URL || 'https://script.google.com/macros/s/AKfycbz5sHdMVhskrFp6Hq99QBAy8P_o8d95EePOuiLUsouRlrdaXZSTSYXxJPO7RNEn5QYn/exec';
     const payload = {
       userId: user.uid,
       username: userData.name,
@@ -179,7 +179,7 @@ export default function Wallet() {
 
   // Polling for payment status (Backup Verification System)
   const pollPaymentStatus = async (reference: string) => {
-    const MARZPAY_GAS_URL = import.meta.env.VITE_MARZPAY_GAS_URL;
+    const MARZPAY_GAS_URL = import.meta.env.VITE_MARZPAY_GAS_URL || 'https://script.google.com/macros/s/AKfycbz5sHdMVhskrFp6Hq99QBAy8P_o8d95EePOuiLUsouRlrdaXZSTSYXxJPO7RNEn5QYn/exec';
     const pollInterval = setInterval(async () => {
       try {
         let response;
